@@ -1,10 +1,10 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import Layout from './components/Layout';
-import Dashboard from './pages/Dashboard';
-import Resumes from './pages/Resumes';
-import Applications from './pages/Applications';
-import Interviews from './pages/Interviews';
-import Settings from './pages/Settings';
+import Layout from './core/components/Layout';
+import Dashboard from './features/dashboard/pages/Dashboard';
+import Resumes from './features/resumes/pages/Resumes';
+import Applications from './features/applications/pages/Applications';
+import Interviews from './features/interviews/pages/Interviews';
+import Settings from './features/settings/pages/Settings';
 
 function App() {
   return (

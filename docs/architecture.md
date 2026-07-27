@@ -11,12 +11,20 @@ offerFlow 并非一个简单的“在线写简历”的页面，而是面向校�
 - **数据持久化**：MVP 阶段使用 `localStorage`，后期演进至 IndexedDB 并支持后端同步。
 - **UI 规范**：原生 CSS / CSS Modules。采用“石墨灰・极简开发者风”，对标 Notion / Obsidian 的极简排版和沉浸感体验。
 
-## 3. 模块划分
-系统主要划分为以下几大模块（对应一级路由）：
-1. `/dashboard` (数据看板)：展示投递漏斗、近期待办面试。
-2. `/resumes` (简历库)：简历版本管理与编辑核心区。
-3. `/applications` (投递与岗位)：JD 解析、投递状态看板。
-4. `/interviews` (面试与面经)：面试题库、面试记录复盘。
+## 3. 模块划分 (Feature-Sliced Design)
+随着项目的演进，我们从 MVP 的扁平结构迁移至了基于特性的 **Feature-Sliced Architecture**，确保各业务模块高内聚低耦合：
+
+```
+src/
+├── core/             # 全局基座：Layout 组件、全局样式、通用钩子
+├── features/         # 独立业务模块
+│   ├── resumes/      # 简历核心模块（内聚 store, components, types, pages）
+│   ├── applications/ # 岗位追踪与投递模块
+│   ├── dashboard/    # 数据看板模块
+│   └── interviews/   # 面试面经模块
+```
+
+这种架构下，任何一个模块的深度开发（例如引入 Drag & Drop 拖拽，或者 PDF 导出）都不会干扰其他模块的上下文。
 
 ## 4. 核心数据模型 (MVP 阶段)
 

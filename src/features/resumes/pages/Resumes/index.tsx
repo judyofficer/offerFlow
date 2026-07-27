@@ -1,5 +1,6 @@
-import React from 'react';
-import { Plus, Copy, Trash2, FileText } from 'lucide-react';
+import React, { useRef } from 'react';
+import { Plus, Copy, Trash2, FileText, Download } from 'lucide-react';
+import { useReactToPrint } from 'react-to-print';
 import { useResumeStore } from '../../store/useResumeStore';
 import ResumeEditor from '../../components/ResumeEditor';
 import ResumePreview from '../../components/ResumePreview';
@@ -7,6 +8,12 @@ import styles from './Resumes.module.css';
 
 const Resumes: React.FC = () => {
   const { resumes, activeResumeId, addResume, setActiveResume, deleteResume, duplicateResume } = useResumeStore();
+  
+  const componentRef = useRef<HTMLDivElement>(null);
+  const handlePrint = useReactToPrint({
+    contentRef: componentRef,
+    documentTitle: 'Resume',
+  });
 
   const handleCreateNew = () => {
     const name = prompt('Enter new resume name (e.g. Frontend Dev):');
@@ -80,7 +87,21 @@ const Resumes: React.FC = () => {
           <ResumeEditor />
         </div>
         <div className={styles.previewPane}>
-          <ResumePreview />
+          <div style={{ position: 'relative', width: '100%', maxWidth: '794px', margin: '0 auto' }}>
+             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
+                <button 
+                  className={styles.button} 
+                  onClick={() => handlePrint()} 
+                  disabled={!activeResumeId}
+                >
+                  <Download size={16} /> Download PDF
+                </button>
+             </div>
+             
+             <div ref={componentRef}>
+                <ResumePreview />
+             </div>
+          </div>
         </div>
       </main>
     </div>

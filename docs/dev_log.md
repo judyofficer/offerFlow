@@ -16,3 +16,11 @@
 - **排查过程**：执行 `npm run build` 时发现多处 TypeScript 编译报错，错误码为 `TS1484` 和 `TS6133`。
 - **根本原因**：Vite 的 React TS 模板默认开启了 `verbatimModuleSyntax` 选项。这要求在导入纯 TypeScript 类型 (Type/Interface) 时，必须显式地使用 `import type` 语法。如果把类型和普通的变量混在同一个普通 `import` 里面（或者对类型使用普通 import），TypeScript 编译器就会抛出 `TS1484` 错误，从而导致 Vite 编译失败并阻断渲染。
 - **解决方案**：遍历了 `App.tsx` 以及 Zustand store 和各个 page 文件，将类似于 `import { ApplicationStatus } from ...` 的类型导入全部修改为 `import type { ApplicationStatus } from ...`。修复后项目编译顺利通过，白屏问题解决。
+## 2026-07-27 (模块架构拆分与简历模块深化)
+- **架构升级**：采纳了 Feature-Sliced (按业务模块切分) 架构方案，彻底废弃了原有的 components/pages/store 扁平目录。将代码迁移入 `src/features/` 以及 `src/core/`，成功验证了路由和模块的独立性。
+- **简历模块 (Module A) 深度突破**：
+  - **组件拆分**：将单文件编辑器拆分为 `PersonalInfoEditor`, `EducationEditor`, `ExperienceEditor`, `ProjectEditor`, `SkillEditor`。
+  - **Zustand 状态增强**：引入了对应各个区块数组的 `addSectionItem`, `updateSectionItem`, `deleteSectionItem`, `reorderSectionItems` 状态更新方法。
+  - **拖拽排序 (Drag & Drop)**：引入 `@hello-pangea/dnd`，实现了教育、工作、项目、技能各个区块的丝滑拖拽重排功能。
+  - **PDF 导出**：引入 `react-to-print`，允许用户一键将右侧的 A4 预览界面导出为标准 PDF 文件。
+- **当前状态**：第一步“简历准备模块”的深度核心诉求已全面实现，系统可用性大幅提升。

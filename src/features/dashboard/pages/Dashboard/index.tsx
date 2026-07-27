@@ -1,7 +1,7 @@
 import React from 'react';
-import { useApplicationStore } from '../../store/useApplicationStore';
-import { STATUS_CONFIG } from '../../types/application';
-import type { ApplicationStatus } from '../../types/application';
+import { useApplicationStore } from '../../../applications/store/useApplicationStore';
+import { STATUS_CONFIG } from '../../../applications/types/application';
+import type { ApplicationStatus } from '../../../applications/types/application';
 
 const Dashboard: React.FC = () => {
   const { applications } = useApplicationStore();
