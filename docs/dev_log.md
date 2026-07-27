@@ -38,3 +38,25 @@
   - **需求**：简历预览界面的字体需要更符合主流。
   - **修改**：将 `ResumePreview` 的 `fontFamily` 从老旧的 `serif` 切换为现代主流的无衬线字体栈：`"Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif`。
   - **理由**：无衬线字体在互联网、科技行业的简历中显得更为整洁、干练和专业。
+
+## 2026-07-27 (模块 B 岗位投递追踪重构)
+- **企业规范 SOP 落地**：采用 `/grill-me` 标准化提问对齐需求，锁定功能设计（支持详情侧边抽屉与拖拽流转），之后一次性完成开发交付。
+- **UI 彻底重构**：
+  - 引入了完整的 Kanban 拖拽交互（借助 `@hello-pangea/dnd`），现在用户可以在列与列之间平滑拖拽卡片来改变状态。
+  - 新增了 `ApplicationCard` 单独组件封装卡片渲染逻辑，展示最新状态和信息。
+  - 新增了 `ApplicationDetailPanel` 详情抽屉，使用精美的右侧滑入 (Slide-over) 动画。
+- **数据流闭环**：
+  - 在详情页中实现了与 `useResumeStore` 的跨 Store 数据读取，允许用户在下拉框中选择当时投递该岗位使用的哪一版简历（关联 `resumeId`）。
+  - 支持长文本的 JD（岗位描述）和 Notes（面试面经备注）记录，解决了早期版本只能用 prompt 编辑几个短字符串的痛点。
+- **当前状态**：核心的简历管理 (模块 A) 和投递流转 (模块 B) 已双双实现重度结构化和高可用体验。
+- **UI 优化与交互增强**：
+  - **需求**：横向的看板在使用普通鼠标时，需要拖动底部滚动条，操作不便，希望能直接使用鼠标滚轮左右滑动。
+  - **修改**：在 `Applications/index.tsx` 中通过 `useRef` 捕获 `.kanbanBoard` DOM 节点，利用原生的 `addEventListener` 绑定 `wheel` 事件，将垂直滚动的增量 (`e.deltaY`) 平滑转换为横向滚动 (`scrollLeft`)。
+  - **收益**：极大地提升了桌面端用户的浏览体验，更加丝滑自然。
+
+## 2026-07-28 (模块 C 面试日程与日历管理)
+- **手写极简日历引擎**：拒绝引入庞大的 `react-big-calendar` 等第三方库，从零手写了一套基于 `Grid` 布局的 7x6 极简日历视图，符合“石墨灰开发者风”，极大地减少了打包体积并保证了 UI 的高度定制化。
+- **模块间的强联动 (Cross-module Linkage)**：
+  - 在投递看板 (Applications) 中，当用户把某张卡片拖拽进入“笔试、面试、HR面、Offer”等实质性推进列时，系统会自动触发 Confirm。
+  - 用户确认后，通过 React Router 的 URL 参数 (`?createFor=appId`) 无缝跳转并唤起 Schedule 模块的“新建日程抽屉”。
+  - 日程抽屉会自动填入相应的公司名和岗位名，极大降低了用户的手动输入成本。

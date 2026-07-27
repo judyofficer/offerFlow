@@ -6,7 +6,8 @@ import {
   Briefcase, 
   MessagesSquare,
   Settings,
-  Workflow
+  Workflow,
+  Calendar
 } from 'lucide-react';
 import styles from './Layout.module.css';
 
@@ -15,6 +16,7 @@ const navItems = [
   { path: '/resumes', label: '简历库', icon: FileText },
   { path: '/applications', label: '投递追踪', icon: Briefcase },
   { path: '/interviews', label: '面试记录', icon: MessagesSquare },
+  { path: '/schedule', label: '日程管理', icon: Calendar },
 ];
 
 const Layout: React.FC = () => {

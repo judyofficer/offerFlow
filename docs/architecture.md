@@ -22,6 +22,7 @@ src/
 │   │   ├── services/ # 包含简历大模型解析引擎 (resumeParser.ts)
 │   │   └── ...       # store, components, types, pages
 │   ├── applications/ # 岗位追踪与投递模块
+│   ├── schedule/     # 日程管理模块 (日历与提醒)
 │   ├── dashboard/    # 数据看板模块
 │   ├── settings/     # 大模型 API 等用户偏好配置模块
 │   └── interviews/   # 面试面经模块
@@ -51,17 +52,38 @@ interface Resume {
 
 ### Application (投递记录)
 ```typescript
+type ApplicationStatus = 'wishlist' | 'applied' | 'oa' | 'interview' | 'hr' | 'offer' | 'rejected';
+
 interface Application {
   id: string;
   companyName: string;
   jobTitle: string;
-  jobDescription: string; // JD原文
-  status: 'wishlist' | 'applied' | 'oa' | 'interview_1' | 'interview_2' | 'hr' | 'offer' | 'rejected';
+  jobDescription: string;
+  status: ApplicationStatus;
   appliedAt: number;
   updatedAt: number;
-  resumeId: string; // 关联的投递简历版本
+  resumeId?: string; // 关联的 Resume 版本 ID
+  salary?: string;
+  location?: string;
+  notes?: string; // 面试/复盘备注
 }
 ```
+*该模型与简历核心模块深度联动，用户可以通过选择 `resumeId` 溯源自己当初投递这个岗位时使用了哪一版简历，形成数据闭环。*
+
+### ScheduleEvent (日程与提醒)
+```typescript
+interface ScheduleEvent {
+  id: string;
+  applicationId?: string; // 关联的投递记录
+  title: string;
+  type: 'oa' | 'interview' | 'deadline' | 'other';
+  date: string;
+  time?: string;
+  location?: string;
+  notes?: string;
+}
+```
+*由全局日历引擎消费，同时可被投递看板在流转到关键节点时自动创建。*
 
 ### Interview (面试记录)
 ```typescript
