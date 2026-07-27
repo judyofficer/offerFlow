@@ -1,0 +1,18 @@
+# offerFlow 开发日志 (Development Log)
+
+## 2026-07-27
+- **项目初始化**：接收到需求，明确了“大学生求职工作台”的定位。
+- **架构确立**：梳理了核心数据模型 (Resume, Application, Interview)。选定 Vite + React + TS 作为技术栈，并决定 MVP 阶段使用 `localStorage`。
+- **UI 风格设计**：确立了“石墨灰・极简开发者风”，默认亮色但低饱和度，对标 Notion 的排版风格。
+- **模块开发完成**：
+  - 构建了 `Layout` 和基础路由。
+  - 完成了 **简历多版本管理模块** (ResumeStore + 左右分屏编辑器与预览)。
+  - 完成了 **岗位投递流程** (ApplicationStore + 状态机 Kanban 视图)。
+  - 完成了 **Dashboard 看板** (数据统计算法与图表占位)。
+- **后续优化**：计划引入更复杂的图表库 (ECharts/Recharts) 完善 Funnel 数据；并且深化面试面经的富文本编辑功能。
+
+## 开发踩坑与 Bug 修复记录
+- **问题现象**：执行 `npm run dev` 后，首页出现白屏，无法正常渲染。
+- **排查过程**：执行 `npm run build` 时发现多处 TypeScript 编译报错，错误码为 `TS1484` 和 `TS6133`。
+- **根本原因**：Vite 的 React TS 模板默认开启了 `verbatimModuleSyntax` 选项。这要求在导入纯 TypeScript 类型 (Type/Interface) 时，必须显式地使用 `import type` 语法。如果把类型和普通的变量混在同一个普通 `import` 里面（或者对类型使用普通 import），TypeScript 编译器就会抛出 `TS1484` 错误，从而导致 Vite 编译失败并阻断渲染。
+- **解决方案**：遍历了 `App.tsx` 以及 Zustand store 和各个 page 文件，将类似于 `import { ApplicationStatus } from ...` 的类型导入全部修改为 `import type { ApplicationStatus } from ...`。修复后项目编译顺利通过，白屏问题解决。
