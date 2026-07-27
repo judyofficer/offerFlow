@@ -13,14 +13,14 @@ const ResumeEditor: React.FC = () => {
   if (!activeResume) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-tertiary)' }}>
-        Please select or create a resume version.
+        请在左侧选择或新建一个简历版本。
       </div>
     );
   }
 
   return (
     <div>
-      <h2 className="text-h2" style={{ marginBottom: '24px' }}>Edit Resume: {activeResume.name}</h2>
+      <h2 className="text-h2" style={{ marginBottom: '24px' }}>正在编辑：{activeResume.name}</h2>
       <PersonalInfoEditor />
       <EducationEditor />
       <ExperienceEditor />

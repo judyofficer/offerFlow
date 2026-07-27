@@ -32,9 +32,9 @@ const ProjectEditor: React.FC = () => {
   return (
     <section style={{ marginBottom: '32px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
-        <h3 className="text-h3">Projects</h3>
+        <h3 className="text-h3">项目经历 (Projects)</h3>
         <button className={styles.buttonOutline} onClick={handleAdd} style={{ padding: '4px 8px', fontSize: '12px' }}>
-          <Plus size={14} /> Add Project
+          <Plus size={14} /> 添加项目经历
         </button>
       </div>
 
@@ -67,7 +67,7 @@ const ProjectEditor: React.FC = () => {
                       
                       <div style={{ marginLeft: '24px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                          <div style={{ fontWeight: 600, fontSize: '14px' }}>Project {index + 1}</div>
+                          <div style={{ fontWeight: 600, fontSize: '14px' }}>项目 {index + 1}</div>
                           <button onClick={() => deleteSectionItem('projects', item.id)} style={{ color: 'var(--danger)' }}>
                             <Trash2 size={14} />
                           </button>
@@ -75,34 +75,34 @@ const ProjectEditor: React.FC = () => {
 
                         <div style={{ display: 'flex', gap: '16px' }}>
                           <div className={styles.inputGroup} style={{ flex: 1 }}>
-                            <label className={styles.label}>Project Name</label>
+                            <label className={styles.label}>项目名称</label>
                             <input type="text" className={styles.input} value={item.name} onChange={e => updateSectionItem('projects', item.id, { name: e.target.value })} />
                           </div>
                           <div className={styles.inputGroup} style={{ flex: 1 }}>
-                            <label className={styles.label}>Your Role</label>
+                            <label className={styles.label}>担任角色</label>
                             <input type="text" className={styles.input} value={item.role} onChange={e => updateSectionItem('projects', item.id, { role: e.target.value })} />
                           </div>
                         </div>
                         
                         <div className={styles.inputGroup}>
-                          <label className={styles.label}>Project Link (Optional)</label>
-                          <input type="url" className={styles.input} placeholder="e.g. https://github.com/your-username/project" value={item.link || ''} onChange={e => updateSectionItem('projects', item.id, { link: e.target.value })} />
+                          <label className={styles.label}>项目链接 (可选)</label>
+                          <input type="url" className={styles.input} placeholder="如: https://github.com/..." value={item.link || ''} onChange={e => updateSectionItem('projects', item.id, { link: e.target.value })} />
                         </div>
 
                         <div style={{ display: 'flex', gap: '16px' }}>
                           <div className={styles.inputGroup} style={{ flex: 1 }}>
-                            <label className={styles.label}>Start Date</label>
-                            <input type="text" className={styles.input} placeholder="e.g. Jul 2022" value={item.startDate} onChange={e => updateSectionItem('projects', item.id, { startDate: e.target.value })} />
+                            <label className={styles.label}>开始时间</label>
+                            <input type="text" className={styles.input} placeholder="如: 2022.07" value={item.startDate} onChange={e => updateSectionItem('projects', item.id, { startDate: e.target.value })} />
                           </div>
                           <div className={styles.inputGroup} style={{ flex: 1 }}>
-                            <label className={styles.label}>End Date</label>
-                            <input type="text" className={styles.input} placeholder="e.g. Present" value={item.endDate} onChange={e => updateSectionItem('projects', item.id, { endDate: e.target.value })} />
+                            <label className={styles.label}>结束时间</label>
+                            <input type="text" className={styles.input} placeholder="如: 至今" value={item.endDate} onChange={e => updateSectionItem('projects', item.id, { endDate: e.target.value })} />
                           </div>
                         </div>
                         
                         <div className={styles.inputGroup}>
-                          <label className={styles.label}>Description</label>
-                          <textarea className={`${styles.input} ${styles.textarea}`} style={{ minHeight: '80px' }} value={item.description} onChange={e => updateSectionItem('projects', item.id, { description: e.target.value })} placeholder="Describe the project and your contributions..." />
+                          <label className={styles.label}>项目描述与贡献</label>
+                          <textarea className={`${styles.input} ${styles.textarea}`} style={{ minHeight: '80px' }} value={item.description} onChange={e => updateSectionItem('projects', item.id, { description: e.target.value })} placeholder="描述项目背景以及您主要负责了哪些工作..." />
                         </div>
                       </div>
                     </div>

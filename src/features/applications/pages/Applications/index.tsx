@@ -35,15 +35,15 @@ const Applications: React.FC = () => {
 
   return (
     <div className={styles.container}>
-      <div className={styles.header}>
+      <header className={styles.header}>
         <div>
-          <h1 className="text-h1">Job Applications</h1>
-          <p className="text-body" style={{ color: 'var(--text-secondary)' }}>Track your interview pipeline</p>
+          <h1 className="text-h1">投递记录看板</h1>
+          <p style={{ color: 'var(--text-secondary)', marginTop: '4px' }}>追踪所有的岗位投递状态与进展。</p>
         </div>
         <button className={styles.button} onClick={handleAddNew}>
-          <Plus size={16} /> Add Job
+          <Plus size={16} /> 添加岗位
         </button>
-      </div>
+      </header>
 
       <div className={styles.kanbanBoard}>
         {COLUMNS.map(status => {

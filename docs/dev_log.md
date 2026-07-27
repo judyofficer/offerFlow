@@ -23,4 +23,18 @@
   - **Zustand 状态增强**：引入了对应各个区块数组的 `addSectionItem`, `updateSectionItem`, `deleteSectionItem`, `reorderSectionItems` 状态更新方法。
   - **拖拽排序 (Drag & Drop)**：引入 `@hello-pangea/dnd`，实现了教育、工作、项目、技能各个区块的丝滑拖拽重排功能。
   - **PDF 导出**：引入 `react-to-print`，允许用户一键将右侧的 A4 预览界面导出为标准 PDF 文件。
+  - **AI 智能简历解析**：
+    - 新增了 `Settings` 模块，用于让用户安全地在本地配置 LLM API Key (支持 OpenAI, DeepSeek, Gemini 等)。
+    - 使用 `pdfjs-dist` 实现纯前端 PDF 文本提取。
+    - 在 `resumeParser.ts` 内组装提示词并调用大语言模型，返回精准的 JSON 结构并直接通过 `importResume` 注入 Zustand，实现“一键传简历 -> 秒级可视化重排”的最佳体验。
 - **当前状态**：第一步“简历准备模块”的深度核心诉求已全面实现，系统可用性大幅提升。
+
+## 2026-07-27 (Bug 修复与 UI 微调)
+- **Bug 修复 (白屏问题回归)**：
+  - **问题现象**：在新增 `Settings` 模块和 AI 解析功能后，页面再次出现白屏，控制台报 Vite HMR 断开。
+  - **排查过程**：执行 `npm run build` 发现 4 处 TypeScript 编译错误（`TS1484` 和 `TS2353` 等）。主要因为 `useSettingsStore` 中普通导入了 `LLMProvider` 类型，违反了 `verbatimModuleSyntax` 规则；同时之前的中文翻译把 `ApplicationStatus` 在 `STATUS_CONFIG` 中的 key 误改了导致类型不匹配。
+  - **解决方案**：统一修改为 `import type` 语法，并将 `STATUS_CONFIG` 的键值回滚为匹配联合类型（`oa`, `interview`, `hr`），只保留 label 为中文。再次构建验证无误，成功修复白屏。
+- **UI 微调**：
+  - **需求**：简历预览界面的字体需要更符合主流。
+  - **修改**：将 `ResumePreview` 的 `fontFamily` 从老旧的 `serif` 切换为现代主流的无衬线字体栈：`"Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif`。
+  - **理由**：无衬线字体在互联网、科技行业的简历中显得更为整洁、干练和专业。

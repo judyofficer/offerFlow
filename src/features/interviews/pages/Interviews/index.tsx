@@ -5,8 +5,8 @@ const Interviews: React.FC = () => {
     <div style={{ padding: '24px', maxWidth: '800px', margin: '0 auto' }}>
       <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 className="text-h1">Interviews & Notes</h1>
-          <p className="text-body" style={{ color: 'var(--text-secondary)' }}>Record your interview questions and personal reflections.</p>
+          <h1 className="text-h1">面试记录与面经</h1>
+          <p className="text-body" style={{ color: 'var(--text-secondary)' }}>记录面试中的高频问题与个人复盘总结。</p>
         </div>
         <button className="button" style={{ 
           backgroundColor: 'var(--accent-color)', 
@@ -14,7 +14,7 @@ const Interviews: React.FC = () => {
           padding: '8px 16px', 
           borderRadius: 'var(--radius-md)' 
         }}>
-          Add Note
+          添加面经
         </button>
       </div>
 
@@ -26,9 +26,9 @@ const Interviews: React.FC = () => {
         textAlign: 'center',
         color: 'var(--text-tertiary)'
       }}>
-        <p>No interview records yet.</p>
+        <p>暂无面经记录。</p>
         <p style={{ fontSize: '12px', marginTop: '8px' }}>
-          When you move an application to "Interviewing" status, you can create notes here.
+          当您在投递看板将某个岗位移至“面试中”状态时，可以在此编写详细的面经。
         </p>
       </div>
     </div>

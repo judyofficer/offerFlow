@@ -11,10 +11,10 @@ import {
 import styles from './Layout.module.css';
 
 const navItems = [
-  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { path: '/resumes', label: 'Resumes', icon: FileText },
-  { path: '/applications', label: 'Applications', icon: Briefcase },
-  { path: '/interviews', label: 'Interviews', icon: MessagesSquare },
+  { path: '/dashboard', label: '数据看板', icon: LayoutDashboard },
+  { path: '/resumes', label: '简历库', icon: FileText },
+  { path: '/applications', label: '投递追踪', icon: Briefcase },
+  { path: '/interviews', label: '面试记录', icon: MessagesSquare },
 ];
 
 const Layout: React.FC = () => {
@@ -52,7 +52,7 @@ const Layout: React.FC = () => {
             }
           >
             <Settings size={18} />
-            Settings
+            系统设置
           </NavLink>
         </nav>
       </aside>

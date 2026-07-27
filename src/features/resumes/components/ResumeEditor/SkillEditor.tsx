@@ -33,9 +33,9 @@ const SkillEditor: React.FC = () => {
   return (
     <section style={{ marginBottom: '32px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
-        <h3 className="text-h3">Skills</h3>
+        <h3 className="text-h3">专业技能 (Skills)</h3>
         <button className={styles.buttonOutline} onClick={handleAdd} style={{ padding: '4px 8px', fontSize: '12px' }}>
-          <Plus size={14} /> Add Skill Group
+          <Plus size={14} /> 添加技能分类
         </button>
       </div>
 
@@ -68,23 +68,23 @@ const SkillEditor: React.FC = () => {
                       
                       <div style={{ marginLeft: '24px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                          <div style={{ fontWeight: 600, fontSize: '14px' }}>Skill Group {index + 1}</div>
+                          <div style={{ fontWeight: 600, fontSize: '14px' }}>分类 {index + 1}</div>
                           <button onClick={() => deleteSectionItem('skills', item.id)} style={{ color: 'var(--danger)' }}>
                             <Trash2 size={14} />
                           </button>
                         </div>
 
                         <div className={styles.inputGroup}>
-                          <label className={styles.label}>Category Name (e.g. Frontend, Languages)</label>
+                          <label className={styles.label}>分类名称 (如：前端开发、掌握语言)</label>
                           <input type="text" className={styles.input} value={item.category} onChange={e => updateSectionItem('skills', item.id, { category: e.target.value })} />
                         </div>
                         
                         <div className={styles.inputGroup}>
-                          <label className={styles.label}>Skills (Comma separated)</label>
+                          <label className={styles.label}>具体技能 (使用逗号分隔)</label>
                           <input 
                             type="text" 
                             className={styles.input} 
-                            placeholder="e.g. React, TypeScript, CSS" 
+                            placeholder="如: React, TypeScript, Vue3" 
                             value={item.items.join(', ')} 
                             onChange={e => handleItemsChange(item.id, e.target.value)} 
                           />

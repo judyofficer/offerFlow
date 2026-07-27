@@ -18,13 +18,17 @@ offerFlow 并非一个简单的“在线写简历”的页面，而是面向校�
 src/
 ├── core/             # 全局基座：Layout 组件、全局样式、通用钩子
 ├── features/         # 独立业务模块
-│   ├── resumes/      # 简历核心模块（内聚 store, components, types, pages）
+│   ├── resumes/      # 简历核心模块
+│   │   ├── services/ # 包含简历大模型解析引擎 (resumeParser.ts)
+│   │   └── ...       # store, components, types, pages
 │   ├── applications/ # 岗位追踪与投递模块
 │   ├── dashboard/    # 数据看板模块
+│   ├── settings/     # 大模型 API 等用户偏好配置模块
 │   └── interviews/   # 面试面经模块
 ```
 
-这种架构下，任何一个模块的深度开发（例如引入 Drag & Drop 拖拽，或者 PDF 导出）都不会干扰其他模块的上下文。
+这种架构下，任何一个模块的深度开发（例如引入 AI 解析和 PDF 导出）都不会干扰其他模块的上下文。
+特别是**智能解析引擎**，完全封装在 `features/resumes/services` 层，通过 `pdfjs-dist` 读取并经过大模型（OpenAI/DeepSeek 等）抽取为高精度的结构化 JSON。
 
 ## 4. 核心数据模型 (MVP 阶段)
 

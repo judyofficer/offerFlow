@@ -32,9 +32,9 @@ const EducationEditor: React.FC = () => {
   return (
     <section style={{ marginBottom: '32px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
-        <h3 className="text-h3">Education</h3>
+        <h3 className="text-h3">教育经历 (Education)</h3>
         <button className={styles.buttonOutline} onClick={handleAdd} style={{ padding: '4px 8px', fontSize: '12px' }}>
-          <Plus size={14} /> Add Education
+          <Plus size={14} /> 添加教育经历
         </button>
       </div>
 
@@ -67,36 +67,36 @@ const EducationEditor: React.FC = () => {
                       
                       <div style={{ marginLeft: '24px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                          <div style={{ fontWeight: 600, fontSize: '14px' }}>Item {index + 1}</div>
+                          <div style={{ fontWeight: 600, fontSize: '14px' }}>经历 {index + 1}</div>
                           <button onClick={() => deleteSectionItem('education', item.id)} style={{ color: 'var(--danger)' }}>
                             <Trash2 size={14} />
                           </button>
                         </div>
 
                         <div className={styles.inputGroup}>
-                          <label className={styles.label}>School</label>
+                          <label className={styles.label}>学校</label>
                           <input type="text" className={styles.input} value={item.school} onChange={e => updateSectionItem('education', item.id, { school: e.target.value })} />
                         </div>
                         
                         <div style={{ display: 'flex', gap: '16px' }}>
                           <div className={styles.inputGroup} style={{ flex: 1 }}>
-                            <label className={styles.label}>Degree</label>
+                            <label className={styles.label}>学历 / 学位</label>
                             <input type="text" className={styles.input} value={item.degree} onChange={e => updateSectionItem('education', item.id, { degree: e.target.value })} />
                           </div>
                           <div className={styles.inputGroup} style={{ flex: 1 }}>
-                            <label className={styles.label}>Major</label>
+                            <label className={styles.label}>专业</label>
                             <input type="text" className={styles.input} value={item.major} onChange={e => updateSectionItem('education', item.id, { major: e.target.value })} />
                           </div>
                         </div>
 
                         <div style={{ display: 'flex', gap: '16px' }}>
                           <div className={styles.inputGroup} style={{ flex: 1 }}>
-                            <label className={styles.label}>Start Date</label>
-                            <input type="text" className={styles.input} placeholder="e.g. Sep 2018" value={item.startDate} onChange={e => updateSectionItem('education', item.id, { startDate: e.target.value })} />
+                            <label className={styles.label}>开始时间</label>
+                            <input type="text" className={styles.input} placeholder="如: 2018.09" value={item.startDate} onChange={e => updateSectionItem('education', item.id, { startDate: e.target.value })} />
                           </div>
                           <div className={styles.inputGroup} style={{ flex: 1 }}>
-                            <label className={styles.label}>End Date</label>
-                            <input type="text" className={styles.input} placeholder="e.g. Jun 2022" value={item.endDate} onChange={e => updateSectionItem('education', item.id, { endDate: e.target.value })} />
+                            <label className={styles.label}>结束时间</label>
+                            <input type="text" className={styles.input} placeholder="如: 2022.06" value={item.endDate} onChange={e => updateSectionItem('education', item.id, { endDate: e.target.value })} />
                           </div>
                         </div>
                       </div>

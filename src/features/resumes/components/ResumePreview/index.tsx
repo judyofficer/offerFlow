@@ -19,12 +19,12 @@ const ResumePreview: React.FC = () => {
       boxShadow: 'var(--shadow-md)',
       padding: '48px',
       color: '#000',
-      fontFamily: 'serif',
+      fontFamily: '"Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "微软雅黑", Arial, sans-serif',
       lineHeight: '1.5'
     }}>
       <header style={{ textAlign: 'center', marginBottom: '24px', borderBottom: '2px solid #000', paddingBottom: '16px' }}>
         <h1 style={{ fontSize: '32px', margin: '0 0 8px 0', textTransform: 'uppercase' }}>
-          {personalInfo.name || 'YOUR NAME'}
+          {personalInfo.name || '您的名字'}
         </h1>
         <div style={{ fontSize: '14px', color: '#444', display: 'flex', justifyContent: 'center', gap: '16px' }}>
           {personalInfo.email && <span>{personalInfo.email}</span>}
@@ -34,14 +34,14 @@ const ResumePreview: React.FC = () => {
 
       {personalInfo.summary && (
         <section style={{ marginBottom: '24px' }}>
-          <h2 style={{ fontSize: '18px', textTransform: 'uppercase', marginBottom: '8px', borderBottom: '1px solid #ccc' }}>Summary</h2>
+          <h2 style={{ fontSize: '18px', textTransform: 'uppercase', marginBottom: '8px', borderBottom: '1px solid #ccc' }}>个人总结</h2>
           <p style={{ fontSize: '14px' }}>{personalInfo.summary}</p>
         </section>
       )}
 
       {education && education.length > 0 && (
         <section style={{ marginBottom: '24px' }}>
-          <h2 style={{ fontSize: '18px', textTransform: 'uppercase', marginBottom: '12px', borderBottom: '1px solid #ccc' }}>Education</h2>
+          <h2 style={{ fontSize: '18px', textTransform: 'uppercase', marginBottom: '12px', borderBottom: '1px solid #ccc' }}>教育经历</h2>
           {education.map(edu => (
             <div key={edu.id} style={{ marginBottom: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
@@ -49,7 +49,7 @@ const ResumePreview: React.FC = () => {
                 <span style={{ fontSize: '14px' }}>{edu.startDate} {edu.startDate && edu.endDate ? '-' : ''} {edu.endDate}</span>
               </div>
               <div style={{ fontStyle: 'italic', fontSize: '14px' }}>
-                {edu.degree} {edu.degree && edu.major ? 'in' : ''} {edu.major}
+                {edu.degree} {edu.degree && edu.major ? ' | ' : ''} {edu.major}
               </div>
             </div>
           ))}
@@ -58,7 +58,7 @@ const ResumePreview: React.FC = () => {
 
       {experience && experience.length > 0 && (
         <section style={{ marginBottom: '24px' }}>
-          <h2 style={{ fontSize: '18px', textTransform: 'uppercase', marginBottom: '12px', borderBottom: '1px solid #ccc' }}>Experience</h2>
+          <h2 style={{ fontSize: '18px', textTransform: 'uppercase', marginBottom: '12px', borderBottom: '1px solid #ccc' }}>工作经历</h2>
           {experience.map(exp => (
             <div key={exp.id} style={{ marginBottom: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
@@ -76,7 +76,7 @@ const ResumePreview: React.FC = () => {
 
       {projects && projects.length > 0 && (
         <section style={{ marginBottom: '24px' }}>
-          <h2 style={{ fontSize: '18px', textTransform: 'uppercase', marginBottom: '12px', borderBottom: '1px solid #ccc' }}>Projects</h2>
+          <h2 style={{ fontSize: '18px', textTransform: 'uppercase', marginBottom: '12px', borderBottom: '1px solid #ccc' }}>项目经历</h2>
           {projects.map(proj => (
             <div key={proj.id} style={{ marginBottom: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
@@ -96,7 +96,7 @@ const ResumePreview: React.FC = () => {
 
       {skills && skills.length > 0 && (
         <section style={{ marginBottom: '24px' }}>
-          <h2 style={{ fontSize: '18px', textTransform: 'uppercase', marginBottom: '12px', borderBottom: '1px solid #ccc' }}>Skills</h2>
+          <h2 style={{ fontSize: '18px', textTransform: 'uppercase', marginBottom: '12px', borderBottom: '1px solid #ccc' }}>专业技能</h2>
           {skills.map(skill => (
             <div key={skill.id} style={{ fontSize: '14px', marginBottom: '4px' }}>
               <span style={{ fontWeight: 'bold' }}>{skill.category}: </span>

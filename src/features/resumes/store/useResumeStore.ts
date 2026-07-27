@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Resume, ResumeContent, Education, Experience, Project, Skill } from '../types/resume';
+import type { Resume, ResumeContent } from '../types/resume';
 
 const initialResumeContent: ResumeContent = {
   personalInfo: { name: '', email: '', phone: '', summary: '' },
@@ -20,6 +20,7 @@ interface ResumeState {
   setActiveResume: (id: string) => void;
   deleteResume: (id: string) => void;
   duplicateResume: (id: string, newName: string) => void;
+  importResume: (name: string, content: ResumeContent) => void;
   
   // Section Array Manipulations for the Active Resume
   addSectionItem: (section: SectionKey, item: any) => void;
@@ -84,6 +85,20 @@ export const useResumeStore = create<ResumeState>()(
         };
         return {
           resumes: [...state.resumes, duplicatedResume],
+        };
+      }),
+
+      importResume: (name, content) => set((state) => {
+        const newResume: Resume = {
+          id: generateId(),
+          name,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          content,
+        };
+        return {
+          resumes: [...state.resumes, newResume],
+          activeResumeId: newResume.id,
         };
       }),
 

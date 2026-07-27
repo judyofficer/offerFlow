@@ -15,11 +15,11 @@ export interface Application {
 }
 
 export const STATUS_CONFIG: Record<ApplicationStatus, { label: string; color: string }> = {
-  wishlist: { label: 'Wishlist', color: 'var(--text-secondary)' },
-  applied: { label: 'Applied', color: 'var(--info)' },
-  oa: { label: 'Online Assessment', color: 'var(--warning)' },
-  interview: { label: 'Interviewing', color: '#8b5cf6' }, // purple
-  hr: { label: 'HR Interview', color: '#ec4899' }, // pink
-  offer: { label: 'Offer', color: 'var(--success)' },
-  rejected: { label: 'Rejected', color: 'var(--danger)' },
+  wishlist: { label: '意向岗', color: 'var(--text-secondary)' },
+  applied: { label: '已投递', color: 'var(--primary)' },
+  oa: { label: '笔试/机试', color: '#8b5cf6' },
+  interview: { label: '面试中', color: '#f59e0b' },
+  hr: { label: 'HR 面', color: '#ec4899' },
+  offer: { label: '已发 Offer', color: '#10b981' },
+  rejected: { label: '已淘汰', color: 'var(--danger)' },
 };

@@ -6,26 +6,19 @@ import type { ApplicationStatus } from '../../../applications/types/application'
 const Dashboard: React.FC = () => {
   const { applications } = useApplicationStore();
   
-  const total = applications.length;
-  
   const getCount = (status: ApplicationStatus) => applications.filter(a => a.status === status).length;
 
   return (
-    <div style={{ padding: '32px', maxWidth: '1000px', margin: '0 auto' }}>
-      <h1 className="text-h1" style={{ marginBottom: '8px' }}>Overview</h1>
-      <p className="text-body" style={{ color: 'var(--text-secondary)', marginBottom: '32px' }}>Your job search at a glance.</p>
-
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-        gap: '24px',
-        marginBottom: '48px'
-      }}>
-        <div style={{ backgroundColor: 'var(--bg-secondary)', padding: '24px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
-          <div style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '8px' }}>Total Applications</div>
-          <div style={{ fontSize: '32px', fontWeight: 'bold' }}>{total}</div>
+    <div style={{ padding: '32px', maxWidth: '1200px', margin: '0 auto', color: 'var(--text-primary)' }}>
+      <h1 className="text-h1" style={{ marginBottom: '8px' }}>数据总览</h1>
+      <p style={{ color: 'var(--text-secondary)', marginBottom: '32px' }}>全局求职数据追踪。</p>
+      
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px' }}>
+        <div style={{ backgroundColor: 'var(--bg-primary)', padding: '24px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)' }}>
+          <div style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '8px' }}>总投递数</div>
+          <div style={{ fontSize: '32px', fontWeight: 700 }}>{applications.length}</div>
         </div>
-
+        
         {Object.entries(STATUS_CONFIG).map(([status, config]) => {
           if (status === 'wishlist') return null;
           return (
@@ -41,9 +34,9 @@ const Dashboard: React.FC = () => {
       </div>
       
       <div style={{ backgroundColor: 'var(--bg-secondary)', padding: '24px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
-        <h3 className="text-h3" style={{ marginBottom: '16px' }}>Funnel (Coming soon)</h3>
+        <h3 className="text-h3" style={{ marginBottom: '16px' }}>漏斗分析 (开发中)</h3>
         <div style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)', border: '1px dashed var(--border-color)', borderRadius: 'var(--radius-sm)' }}>
-          Data visualization charts will be implemented here.
+          图表可视化将在这里渲染...
         </div>
       </div>
     </div>
