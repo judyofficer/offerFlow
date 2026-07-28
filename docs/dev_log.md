@@ -60,3 +60,7 @@
   - 在投递看板 (Applications) 中，当用户把某张卡片拖拽进入“笔试、面试、HR面、Offer”等实质性推进列时，系统会自动触发 Confirm。
   - 用户确认后，通过 React Router 的 URL 参数 (`?createFor=appId`) 无缝跳转并唤起 Schedule 模块的“新建日程抽屉”。
   - 日程抽屉会自动填入相应的公司名和岗位名，极大降低了用户的手动输入成本。
+
+## 2026-07-28 (模块 D 数据看板 Dashboard)
+- **ECharts 数据可视化**：抛弃了 Recharts，引入强大的 `echarts` 和 `echarts-for-react` 开发了 `FunnelChart` 漏斗图组件，不仅能直观展示（投递 -> 面试 -> 录用）的转化漏斗，还自带完美的阴影渲染和百分比 Tooltip。
+- **指挥中心布局**：采用 Vercel / Supabase 后台的高级质感网格布局。顶部 4 张核心指标卡片（总投递、面试中、已拿 Offer、整体回复率），下半部分左侧为漏斗图，右侧为“近期日程 (Upcoming Schedule)”，实现了模块 B (投递) 与模块 C (日程) 数据的高度聚合。
