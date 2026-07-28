@@ -18,6 +18,10 @@
   --accent-hover: #27272a;     /* Darker graphite (zinc-800) */
   --accent-light: #f4f4f5;     /* Light graphite background */
   
+  --primary: #1e1e24;          /* Main primary CTA color */
+  --primary-hover: #000000;
+  --primary-foreground: #ffffff;
+  
   --success: #10b981;
   --warning: #f59e0b;
   --danger: #ef4444;
@@ -51,6 +55,10 @@
     --accent-color: #f4f4f5;   
     --accent-hover: #ffffff;
     --accent-light: #27272a;
+    
+    --primary: #e4e4e7;
+    --primary-hover: #ffffff;
+    --primary-foreground: #121212;
   }
 }
 

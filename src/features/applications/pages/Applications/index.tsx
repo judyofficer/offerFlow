@@ -10,7 +10,7 @@ import { ApplicationCard } from '../../components/ApplicationCard';
 import { ApplicationDetailPanel } from '../../components/ApplicationDetailPanel';
 import styles from './Applications.module.css';
 
-const COLUMNS: ApplicationStatus[] = ['wishlist', 'applied', 'oa', 'interview', 'hr', 'offer', 'rejected'];
+const COLUMNS: ApplicationStatus[] = ['applied', 'oa', 'interview', 'hr', 'offer', 'rejected'];
 
 const Applications: React.FC = () => {
   const { applications, addApplication, updateApplicationStatus } = useApplicationStore();
@@ -26,7 +26,7 @@ const Applications: React.FC = () => {
       companyName: company,
       jobTitle: title,
       jobDescription: '',
-      status: 'wishlist'
+      status: 'applied'
     });
   };
 
@@ -42,7 +42,6 @@ const Applications: React.FC = () => {
     updateApplicationStatus(draggableId, newStatus);
 
     if (newStatus !== source.droppableId && ['oa', 'interview', 'hr', 'offer'].includes(newStatus)) {
-      // Small timeout allows the UI to render the card in the new column before alert blocks the main thread
       setTimeout(() => {
         if (confirm(`已将状态推进至 [${STATUS_CONFIG[newStatus].label}]，是否需要在日历中添加日程提醒？`)) {
           navigate(`/schedule?createFor=${draggableId}`);

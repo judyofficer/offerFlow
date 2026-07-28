@@ -221,7 +221,7 @@ export const EventDetailPanel: React.FC<Props> = ({ eventId, initialDate, initia
           </button>
           <button 
             onClick={handleSave}
-            style={{ padding: '8px 24px', borderRadius: '4px', border: 'none', backgroundColor: 'var(--primary)', color: '#fff', cursor: 'pointer', fontWeight: 500 }}
+            style={{ padding: '8px 24px', borderRadius: '4px', border: 'none', backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)', cursor: 'pointer', fontWeight: 500 }}
           >
             保存日程
           </button>

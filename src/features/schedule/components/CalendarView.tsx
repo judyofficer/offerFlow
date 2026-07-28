@@ -158,7 +158,7 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
                 justifyContent: 'center', 
                 borderRadius: '50%',
                 backgroundColor: isToday ? 'var(--primary)' : 'transparent',
-                color: isToday ? '#fff' : 'var(--text-primary)',
+                color: isToday ? 'var(--primary-foreground)' : 'var(--text-primary)',
                 fontWeight: isToday ? 600 : 400,
                 fontSize: '14px',
                 marginBottom: '4px'

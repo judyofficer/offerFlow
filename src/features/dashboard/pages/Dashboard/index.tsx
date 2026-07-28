@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useApplicationStore } from '../../../applications/store/useApplicationStore';
-import { STATUS_CONFIG } from '../../../applications/types/application';
-import { FunnelChart } from '../../components/FunnelChart';
+import { DropOffAnalysis } from '../../components/DropOffAnalysis';
+import { StalledApplications } from '../../components/StalledApplications';
 import { UpcomingSchedule } from '../../components/UpcomingSchedule';
 import { Briefcase, CheckCircle, Mail, Target } from 'lucide-react';
 
@@ -18,18 +18,6 @@ const Dashboard: React.FC = () => {
     const responseRate = totalApplied > 0 ? Math.round((responses / totalApplied) * 100) : 0;
 
     return { totalApplied, interviewing, offers, responseRate };
-  }, [applications]);
-
-  const funnelData = useMemo(() => {
-    const applied = applications.filter(a => a.status !== 'wishlist').length;
-    const interview = applications.filter(a => ['oa', 'interview', 'hr', 'offer'].includes(a.status)).length;
-    const offer = applications.filter(a => a.status === 'offer').length;
-
-    return [
-      { name: '投递 (Applied)', value: applied, fill: STATUS_CONFIG['applied'].color },
-      { name: '笔/面试 (OA/Interview)', value: interview, fill: STATUS_CONFIG['interview'].color },
-      { name: '录用 (Offer)', value: offer, fill: STATUS_CONFIG['offer'].color },
-    ];
   }, [applications]);
 
   return (
@@ -59,22 +47,30 @@ const Dashboard: React.FC = () => {
         ))}
       </div>
       
-      {/* Middle Row: Charts & Sidebar */}
-      <div style={{ display: 'flex', gap: '24px', flex: 1, minHeight: 0 }}>
-        {/* Left: Charts (Funnel) */}
-        <div style={{ flex: 7, display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          <div style={{ flex: 1, backgroundColor: 'var(--bg-primary)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)', padding: '24px', display: 'flex', flexDirection: 'column' }}>
-            <h3 className="text-h3" style={{ marginBottom: '24px' }}>投递转化漏斗</h3>
-            <div style={{ flex: 1, minHeight: 0 }}>
-              <FunnelChart data={funnelData} />
-            </div>
+      {/* Middle Row: 3 Columns for actionable data */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', flex: 1, minHeight: 0 }}>
+        
+        {/* Left: Drop-off Analysis */}
+        <div style={{ backgroundColor: 'var(--bg-primary)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)', padding: '24px', display: 'flex', flexDirection: 'column' }}>
+          <h3 className="text-h3" style={{ marginBottom: '24px' }}>环节存活率诊断</h3>
+          <div style={{ flex: 1, minHeight: 0 }}>
+            <DropOffAnalysis />
+          </div>
+        </div>
+
+        {/* Middle: Stalled Radar */}
+        <div style={{ backgroundColor: 'var(--bg-primary)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)', padding: '24px', display: 'flex', flexDirection: 'column' }}>
+          <h3 className="text-h3" style={{ marginBottom: '24px' }}>停滞/养鱼预警</h3>
+          <div style={{ flex: 1, minHeight: 0 }}>
+            <StalledApplications />
           </div>
         </div>
 
         {/* Right: Upcoming Schedule */}
-        <div style={{ flex: 3 }}>
+        <div style={{ backgroundColor: 'var(--bg-primary)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           <UpcomingSchedule />
         </div>
+        
       </div>
     </div>
   );

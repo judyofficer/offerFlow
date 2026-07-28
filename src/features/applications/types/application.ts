@@ -5,12 +5,14 @@ export interface Application {
   companyName: string;
   jobTitle: string;
   jobDescription: string;
+  url?: string;
+  salary?: string;
+  location?: string;
+  source?: string;
   status: ApplicationStatus;
   appliedAt: number;
   updatedAt: number;
   resumeId?: string; // Optional reference to the resume used
-  salary?: string;
-  location?: string;
   notes?: string;
 }
 

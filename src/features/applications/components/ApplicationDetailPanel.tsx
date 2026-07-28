@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Trash2 } from 'lucide-react';
+import { X, Trash2, Link } from 'lucide-react';
 import { useApplicationStore } from '../store/useApplicationStore';
 import { useResumeStore } from '../../resumes/store/useResumeStore';
 import { STATUS_CONFIG } from '../types/application';
@@ -59,9 +59,25 @@ export const ApplicationDetailPanel: React.FC<Props> = ({ appId, onClose }) => {
           borderLeft: '1px solid var(--border-color)'
         }}
       >
-        <header style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h2 className="text-h2">投递详情</h2>
-          <div style={{ display: 'flex', gap: '12px' }}>
+        <header style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <h2 className="text-h2" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {application.companyName}
+              {application.url && (
+                <a 
+                  href={application.url.startsWith('http') ? application.url : `https://${application.url}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  style={{ fontSize: '12px', padding: '2px 8px', borderRadius: '4px', backgroundColor: 'var(--bg-tertiary)', color: 'var(--primary)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 500 }}
+                  title="打开原招聘链接"
+                >
+                  <Link size={12} /> 原链接
+                </a>
+              )}
+            </h2>
+            <p className="text-body" style={{ color: 'var(--text-secondary)' }}>{application.jobTitle}</p>
+          </div>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
             <button 
               onClick={handleDelete}
               style={{ padding: '6px', color: 'var(--danger)', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '4px' }}
@@ -79,6 +95,20 @@ export const ApplicationDetailPanel: React.FC<Props> = ({ appId, onClose }) => {
         </header>
 
         <div style={{ padding: '24px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          
+          <div style={{ display: 'flex', gap: '16px' }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>招聘链接 (URL)</label>
+              <input 
+                name="url"
+                value={application.url || ''}
+                onChange={handleChange}
+                placeholder="https://..."
+                style={{ padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+              />
+            </div>
+          </div>
+
           <div style={{ display: 'flex', gap: '16px' }}>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>公司名称</label>
@@ -148,6 +178,16 @@ export const ApplicationDetailPanel: React.FC<Props> = ({ appId, onClose }) => {
                 value={application.salary || ''}
                 onChange={handleChange}
                 placeholder="例如: 20k-30k * 15"
+                style={{ padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+              />
+            </div>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>信息来源</label>
+              <input 
+                name="source"
+                value={application.source || ''}
+                onChange={handleChange}
+                placeholder="Boss, 牛客, 官网等"
                 style={{ padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
               />
             </div>
