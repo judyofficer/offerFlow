@@ -1,7 +1,7 @@
 # ADR 002: MVP 阶段本地存储的演进策略 (localStorage -> IndexedDB)
 
-**时间**: 2026-07-27
-**状态**: 已接受
+**时间**: 2026-07-27 (更新于 2026-07-29)
+**状态**: 已接受 (并在部分模块实施阶段二)
 
 ## 背景 (Context)
 offerFlow 作为一个“大学生求职工作台”，用户会产生大量数据：
@@ -13,7 +13,7 @@ offerFlow 作为一个“大学生求职工作台”，用户会产生大量数�
 
 ## 决策 (Decision)
 - **MVP (第一阶段)**：使用 Zustand `persist` 结合 `localStorage` 作为单一真实数据源 (SSOT)。
-- **后续迭代 (第二阶段)**：将核心大型业务数据（特别是带有 PDF/图片/庞大面经附件的记录）迁移至 `IndexedDB`（考虑使用 localForage 或 Dexie.js）。
+- **后续迭代 (第二阶段 - 当前进度)**：将核心大型业务数据（特别是带有 PDF/图片/庞大面经附件的记录）迁移至 `IndexedDB`。目前已引入 `idb-keyval` 用于存储用户解析简历时的原始 PDF 文件，以规避 localStorage 5MB 的硬性限制。
 
 ## 理由 (Rationale - 面试高分对答点)
 1. **为什么 MVP 用 localStorage？**

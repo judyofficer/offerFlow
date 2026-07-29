@@ -165,7 +165,15 @@ export const parseTextWithLLM = async (text: string): Promise<ResumeContent> => 
       jsonString = jsonString.substring(0, jsonString.length - 3);
     }
 
-    return JSON.parse(jsonString.trim()) as ResumeContent;
+    const parsed = JSON.parse(jsonString.trim()) as ResumeContent;
+    const generateId = () => Math.random().toString(36).substring(2, 9);
+    
+    if (Array.isArray(parsed.education)) parsed.education.forEach(i => i.id = generateId());
+    if (Array.isArray(parsed.experience)) parsed.experience.forEach(i => i.id = generateId());
+    if (Array.isArray(parsed.projects)) parsed.projects.forEach(i => i.id = generateId());
+    if (Array.isArray(parsed.skills)) parsed.skills.forEach(i => i.id = generateId());
+    
+    return parsed;
   } catch (error: any) {
     console.error("LLM Parse error:", error);
     throw new Error(`简历解析失败：${error.message}`);

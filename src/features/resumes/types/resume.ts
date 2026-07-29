@@ -57,4 +57,6 @@ export interface Resume {
   createdAt: number;
   updatedAt: number;
   content: ResumeContent;
+  sourceFileId?: string;
+  sourceFileName?: string;
 }
