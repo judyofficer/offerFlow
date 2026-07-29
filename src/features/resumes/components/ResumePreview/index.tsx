@@ -1,4 +1,5 @@
 import React from 'react';
+import { Mail, Phone, Link, Globe } from 'lucide-react';
 import { useResumeStore } from '../../store/useResumeStore';
 
 const ResumePreview: React.FC = () => {
@@ -26,9 +27,11 @@ const ResumePreview: React.FC = () => {
         <h1 style={{ fontSize: '32px', margin: '0 0 8px 0', textTransform: 'uppercase' }}>
           {personalInfo.name || '您的名字'}
         </h1>
-        <div style={{ fontSize: '14px', color: '#444', display: 'flex', justifyContent: 'center', gap: '16px' }}>
-          {personalInfo.email && <span>{personalInfo.email}</span>}
-          {personalInfo.phone && <span>{personalInfo.phone}</span>}
+        <div style={{ fontSize: '14px', color: '#444', display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap' }}>
+          {personalInfo.email && <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Mail size={14} /> {personalInfo.email}</span>}
+          {personalInfo.phone && <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Phone size={14} /> {personalInfo.phone}</span>}
+          {personalInfo.github && <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Link size={14} /> {personalInfo.github.replace('https://', '')}</span>}
+          {personalInfo.website && <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Globe size={14} /> {personalInfo.website.replace('https://', '')}</span>}
         </div>
       </header>
 

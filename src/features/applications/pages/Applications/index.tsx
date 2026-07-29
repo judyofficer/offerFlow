@@ -5,6 +5,7 @@ import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
 import { useApplicationStore } from '../../store/useApplicationStore';
 import { useScheduleStore } from '../../../schedule/store/useScheduleStore';
+import type { EventType } from '../../../schedule/types/schedule';
 import { STATUS_CONFIG } from '../../types/application';
 import type { ApplicationStatus } from '../../types/application';
 import { ApplicationCard } from '../../components/ApplicationCard';
@@ -28,9 +29,15 @@ const Applications: React.FC = () => {
     appId: string;
     status: ApplicationStatus;
   } | null>(null);
-  const [scheduleFormData, setScheduleFormData] = useState({
+  const [scheduleFormData, setScheduleFormData] = useState<{
+    title: string;
+    type: EventType;
+    date: string;
+    time: string;
+    notes: string;
+  }>({
     title: '',
-    type: 'interview' as const,
+    type: 'interview',
     date: new Date().toISOString().split('T')[0],
     time: '14:00',
     notes: ''

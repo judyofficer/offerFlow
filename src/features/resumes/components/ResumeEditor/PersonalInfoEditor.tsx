@@ -73,6 +73,29 @@ const PersonalInfoEditor: React.FC = () => {
               />
             </div>
           </div>
+
+          <div style={{ display: 'flex', gap: '16px' }}>
+            <div className={styles.inputGroup} style={{ flex: 1 }}>
+              <label className={styles.label}>GitHub主页</label>
+              <input 
+                type="text" 
+                className={styles.input} 
+                value={personalInfo.github || ''} 
+                onChange={(e) => handlePersonalInfoChange('github', e.target.value)}
+                placeholder="例如: github.com/username"
+              />
+            </div>
+            <div className={styles.inputGroup} style={{ flex: 1 }}>
+              <label className={styles.label}>个人网站/博客</label>
+              <input 
+                type="text" 
+                className={styles.input} 
+                value={personalInfo.website || ''} 
+                onChange={(e) => handlePersonalInfoChange('website', e.target.value)}
+                placeholder="例如: example.com"
+              />
+            </div>
+          </div>
           
           <div className={styles.inputGroup}>
             <label className={styles.label}>个人总结</label>

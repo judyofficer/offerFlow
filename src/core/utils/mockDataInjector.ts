@@ -21,7 +21,7 @@ export const injectMockData = () => {
         updatedAt: now - 2 * oneDay,
         content: {
           personalInfo: {
-            name: '李华 (Li Hua)',
+            name: '李华',
             email: 'lihua.dev@example.com',
             phone: '138-0000-0000',
             github: 'github.com/lihua-dev',
