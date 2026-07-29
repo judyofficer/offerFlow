@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Plus, X, Calendar } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
@@ -60,8 +59,6 @@ const Applications: React.FC = () => {
     });
     setAddModalOpen(false);
   };
-
-  const navigate = useNavigate();
 
   const handleDragEnd = (result: DropResult) => {
     const { destination, source, draggableId } = result;
