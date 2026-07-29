@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus } from 'lucide-react';
+import { Plus, X, Calendar } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
 import { useApplicationStore } from '../../store/useApplicationStore';
+import { useScheduleStore } from '../../../schedule/store/useScheduleStore';
 import { STATUS_CONFIG } from '../../types/application';
 import type { ApplicationStatus } from '../../types/application';
 import { ApplicationCard } from '../../components/ApplicationCard';
@@ -14,20 +15,43 @@ const COLUMNS: ApplicationStatus[] = ['applied', 'oa', 'interview', 'hr', 'offer
 
 const Applications: React.FC = () => {
   const { applications, addApplication, updateApplicationStatus } = useApplicationStore();
+  const { addEvent } = useScheduleStore();
   const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
 
+  // Add Application Modal State
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [addFormData, setAddFormData] = useState({ companyName: '', jobTitle: '' });
+
+  // Schedule Prompt Modal State
+  const [scheduleModalState, setScheduleModalState] = useState<{
+    isOpen: boolean;
+    appId: string;
+    status: ApplicationStatus;
+  } | null>(null);
+  const [scheduleFormData, setScheduleFormData] = useState({
+    title: '',
+    type: 'interview' as const,
+    date: new Date().toISOString().split('T')[0],
+    time: '14:00',
+    notes: ''
+  });
+
   const handleAddNew = () => {
-    const company = prompt('请输入公司名称:');
-    if (!company) return;
-    const title = prompt('请输入投递岗位:');
-    if (!title) return;
+    setAddFormData({ companyName: '', jobTitle: '' });
+    setAddModalOpen(true);
+  };
+
+  const submitAddNew = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addFormData.companyName.trim() || !addFormData.jobTitle.trim()) return;
     
     addApplication({
-      companyName: company,
-      jobTitle: title,
+      companyName: addFormData.companyName.trim(),
+      jobTitle: addFormData.jobTitle.trim(),
       jobDescription: '',
       status: 'applied'
     });
+    setAddModalOpen(false);
   };
 
   const navigate = useNavigate();
@@ -43,11 +67,27 @@ const Applications: React.FC = () => {
 
     if (newStatus !== source.droppableId && ['oa', 'interview', 'hr', 'offer'].includes(newStatus)) {
       setTimeout(() => {
-        if (confirm(`已将状态推进至 [${STATUS_CONFIG[newStatus].label}]，是否需要在日历中添加日程提醒？`)) {
-          navigate(`/schedule?createFor=${draggableId}`);
-        }
+        const app = applications.find(a => a.id === draggableId);
+        setScheduleFormData({
+          title: `${app?.companyName || ''} - ${STATUS_CONFIG[newStatus].label}`,
+          type: newStatus === 'oa' ? 'oa' : (newStatus === 'offer' ? 'deadline' : 'interview'),
+          date: new Date().toISOString().split('T')[0],
+          time: '14:00',
+          notes: ''
+        });
+        setScheduleModalState({ isOpen: true, appId: draggableId, status: newStatus });
       }, 50);
     }
+  };
+
+  const submitScheduleEvent = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!scheduleModalState) return;
+    addEvent({
+      ...scheduleFormData,
+      applicationId: scheduleModalState.appId,
+    });
+    setScheduleModalState(null);
   };
 
   const kanbanRef = React.useRef<HTMLDivElement>(null);
@@ -144,6 +184,67 @@ const Applications: React.FC = () => {
           appId={selectedAppId} 
           onClose={() => setSelectedAppId(null)} 
         />
+      )}
+
+      {/* Add Application Modal */}
+      {addModalOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
+          <div style={{ backgroundColor: 'var(--bg-primary)', borderRadius: 'var(--radius-lg)', width: '400px', padding: '24px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 className="text-h3">添加岗位</h3>
+              <button onClick={() => setAddModalOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={20} /></button>
+            </div>
+            <form onSubmit={submitAddNew}>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>公司名称</label>
+                <input required autoFocus className={styles.input} placeholder="例如：字节跳动" value={addFormData.companyName} onChange={e => setAddFormData({...addFormData, companyName: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }} />
+              </div>
+              <div style={{ marginBottom: '24px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>投递岗位</label>
+                <input required className={styles.input} placeholder="例如：前端开发工程师" value={addFormData.jobTitle} onChange={e => setAddFormData({...addFormData, jobTitle: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }} />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                <button type="button" onClick={() => setAddModalOpen(false)} style={{ padding: '8px 16px', borderRadius: '6px', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-primary)', cursor: 'pointer' }}>取消</button>
+                <button type="submit" style={{ padding: '8px 16px', borderRadius: '6px', background: 'var(--primary)', border: 'none', color: '#fff', cursor: 'pointer', fontWeight: 500 }}>确认添加</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Schedule Prompt Modal */}
+      {scheduleModalState && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
+          <div style={{ backgroundColor: 'var(--bg-primary)', borderRadius: 'var(--radius-lg)', width: '450px', padding: '24px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h3 className="text-h3" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Calendar size={20} color="var(--primary)" /> 添加日程提醒</h3>
+              <button onClick={() => setScheduleModalState(null)} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={20} /></button>
+            </div>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '20px', lineHeight: 1.5 }}>
+              岗位状态已推进至 <strong>{STATUS_CONFIG[scheduleModalState.status].label}</strong>，建议您为其添加一条日程安排以免遗忘。
+            </p>
+            <form onSubmit={submitScheduleEvent}>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>日程标题</label>
+                <input required className={styles.input} value={scheduleFormData.title} onChange={e => setScheduleFormData({...scheduleFormData, title: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }} />
+              </div>
+              <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>日期</label>
+                  <input type="date" required className={styles.input} value={scheduleFormData.date} onChange={e => setScheduleFormData({...scheduleFormData, date: e.target.value})} onClick={(e) => { try { (e.target as HTMLInputElement).showPicker(); } catch(err) {} }} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', colorScheme: 'dark', cursor: 'pointer' }} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>时间</label>
+                  <input type="time" required className={styles.input} value={scheduleFormData.time} onChange={e => setScheduleFormData({...scheduleFormData, time: e.target.value})} onClick={(e) => { try { (e.target as HTMLInputElement).showPicker(); } catch(err) {} }} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', colorScheme: 'dark', cursor: 'pointer' }} />
+                </div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
+                <button type="button" onClick={() => setScheduleModalState(null)} style={{ padding: '8px 16px', borderRadius: '6px', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-primary)', cursor: 'pointer' }}>暂不添加</button>
+                <button type="submit" style={{ padding: '8px 16px', borderRadius: '6px', background: 'var(--primary)', border: 'none', color: '#fff', cursor: 'pointer', fontWeight: 500 }}>保存日程</button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

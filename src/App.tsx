@@ -7,11 +7,13 @@ import JobBoard from './features/jobBoard/pages/JobBoard';
 import Settings from './features/settings/pages/Settings';
 import Schedule from './features/schedule/pages/Schedule';
 
+import LandingPage from './features/landing/pages/LandingPage';
+
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Layout />}>
-        <Route index element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={<LandingPage />} />
+      <Route element={<Layout />}>
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="jobs" element={<JobBoard />} />
         <Route path="resumes" element={<Resumes />} />

@@ -104,7 +104,7 @@ export const ApplicationDetailPanel: React.FC<Props> = ({ appId, onClose }) => {
                 value={application.url || ''}
                 onChange={handleChange}
                 placeholder="https://..."
-                style={{ padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
               />
             </div>
           </div>
@@ -116,7 +116,7 @@ export const ApplicationDetailPanel: React.FC<Props> = ({ appId, onClose }) => {
                 name="companyName"
                 value={application.companyName}
                 onChange={handleChange}
-                style={{ padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
               />
             </div>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -125,7 +125,7 @@ export const ApplicationDetailPanel: React.FC<Props> = ({ appId, onClose }) => {
                 name="jobTitle"
                 value={application.jobTitle}
                 onChange={handleChange}
-                style={{ padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
               />
             </div>
           </div>
@@ -137,7 +137,7 @@ export const ApplicationDetailPanel: React.FC<Props> = ({ appId, onClose }) => {
                 name="status"
                 value={application.status}
                 onChange={handleChange}
-                style={{ padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
               >
                 {Object.entries(STATUS_CONFIG).map(([key, config]) => (
                   <option key={key} value={key}>{config.label}</option>
@@ -150,7 +150,7 @@ export const ApplicationDetailPanel: React.FC<Props> = ({ appId, onClose }) => {
                 name="resumeId"
                 value={application.resumeId || ''}
                 onChange={handleChange}
-                style={{ padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
               >
                 <option value="">-- 未关联简历 --</option>
                 {resumes.map(resume => (
@@ -168,7 +168,7 @@ export const ApplicationDetailPanel: React.FC<Props> = ({ appId, onClose }) => {
                 value={application.location || ''}
                 onChange={handleChange}
                 placeholder="例如: 北京, 上海, 远程"
-                style={{ padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
               />
             </div>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -178,7 +178,7 @@ export const ApplicationDetailPanel: React.FC<Props> = ({ appId, onClose }) => {
                 value={application.salary || ''}
                 onChange={handleChange}
                 placeholder="例如: 20k-30k * 15"
-                style={{ padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
               />
             </div>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -188,7 +188,7 @@ export const ApplicationDetailPanel: React.FC<Props> = ({ appId, onClose }) => {
                 value={application.source || ''}
                 onChange={handleChange}
                 placeholder="Boss, 牛客, 官网等"
-                style={{ padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
               />
             </div>
           </div>
@@ -200,7 +200,7 @@ export const ApplicationDetailPanel: React.FC<Props> = ({ appId, onClose }) => {
               value={application.jobDescription || ''}
               onChange={handleChange}
               placeholder="请粘贴详细的 JD 文本..."
-              style={{ padding: '12px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', resize: 'none', flex: 1, minHeight: '200px', fontFamily: 'inherit', lineHeight: '1.5' }}
+              style={{ width: '100%', boxSizing: 'border-box', padding: '12px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', resize: 'none', flex: 1, minHeight: '200px', fontFamily: 'inherit', lineHeight: '1.5' }}
             />
           </div>
 
@@ -211,9 +211,12 @@ export const ApplicationDetailPanel: React.FC<Props> = ({ appId, onClose }) => {
               value={application.notes || ''}
               onChange={handleChange}
               placeholder="面试准备要点，或面经记录..."
-              style={{ padding: '12px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', resize: 'vertical', minHeight: '80px', fontFamily: 'inherit' }}
+              style={{ width: '100%', boxSizing: 'border-box', padding: '12px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', resize: 'vertical', minHeight: '80px', fontFamily: 'inherit' }}
             />
           </div>
+          
+          {/* 解决由于 Flex 布局在不同浏览器下底部 Padding 丢失导致被遮挡的问题 */}
+          <div style={{ minHeight: '24px', flexShrink: 0 }} />
         </div>
       </div>
       <style>
