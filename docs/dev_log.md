@@ -130,3 +130,7 @@
 - **问题与挑战**：由于我们使用的是纯前端的 React Router (`BrowserRouter`)，一旦将代码推送到 Vercel 等静态托管平台，如果在非根目录 `/` 刷新页面，Vercel 默认会去查找对应的静态目录文件，导致报出 404 Not Found 错误。
 - **解决方案**：在根目录新增了 `vercel.json` 配置文件，加入 `rewrites` 规则 `{"source": "/(.*)", "destination": "/index.html"}`，强制将所有的前端路由回退给 `index.html`，由 React Router 接管后续渲染。
 - **Mock数据策略**：最终决定保留 `mockDataInjector` 的自动注入演示数据，让初次访问的用户立刻看到丰富的数据效果，增强开源作品集的展示能力。
+
+### 9. 【工程部署：Netlify 生产环境配置】
+- **问题与挑战**：切换到 Netlify 部署后，由于使用了 React Router (`BrowserRouter`)，子路由（如 `/jobs`）在刷新时直接报出 404 Page Not Found，这是因为 Netlify 默认找不到对应的静态 HTML 文件。
+- **解决方案**：在 `public/` 目录下新增了 `_redirects` 配置文件，加入规则 `/* /index.html 200`。Vite 打包时会自动将此文件输出到 `dist` 根目录，通知 Netlify 的边缘服务器把所有路由请求统一重写（Rewrite）并打回到 `index.html`，完美解决了 SPA 的 404 问题。
