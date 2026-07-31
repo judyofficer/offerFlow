@@ -117,7 +117,7 @@ const Applications: React.FC = () => {
           <h1 className="text-h1">投递记录看板</h1>
           <p style={{ color: 'var(--text-secondary)', marginTop: '4px' }}>追踪所有的岗位投递状态与进展，支持拖拽改变状态。</p>
         </div>
-        <button className={styles.button} onClick={handleAddNew}>
+        <button className="btn btn-accent" onClick={handleAddNew}>
           <Plus size={16} /> 添加岗位
         </button>
       </header>
@@ -196,7 +196,7 @@ const Applications: React.FC = () => {
           <div style={{ backgroundColor: 'var(--bg-primary)', borderRadius: 'var(--radius-lg)', width: '400px', padding: '24px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h3 className="text-h3">添加岗位</h3>
-              <button onClick={() => setAddModalOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={20} /></button>
+              <button onClick={() => setAddModalOpen(false)} className="btn btn-ghost btn-icon"><X size={20} /></button>
             </div>
             <form onSubmit={submitAddNew}>
               <div style={{ marginBottom: '16px' }}>
@@ -208,8 +208,8 @@ const Applications: React.FC = () => {
                 <input required className={styles.input} placeholder="例如：前端开发工程师" value={addFormData.jobTitle} onChange={e => setAddFormData({...addFormData, jobTitle: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }} />
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-                <button type="button" onClick={() => setAddModalOpen(false)} style={{ padding: '8px 16px', borderRadius: '6px', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-primary)', cursor: 'pointer' }}>取消</button>
-                <button type="submit" style={{ padding: '8px 16px', borderRadius: '6px', background: 'var(--primary)', border: 'none', color: '#fff', cursor: 'pointer', fontWeight: 500 }}>确认添加</button>
+                <button type="button" onClick={() => setAddModalOpen(false)} className="btn btn-outline">取消</button>
+                <button type="submit" className="btn btn-primary">确认添加</button>
               </div>
             </form>
           </div>
@@ -222,7 +222,7 @@ const Applications: React.FC = () => {
           <div style={{ backgroundColor: 'var(--bg-primary)', borderRadius: 'var(--radius-lg)', width: '450px', padding: '24px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h3 className="text-h3" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Calendar size={20} color="var(--primary)" /> 添加日程提醒</h3>
-              <button onClick={() => setScheduleModalState(null)} style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer' }}><X size={20} /></button>
+              <button onClick={() => setScheduleModalState(null)} className="btn btn-ghost btn-icon"><X size={20} /></button>
             </div>
             <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '20px', lineHeight: 1.5 }}>
               岗位状态已推进至 <strong>{STATUS_CONFIG[scheduleModalState.status].label}</strong>，建议您为其添加一条日程安排以免遗忘。
@@ -243,8 +243,8 @@ const Applications: React.FC = () => {
                 </div>
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
-                <button type="button" onClick={() => setScheduleModalState(null)} style={{ padding: '8px 16px', borderRadius: '6px', background: 'transparent', border: '1px solid var(--border-color)', color: 'var(--text-primary)', cursor: 'pointer' }}>暂不添加</button>
-                <button type="submit" style={{ padding: '8px 16px', borderRadius: '6px', background: 'var(--primary)', border: 'none', color: '#fff', cursor: 'pointer', fontWeight: 500 }}>保存日程</button>
+                <button type="button" onClick={() => setScheduleModalState(null)} className="btn btn-outline">暂不添加</button>
+                <button type="submit" className="btn btn-primary">保存日程</button>
               </div>
             </form>
           </div>

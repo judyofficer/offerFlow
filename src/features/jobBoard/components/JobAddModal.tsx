@@ -62,12 +62,11 @@ export const JobAddModal: React.FC<Props> = ({ onClose, onSave, suggestedTitles 
         }}
       />
 
-      <div style={{
+      <div className="job-add-modal" style={{
         position: 'fixed',
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        width: '560px',
         backgroundColor: 'var(--bg-primary)',
         borderRadius: '12px',
         boxShadow: '0 24px 48px rgba(0,0,0,0.2)',
@@ -82,7 +81,7 @@ export const JobAddModal: React.FC<Props> = ({ onClose, onSave, suggestedTitles 
             <Wand2 size={20} color="var(--primary)" />
             添加收藏记录
           </h2>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+          <button onClick={onClose} className="btn btn-ghost btn-icon" style={{ color: 'var(--text-secondary)' }}>
             <X size={20} />
           </button>
         </div>
@@ -103,7 +102,7 @@ export const JobAddModal: React.FC<Props> = ({ onClose, onSave, suggestedTitles 
             />
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+          <div className="job-add-grid-2">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>公司名称 *</label>
               <input
@@ -126,7 +125,7 @@ export const JobAddModal: React.FC<Props> = ({ onClose, onSave, suggestedTitles 
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
+          <div className="job-add-grid-3">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>薪资范围</label>
               <input
@@ -162,10 +161,10 @@ export const JobAddModal: React.FC<Props> = ({ onClose, onSave, suggestedTitles 
         </div>
 
         <div style={{ padding: '16px 24px', backgroundColor: 'var(--bg-secondary)', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'flex-end', gap: '12px', borderRadius: '0 0 12px 12px' }}>
-          <button onClick={onClose} style={{ padding: '8px 16px', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer', fontWeight: 500 }}>
+          <button onClick={onClose} className="btn btn-outline">
             取消
           </button>
-          <button onClick={handleSave} style={{ padding: '8px 24px', borderRadius: '4px', border: 'none', background: 'var(--primary)', color: 'var(--primary-foreground)', cursor: 'pointer', fontWeight: 600 }}>
+          <button onClick={handleSave} className="btn btn-primary">
             保存到收藏池
           </button>
         </div>
@@ -174,6 +173,29 @@ export const JobAddModal: React.FC<Props> = ({ onClose, onSave, suggestedTitles 
 
       <style>
         {`
+          .job-add-modal {
+            width: 560px;
+          }
+          .job-add-grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+          }
+          .job-add-grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 16px;
+          }
+          
+          @media (max-width: 768px) {
+            .job-add-modal {
+              width: 90vw;
+            }
+            .job-add-grid-2, .job-add-grid-3 {
+              grid-template-columns: 1fr;
+            }
+          }
+          
           @keyframes scaleIn {
             from { opacity: 0; transform: translate(-50%, -48%) scale(0.96); }
             to { opacity: 1; transform: translate(-50%, -50%) scale(1); }

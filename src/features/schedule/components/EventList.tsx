@@ -38,7 +38,7 @@ export const EventList: React.FC<Props> = ({ events, selectedDate, onAddEvent, o
             padding: '8px 16px', 
             borderRadius: 'var(--radius-md)', 
             backgroundColor: 'var(--primary)', 
-            color: '#fff', 
+            color: 'var(--accent-foreground)', 
             border: 'none',
             cursor: 'pointer',
             fontSize: '14px',

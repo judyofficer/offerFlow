@@ -41,7 +41,7 @@ const ExperienceEditor: React.FC = () => {
           工作经历 (Work Experience)
         </h3>
         {isExpanded && (
-          <button className={styles.buttonOutline} onClick={handleAdd} style={{ padding: '4px 8px', fontSize: '12px' }}>
+          <button className="btn btn-outline btn-sm" onClick={handleAdd}>
             <Plus size={14} /> 添加工作经历
           </button>
         )}

@@ -42,7 +42,7 @@ const EducationEditor: React.FC = () => {
           教育经历 (Education)
         </h3>
         {isExpanded && (
-          <button className={styles.buttonOutline} onClick={handleAdd} style={{ padding: '4px 8px', fontSize: '12px' }}>
+          <button className="btn btn-outline btn-sm" onClick={handleAdd}>
             <Plus size={14} /> 添加教育经历
           </button>
         )}

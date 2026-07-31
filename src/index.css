@@ -17,6 +17,7 @@
   --accent-color: #3f3f46;     /* Graphite accent (zinc-700) */
   --accent-hover: #27272a;     /* Darker graphite (zinc-800) */
   --accent-light: #f4f4f5;     /* Light graphite background */
+  --accent-foreground: #ffffff;
   
   --primary: #1e1e24;          /* Main primary CTA color */
   --primary-hover: #000000;
@@ -55,6 +56,7 @@
     --accent-color: #f4f4f5;   
     --accent-hover: #ffffff;
     --accent-light: #27272a;
+    --accent-foreground: #121212;
     
     --primary: #e4e4e7;
     --primary-hover: #ffffff;
@@ -97,6 +99,99 @@ ul, ol {
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary); 
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color); 
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary); 
+}
+
+/* =========================================
+   Global UI Components (FSD Shared Layer)
+   ========================================= */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: var(--font-family);
+  white-space: nowrap;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Primary Button */
+.btn-primary {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--primary-hover);
+}
+
+/* Accent Button */
+.btn-accent {
+  background-color: var(--accent-color);
+  color: var(--accent-foreground);
+}
+
+.btn-accent:hover:not(:disabled) {
+  background-color: var(--accent-hover);
+}
+
+/* Outline Button */
+.btn-outline {
+  background-color: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.btn-outline:hover:not(:disabled) {
+  background-color: var(--bg-tertiary);
+  border-color: var(--border-color-hover);
+}
+
+/* Ghost / Icon Button */
+.btn-ghost {
+  background-color: transparent;
+  color: var(--text-secondary);
+  padding: 8px;
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+/* Sizes */
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 13px;
+}
+
+.btn-icon {
+  padding: 6px;
+  border-radius: var(--radius-md);
 }
 ::-webkit-scrollbar-track {
   background: transparent;

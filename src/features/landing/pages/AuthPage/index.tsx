@@ -41,13 +41,13 @@ const AuthPage: React.FC = () => {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         const changed1 = await syncEngine.pullFromCloud(true);
-        if (changed1) window.location.href = '/dashboard';
+        if (changed1) window.location.href = '/';
         else navigate('/dashboard');
       } else {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
         const changed2 = await syncEngine.pullFromCloud(true);
-        if (changed2) window.location.href = '/dashboard';
+        if (changed2) window.location.href = '/';
         else navigate('/dashboard');
       }
     } catch (err: any) {

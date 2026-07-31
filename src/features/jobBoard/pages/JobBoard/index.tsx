@@ -56,9 +56,7 @@ const JobBoard: React.FC = () => {
           <h1 className="text-h1" style={{ marginBottom: '4px' }}>招聘信息池</h1>
           <p style={{ color: 'var(--text-secondary)' }}>囤积有意向的岗位，一键转化为正式投递记录。</p>
         </div>
-        <button onClick={() => setIsModalOpen(true)} style={{
-          backgroundColor: 'var(--accent-color)', color: 'white', padding: '8px 16px', borderRadius: '4px', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600
-        }}>
+        <button onClick={() => setIsModalOpen(true)} className="btn btn-accent">
           <Plus size={16} /> 添加收藏
         </button>
       </header>
@@ -127,13 +125,15 @@ const JobBoard: React.FC = () => {
                   <td style={{ padding: '16px', textAlign: 'right' }}>
                     <button
                       onClick={() => handleApply(b)}
-                      style={{ background: 'var(--primary)', color: 'var(--primary-foreground)', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '13px', fontWeight: 500, marginRight: '12px' }}
+                      className="btn btn-primary btn-sm"
                     >
                       <Send size={14} /> 投递
                     </button>
                     <button
-                      onClick={() => { if (confirm('确定删除此收藏？')) deleteBookmark(b.id) }}
-                      style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer', padding: '6px' }}
+                      onClick={() => {
+                        if (confirm('确认删除该条招聘收藏吗？')) deleteBookmark(b.id);
+                      }}
+                      className="btn btn-ghost btn-icon"
                       title="删除"
                     >
                       <Trash2 size={16} />

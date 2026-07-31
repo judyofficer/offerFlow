@@ -125,7 +125,7 @@
 .submitBtn {
   margin-top: 12px;
   background: var(--primary);
-  color: white;
+  color: var(--primary-foreground);
   border: none;
   padding: 14px;
   border-radius: 8px;

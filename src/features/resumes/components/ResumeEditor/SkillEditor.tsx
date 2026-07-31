@@ -43,7 +43,7 @@ const SkillEditor: React.FC = () => {
           专业技能 (Skills)
         </h3>
         {isExpanded && (
-          <button className={styles.buttonOutline} onClick={handleAdd} style={{ padding: '4px 8px', fontSize: '12px' }}>
+          <button className="btn btn-outline btn-sm" onClick={handleAdd}>
             <Plus size={14} /> 添加技能分类
           </button>
         )}

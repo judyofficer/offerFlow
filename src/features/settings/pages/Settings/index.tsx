@@ -117,7 +117,7 @@ const Settings: React.FC = () => {
               <p style={{ color: 'var(--text-secondary)', marginBottom: '16px' }}>您目前处于<strong>离线体验模式</strong>，数据不会被同步到云端。</p>
               <button 
                 onClick={() => navigate('/auth')}
-                style={{ padding: '10px 20px', borderRadius: '6px', backgroundColor: 'var(--primary)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+                style={{ padding: '10px 20px', borderRadius: '6px', backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)', border: 'none', cursor: 'pointer', fontWeight: 600 }}
               >
                 立即注册 / 登录
               </button>

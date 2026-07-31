@@ -168,7 +168,7 @@ const Resumes: React.FC = () => {
                 <FileText size={18} />
                 {activeResume?.sourceFileName}
               </h3>
-              <button onClick={closePreview} style={{ color: 'var(--text-secondary)', cursor: 'pointer', background: 'transparent', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px', borderRadius: '4px' }}>
+              <button onClick={closePreview} className="btn btn-ghost btn-icon">
                 <X size={24} />
               </button>
             </div>
@@ -188,7 +188,7 @@ const Resumes: React.FC = () => {
                 {modalState.type === 'duplicate' && '复制简历'}
                 {modalState.type === 'rename' && '重命名简历'}
               </h3>
-              <button onClick={() => setModalState({ isOpen: false, type: 'create' })} style={{ color: 'var(--text-tertiary)', cursor: 'pointer', background: 'transparent', border: 'none' }}>
+              <button onClick={() => setModalState({ isOpen: false, type: 'create' })} className="btn btn-ghost btn-icon">
                 <X size={18} />
               </button>
             </div>
@@ -209,8 +209,8 @@ const Resumes: React.FC = () => {
                 />
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
-                <button type="button" className={`${styles.button} ${styles.buttonOutline}`} onClick={() => setModalState({ isOpen: false, type: 'create' })}>取消</button>
-                <button type="submit" className={styles.button} disabled={!modalInput.trim()}>确认</button>
+                <button type="button" className="btn btn-outline" onClick={() => setModalState({ isOpen: false, type: 'create' })}>取消</button>
+                <button type="submit" className="btn btn-primary" disabled={!modalInput.trim()}>确认</button>
               </div>
             </form>
           </div>
@@ -229,12 +229,12 @@ const Resumes: React.FC = () => {
       {showVersions && (
         <aside className={styles.versionsPanel}>
           <div className={styles.versionsHeader}>
-            <h3 className="text-h3" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h3 className="text-h3" style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
               <FileText size={18} />
               简历版本
             </h3>
             <div style={{ display: 'flex', gap: '8px' }}>
-              <button className={`${styles.button} ${styles.buttonOutline}`} onClick={() => fileInputRef.current?.click()} title="导入简历 (PDF)">
+              <button className="btn btn-outline" onClick={() => fileInputRef.current?.click()} title="导入简历 (PDF)">
                 <UploadCloud size={16} /> 导入
               </button>
               <input 
@@ -244,7 +244,7 @@ const Resumes: React.FC = () => {
                 style={{ display: 'none' }} 
                 onChange={handleFileUpload} 
               />
-              <button className={`${styles.button}`} onClick={openCreateModal} title="新建简历">
+              <button className="btn btn-accent" onClick={openCreateModal} title="新建简历">
                 <Plus size={16} />
               </button>
             </div>
@@ -266,13 +266,13 @@ const Resumes: React.FC = () => {
                   <div style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span>{new Date(resume.updatedAt).toLocaleDateString()}</span>
                     <div style={{ display: 'flex', gap: '6px' }}>
-                      <button onClick={(e) => openRenameModal(resume.id, e)} title="重命名">
+                      <button onClick={(e) => openRenameModal(resume.id, e)} className="btn btn-ghost btn-icon" title="重命名">
                         <Edit3 size={14} color="var(--text-secondary)" />
                       </button>
-                      <button onClick={(e) => openDuplicateModal(resume.id, e)} title="复制">
+                      <button onClick={(e) => openDuplicateModal(resume.id, e)} className="btn btn-ghost btn-icon" title="复制">
                         <Copy size={14} color="var(--text-secondary)" />
                       </button>
-                      <button onClick={(e) => handleDelete(resume.id, e)} title="删除">
+                      <button onClick={(e) => handleDelete(resume.id, e)} className="btn btn-ghost btn-icon" style={{ color: 'var(--danger)' }} title="删除">
                         <Trash2 size={14} color="var(--danger)" />
                       </button>
                     </div>
@@ -296,17 +296,17 @@ const Resumes: React.FC = () => {
           <div style={{ position: 'relative', width: '100%', maxWidth: '794px', margin: '0 auto' }}>
              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <button className={styles.buttonOutline} style={{ padding: '6px 12px' }} onClick={() => setShowVersions(!showVersions)} title="切换版本列表">
+                  <button className="btn btn-outline btn-sm" onClick={() => setShowVersions(!showVersions)} title="切换版本列表">
                     {showVersions ? <SidebarClose size={16} /> : <Sidebar size={16} />}
                     <span style={{ marginLeft: '6px' }}>版本列表</span>
                   </button>
-                  <button className={styles.buttonOutline} style={{ padding: '6px 12px' }} onClick={() => setShowEditor(!showEditor)} title="切换编辑器">
+                  <button className="btn btn-outline btn-sm" onClick={() => setShowEditor(!showEditor)} title="切换编辑器">
                     {showEditor ? <EyeOff size={16} /> : <Edit3 size={16} />}
                     <span style={{ marginLeft: '6px' }}>编辑器</span>
                   </button>
                   <div style={{ width: '1px', backgroundColor: 'var(--border-color)', margin: '0 4px' }}></div>
                   <button 
-                    className={styles.buttonOutline} 
+                    className="btn btn-outline btn-sm" 
                     style={{ padding: '6px 8px', opacity: useResumeStore(s => s.past).length === 0 ? 0.5 : 1 }} 
                     onClick={() => useResumeStore.getState().undo()} 
                     disabled={useResumeStore(s => s.past).length === 0}
@@ -328,7 +328,7 @@ const Resumes: React.FC = () => {
                 <div style={{ display: 'flex', gap: '8px' }}>
                   {activeResume?.sourceFileId && (
                     <button 
-                      className={`${styles.button} ${styles.buttonOutline}`} 
+                      className="btn btn-outline btn-sm" 
                       onClick={handlePreviewSource}
                       title="预览原始 PDF"
                     >
@@ -336,7 +336,7 @@ const Resumes: React.FC = () => {
                     </button>
                   )}
                   <button 
-                    className={styles.button} 
+                    className="btn btn-accent btn-sm" 
                     onClick={() => handlePrint()} 
                     disabled={!activeResumeId}
                   >

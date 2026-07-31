@@ -61,14 +61,15 @@ export const ApplicationDetailPanel: React.FC<Props> = ({ appId, onClose }) => {
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
             <button 
               onClick={handleDelete}
-              style={{ padding: '6px', color: 'var(--danger)', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '4px' }}
+              className="btn btn-ghost btn-icon"
+              style={{ color: 'var(--danger)' }}
               title="删除记录"
             >
               <Trash2 size={18} />
             </button>
             <button 
               onClick={onClose}
-              style={{ padding: '6px', color: 'var(--text-secondary)', background: 'transparent', border: 'none', cursor: 'pointer', borderRadius: '4px' }}
+              className="btn btn-ghost btn-icon"
             >
               <X size={20} />
             </button>

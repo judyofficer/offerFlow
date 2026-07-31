@@ -112,7 +112,9 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
         </div>
       </header>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px', marginBottom: '8px', textAlign: 'center', fontWeight: 600, fontSize: '13px', color: 'var(--text-tertiary)' }}>
+      <div style={{ overflowX: 'auto', width: '100%', paddingBottom: '8px' }}>
+        <div style={{ minWidth: '400px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px', marginBottom: '8px', textAlign: 'center', fontWeight: 600, fontSize: '13px', color: 'var(--text-tertiary)' }}>
         {['日', '一', '二', '三', '四', '五', '六'].map(day => (
           <div key={day}>{day}</div>
         ))}
@@ -186,6 +188,8 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
             </div>
           );
         })}
+      </div>
+        </div>
       </div>
     </div>
   );
