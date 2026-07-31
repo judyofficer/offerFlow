@@ -4,6 +4,7 @@ import { useApplicationStore } from '../../../applications/store/useApplicationS
 import { ExternalLink, Plus, Trash2, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { JobAddModal } from '../../components/JobAddModal';
+import styles from './JobBoard.module.css';
 
 const JobBoard: React.FC = () => {
   const { bookmarks, addBookmark, updateBookmark, deleteBookmark } = useJobStore();
@@ -40,7 +41,7 @@ const JobBoard: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: '32px 48px', height: '100%', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div className={styles.container}>
 
       {isModalOpen && (
         <JobAddModal
@@ -50,7 +51,7 @@ const JobBoard: React.FC = () => {
         />
       )}
 
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+      <header className={styles.header}>
         <div>
           <h1 className="text-h1" style={{ marginBottom: '4px' }}>招聘信息池</h1>
           <p style={{ color: 'var(--text-secondary)' }}>囤积有意向的岗位，一键转化为正式投递记录。</p>
@@ -62,9 +63,9 @@ const JobBoard: React.FC = () => {
         </button>
       </header>
 
-      <div style={{ flex: 1, backgroundColor: 'var(--bg-primary)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ overflowY: 'auto', flex: 1 }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '14px' }}>
+      <div className={styles.tableContainer}>
+        <div className={styles.tableScroll}>
+          <table className={styles.table}>
             <thead style={{ position: 'sticky', top: 0, backgroundColor: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)', zIndex: 1 }}>
               <tr>
                 <th style={{ padding: '16px', fontWeight: 600, color: 'var(--text-secondary)' }}>公司与岗位</th>

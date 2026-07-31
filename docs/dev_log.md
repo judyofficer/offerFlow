@@ -144,3 +144,14 @@
 - **环境初始化**：
   - 已在项目中引入 `@capacitor/core`, `@capacitor/cli` 并初始化了 `capacitor.config.ts`。
   - 已引入 `@supabase/supabase-js` 并构建了云端通信 Client `src/core/services/supabaseClient.ts`。
+
+### 11. 【架构升级：全站移动端响应式 (Mobile Responsive Overhaul)】
+- **业务背景**：既然已通过 Capacitor 将项目打包为 Android/iOS Native App，则必须彻底重构原先基于 PC 端宽屏设计的 UI（如大面积 Sidebar、横铺的 Dashboard 网格、以及固定宽度的 Kanban 拖拽列），让用户在狭窄的手机屏幕上获得无缝的原生级操作体验。
+- **本次修改范围**：
+  - **核心布局 (Layout)**：将原先固定于左侧的 Sidebar (`Layout.module.css`) 在移动设备（`max-width: 768px`）下彻底隐去，并降维转换为**底部的 Fixed Tab Bar (底部导航栏)**，包含系统设置入口，贴合原生 App 的拇指操作习惯。
+  - **数据看板 (Dashboard)**：将写死的四列卡片和三列图表网格抽离出 `Dashboard.module.css`，在移动端自动折叠为单列/双列展示，保障大字体和可视化图表在小屏不被挤压。
+  - **拖拽看板 (Kanban)**：重构了 `Applications.module.css`，为移动端引入了 iOS 级的 `scroll-snap-type: x mandatory` 特性。允许用户在屏幕上流畅地横向滑动（Swipe）来翻阅不同的投递状态列，避免了传统表格在小屏上的“灾难级”排版。
+  - **入口分发**：利用 `@capacitor/core` 提供的 `Capacitor.isNativePlatform()` API，若检测到环境为原生客户端容器，则强制在挂载时（`useEffect`）跳过供 PC 浏览器使用的 `LandingPage` 营销页，直接进入 App 的主界面或登录页，进一步强化了 Native 体验。
+- **关键决策理由**：
+  - **为什么移动端不保留 Kanban 的拖拽 (Drag and Drop)？**：在移动端，屏幕的纵向滚动与 Kanban 组件的横向 Swipe 滑动已经占用了用户的绝大部分手势习惯，若强行加入长按拖拽，极易引发手势冲突和误触（如页面乱跳）。由于我们本就存在卡片的 Detail Panel 内置了状态切换下拉菜单，因此在小屏幕下“点击卡片 -> 在详情面板修改状态”是体验最稳定且开发成本极低的 Mobile 方案。
+  - **为什么在 Capacitor 容器下跳过 Landing Page？**：网页端的 Landing Page 是典型的 SEO/营销手段。当用户已经通过 App Store 或 APK 下载了客户端并打开，他们就是明确的用户。此时要求他们先看一堆“吹嘘产品有多棒”的光斑动画，是对移动端宝贵注意力的极大浪费。直接跳转 Auth/Dashboard 符合 App 的启动直觉。

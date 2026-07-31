@@ -3,6 +3,7 @@ import { X, Trash2, Link } from 'lucide-react';
 import { useApplicationStore } from '../store/useApplicationStore';
 import { useResumeStore } from '../../resumes/store/useResumeStore';
 import { STATUS_CONFIG } from '../types/application';
+import styles from './ApplicationDetailPanel.module.css';
 
 interface Props {
   appId: string;
@@ -34,31 +35,11 @@ export const ApplicationDetailPanel: React.FC<Props> = ({ appId, onClose }) => {
       {/* Backdrop */}
       <div 
         onClick={onClose}
-        style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.2)',
-          zIndex: 998,
-        }}
+        className={styles.backdrop}
       />
       
       {/* Panel */}
-      <div 
-        style={{
-          position: 'fixed',
-          top: 0,
-          right: 0,
-          bottom: 0,
-          width: '500px',
-          backgroundColor: 'var(--bg-primary)',
-          boxShadow: '-4px 0 24px rgba(0,0,0,0.1)',
-          zIndex: 999,
-          display: 'flex',
-          flexDirection: 'column',
-          animation: 'slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-          borderLeft: '1px solid var(--border-color)'
-        }}
-      >
+      <div className={styles.panel}>
         <header style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <h2 className="text-h2" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

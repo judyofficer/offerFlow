@@ -32,3 +32,31 @@
   display: flex;
   flex-direction: column;
 }
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .container {
+    padding: 16px;
+    height: auto;
+  }
+  
+  .content {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .calendarPane {
+    min-width: 0;
+    flex: none;
+  }
+
+  .listPane {
+    min-width: 0;
+    max-width: 100%;
+    border-left: none;
+    border-top: 1px solid var(--border-color);
+    padding-left: 0;
+    padding-top: 24px;
+    flex: none;
+  }
+}

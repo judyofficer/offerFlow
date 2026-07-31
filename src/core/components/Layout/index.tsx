@@ -16,6 +16,7 @@ const navItems = [
   { path: '/applications', label: '投递追踪', icon: Workflow },
   { path: '/schedule', label: '日程管理', icon: Calendar },
   { path: '/resumes', label: '简历管理', icon: FileText },
+  { path: '/settings', label: '设置', icon: Settings },
 ];
 
 const Layout: React.FC = () => {
@@ -35,26 +36,14 @@ const Layout: React.FC = () => {
                 key={item.path}
                 to={item.path}
                 className={({ isActive }) => 
-                  `${styles.navItem} ${isActive ? styles.active : ''}`
+                  `${styles.navItem} ${isActive ? styles.active : ''} ${item.path === '/settings' ? styles.settingsItem : ''}`
                 }
               >
                 <Icon size={18} />
-                {item.label}
+                <span>{item.label}</span>
               </NavLink>
             );
           })}
-        </nav>
-
-        <nav className={styles.nav} style={{ flex: 0, marginTop: 'auto' }}>
-          <NavLink
-            to="/settings"
-            className={({ isActive }) => 
-              `${styles.navItem} ${isActive ? styles.active : ''}`
-            }
-          >
-            <Settings size={18} />
-            系统设置
-          </NavLink>
         </nav>
       </aside>
 

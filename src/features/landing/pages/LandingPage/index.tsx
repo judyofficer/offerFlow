@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Briefcase, FileText, Sparkles, ArrowRight, LayoutDashboard, Calendar } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
 import { injectMockData } from '../../../../core/utils/mockDataInjector';
 import styles from './LandingPage.module.css';
 
@@ -10,6 +11,14 @@ const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const setGuestMode = useAuthStore((state) => state.setGuestMode);
   const user = useAuthStore((state) => state.user);
+
+  useEffect(() => {
+    // If it's a mobile app (Native) or window is small, skip landing page
+    if (Capacitor.isNativePlatform()) {
+      if (user) navigate('/dashboard', { replace: true });
+      else navigate('/auth', { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleDemo = () => {
     // 注入全部虚构数据
