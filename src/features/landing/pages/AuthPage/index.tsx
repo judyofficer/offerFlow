@@ -1,20 +1,38 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Briefcase, ArrowRight, Loader } from 'lucide-react';
+import { Briefcase, ArrowRight, Loader, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../../../../core/services/supabaseClient';
 import { syncEngine } from '../../../../core/services/syncEngine';
+import { useAuthStore } from '../../../../core/store/useAuthStore';
 import styles from './AuthPage.module.css';
 
 const AuthPage: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
+
+  React.useEffect(() => {
+    if (user) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, navigate]);
+
+  const validateEmail = (email: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateEmail(email)) {
+      setError('请输入有效的邮箱地址');
+      return;
+    }
+    
     setLoading(true);
     setError(null);
 
@@ -49,6 +67,26 @@ const AuthPage: React.FC = () => {
     }
   };
 
+  const handleResetPassword = async () => {
+    if (!email || !validateEmail(email)) {
+      setError('请输入有效的邮箱地址，系统将发送重置密码邮件给您');
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/auth',
+      });
+      if (error) throw error;
+      setError('密码重置邮件已发送，请查收您的邮箱');
+    } catch (err: any) {
+      setError(err.message || '发送失败，请稍后重试');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className={styles.authContainer}>
       <div className={styles.authCard}>
@@ -73,19 +111,43 @@ const AuthPage: React.FC = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="geek@example.com"
+              disabled={loading}
             />
           </div>
           
           <div className={styles.inputGroup}>
-            <label>密码</label>
-            <input 
-              type="password" 
-              required 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              minLength={6}
-            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <label>密码</label>
+              {isLogin && (
+                <button 
+                  type="button" 
+                  onClick={handleResetPassword}
+                  disabled={loading}
+                  style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '12px', cursor: 'pointer', padding: 0 }}
+                >
+                  忘记密码？
+                </button>
+              )}
+            </div>
+            <div className={styles.passwordWrapper}>
+              <input 
+                type={showPassword ? "text" : "password"} 
+                required 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                minLength={6}
+                disabled={loading}
+              />
+              <button 
+                type="button"
+                className={styles.eyeBtn}
+                onClick={() => setShowPassword(!showPassword)}
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           <button type="submit" className={styles.submitBtn} disabled={loading}>

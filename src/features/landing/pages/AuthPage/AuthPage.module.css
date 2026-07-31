@@ -87,6 +87,41 @@
   box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
 }
 
+.inputGroup input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: var(--bg-secondary);
+}
+
+.passwordWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.passwordWrapper input {
+  width: 100%;
+  padding-right: 40px; /* Make room for the eye icon */
+}
+
+.eyeBtn {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.eyeBtn:hover {
+  color: var(--text-primary);
+}
+
 .submitBtn {
   margin-top: 12px;
   background: var(--primary);

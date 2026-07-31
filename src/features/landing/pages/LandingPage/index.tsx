@@ -9,6 +9,7 @@ import { useAuthStore } from '../../../../core/store/useAuthStore';
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const setGuestMode = useAuthStore((state) => state.setGuestMode);
+  const user = useAuthStore((state) => state.user);
 
   const handleDemo = () => {
     // 注入全部虚构数据
@@ -19,17 +20,16 @@ const LandingPage: React.FC = () => {
   };
 
   const handleStart = () => {
-    // 不注入数据，去登录页
-    setGuestMode(false);
-    navigate('/auth');
+    if (user) {
+      navigate('/dashboard');
+    } else {
+      setGuestMode(false);
+      navigate('/auth');
+    }
   };
 
   return (
     <div className={styles.landingContainer}>
-      {/* Animated Background */}
-      <div className={`${styles.backgroundBlob} ${styles.blob1}`} />
-      <div className={`${styles.backgroundBlob} ${styles.blob2}`} />
-
       {/* Header */}
       <header className={styles.header}>
         <div className={styles.logo}>
@@ -46,25 +46,25 @@ const LandingPage: React.FC = () => {
       <main className={styles.hero}>
         <div className={styles.heroBadge}>
           <Sparkles size={16} />
-          <span>v1.0 全新架构上线，搭载纯前端极速引擎</span>
+          <span>v1.0 现已上线，支持多端同步</span>
         </div>
-        
+
         <h1 className={styles.heroTitle}>
-          掌控你的求职之旅<br />
+          一站式求职管理工具<br />
           从简历到 Offer
         </h1>
-        
+
         <p className={styles.heroSubtitle}>
-          offerFlow 是专为顶尖求职者设计的全生命周期求职工作台。拥有极客级的简历版本管理、拖拽式投递追踪，以及全景数据漏斗分析。完全离线化运行，保护您的隐私。
+          offerFlow 是一款开源的求职管理工具。提供多版本简历管理、看板式的投递状态追踪，以及清晰的数据漏斗分析。支持跨端自动同步，保护数据隐私。
         </p>
-        
+
         <div className={styles.heroActions}>
           <button className={styles.primaryButton} onClick={handleDemo}>
             <Sparkles size={20} />
             一键体验 Demo
           </button>
           <button className={styles.secondaryButton} onClick={handleStart}>
-            从零开始使用 <ArrowRight size={20} />
+            {user ? '进入工作台' : '从零开始使用'} <ArrowRight size={20} />
           </button>
         </div>
       </main>
@@ -75,9 +75,9 @@ const LandingPage: React.FC = () => {
           <div className={styles.featureIcon}>
             <FileText size={24} />
           </div>
-          <h3 className={styles.featureTitle}>Git-like 简历控制</h3>
+          <h3 className={styles.featureTitle}>多版本简历管理</h3>
           <p className={styles.featureDesc}>
-            抛弃混乱的 PDF 文件，使用类似 Git 的多版本管理系统。支持智能防抖保存、Ctrl+Z 撤销重做，一键导出高清 PDF。
+            不再被混乱的文件命名困扰。使用系统化的版本管理，支持自动保存、撤销重做，可一键导出为标准 PDF。
           </p>
         </div>
 
@@ -85,9 +85,9 @@ const LandingPage: React.FC = () => {
           <div className={styles.featureIcon}>
             <LayoutDashboard size={24} />
           </div>
-          <h3 className={styles.featureTitle}>全景 Kanban 追踪</h3>
+          <h3 className={styles.featureTitle}>求职进度追踪</h3>
           <p className={styles.featureDesc}>
-            通过极致顺滑的拖拽 Kanban 追踪您的每一次投递状态。实时同步至数据大盘，自动生成漏斗转化图表。
+            使用投递追踪看板直观地管理您的每一次投递状态。支持拖拽操作，自动生成清晰的可视化投递转化数据。
           </p>
         </div>
 
@@ -95,9 +95,9 @@ const LandingPage: React.FC = () => {
           <div className={styles.featureIcon}>
             <Calendar size={24} />
           </div>
-          <h3 className={styles.featureTitle}>智能化日程管理</h3>
+          <h3 className={styles.featureTitle}>面试日程记录</h3>
           <p className={styles.featureDesc}>
-            集成的日历视图助您从容应对密集面试，不会错过任何一场笔试或 HR 对接，确保求职节奏井然有序。
+            提供集成的日历视图功能，方便统一记录笔试和面试时间，帮助您安排求职节奏，不遗漏任何重要行程。
           </p>
         </div>
       </section>
