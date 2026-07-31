@@ -1,4 +1,5 @@
 import type { StateStorage } from 'zustand/middleware';
+import { syncEngine } from './syncEngine';
 
 export const createDebouncedStorage = (
   storage: StateStorage,
@@ -11,6 +12,9 @@ export const createDebouncedStorage = (
   const flush = () => {
     if (pendingKey && pendingValue !== null) {
       storage.setItem(pendingKey, pendingValue);
+      // 🔥 Async background push to Supabase cloud!
+      syncEngine.pushToCloud(pendingKey, pendingValue);
+      
       pendingKey = null;
       pendingValue = null;
       if (timeoutId) {

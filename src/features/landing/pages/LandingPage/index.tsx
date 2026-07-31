@@ -4,19 +4,24 @@ import { Briefcase, FileText, Sparkles, ArrowRight, LayoutDashboard, Calendar } 
 import { injectMockData } from '../../../../core/utils/mockDataInjector';
 import styles from './LandingPage.module.css';
 
+import { useAuthStore } from '../../../../core/store/useAuthStore';
+
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
+  const setGuestMode = useAuthStore((state) => state.setGuestMode);
 
   const handleDemo = () => {
     // 注入全部虚构数据
     injectMockData();
+    setGuestMode(true);
     // 跳转到 Dashboard
     navigate('/dashboard');
   };
 
   const handleStart = () => {
-    // 不注入数据，直接跳转
-    navigate('/dashboard');
+    // 不注入数据，去登录页
+    setGuestMode(false);
+    navigate('/auth');
   };
 
   return (

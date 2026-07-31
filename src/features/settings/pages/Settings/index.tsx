@@ -1,9 +1,18 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../../../../core/store/useAuthStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import type { LLMProvider } from '../../store/useSettingsStore';
 
 const Settings: React.FC = () => {
   const { llmProvider, apiKey, apiUrl, model, updateSettings } = useSettingsStore();
+  const { user, isGuest, logout } = useAuthStore();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/auth');
+  };
 
   const handleProviderChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const provider = e.target.value as LLMProvider;
@@ -97,6 +106,34 @@ const Settings: React.FC = () => {
             />
             <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>您的 API 密钥只会安全地存储在本地浏览器的 localStorage 中，绝不会上传到任何第三方服务器。</span>
           </div>
+        </div>
+      </section>
+
+      <section style={{ backgroundColor: 'var(--bg-primary)', padding: '24px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', marginTop: '32px' }}>
+        <h2 className="text-h2" style={{ marginBottom: '24px', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px' }}>云端账号与同步</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          {isGuest ? (
+            <div>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '16px' }}>您目前处于<strong>离线体验模式</strong>，数据不会被同步到云端。</p>
+              <button 
+                onClick={() => navigate('/auth')}
+                style={{ padding: '10px 20px', borderRadius: '6px', backgroundColor: 'var(--primary)', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+              >
+                立即注册 / 登录
+              </button>
+            </div>
+          ) : user ? (
+            <div>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '16px' }}>已登录账号：<strong>{user.email}</strong></p>
+              <p style={{ fontSize: '13px', color: 'var(--text-tertiary)', marginBottom: '24px' }}>您的所有修改都将在后台静默同步至云端，实现跨设备无缝衔接。</p>
+              <button 
+                onClick={handleLogout}
+                style={{ padding: '10px 20px', borderRadius: '6px', backgroundColor: 'transparent', color: '#ef4444', border: '1px solid #ef4444', cursor: 'pointer', fontWeight: 600 }}
+              >
+                退出登录
+              </button>
+            </div>
+          ) : null}
         </div>
       </section>
     </div>

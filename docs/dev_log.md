@@ -133,4 +133,14 @@
 
 ### 9. 【工程部署：Netlify 生产环境配置】
 - **问题与挑战**：切换到 Netlify 部署后，由于使用了 React Router (`BrowserRouter`)，子路由（如 `/jobs`）在刷新时直接报出 404 Page Not Found，这是因为 Netlify 默认找不到对应的静态 HTML 文件。
-- **解决方案**：在 `public/` 目录下新增了 `_redirects` 配置文件，加入规则 `/* /index.html 200`。Vite 打包时会自动将此文件输出到 `dist` 根目录，通知 Netlify 的边缘服务器把所有路由请求统一重写（Rewrite）并打回到 `index.html`，完美解决了 SPA 的 404 问题。
+- **解决方案**：在 `public/` 目录下新增了 `_redirects` 配置文件，加入规则 `/* /index.html 200`。Vite 打包时会自动将此文件后台合并，完美解决了 SPA 的 404 问题。
+
+## 2026-07-31 (架构演进：跨端移动化与云端最终一致性同步)
+### 10. 【架构升级：跨端移动 App 与 Local-First 同步引擎】
+- **业务背景**：为了实现多端设备联动，需要将应用从“纯网页版”打包升维为“真跨端 App”，同时打破“本地单机局限”，引入数据云端同步。
+- **技术决策 (ADR-007)**：
+  - **打包方案选型**：采纳了基于 Webview 容器的 **Capacitor**（负责 iOS/Android 构建）。相比重写 React Native，该方案实现了零成本迁移现有的复杂 Kanban UI，体验同样极佳。
+  - **同步方案选型 (Local-First Architecture)**：否决了“实时强依赖云端（WebSocket Push）”的方案，确立了 **“最终一致性的自动同步 (Eventual Consistency)”**。即：继续保留目前的 IndexedDB/LocalStorage 作为**绝对的 Single Source of Truth（单一数据源）**，从而保障离线秒开和极致的交互速度；通过后台引入 **Supabase**，在设备连网时静默将本地快照推送到云端关系型数据库中，实现云端备份与跨设备“最终一致性”恢复。
+- **环境初始化**：
+  - 已在项目中引入 `@capacitor/core`, `@capacitor/cli` 并初始化了 `capacitor.config.ts`。
+  - 已引入 `@supabase/supabase-js` 并构建了云端通信 Client `src/core/services/supabaseClient.ts`。

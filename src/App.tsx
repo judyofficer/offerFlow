@@ -8,18 +8,23 @@ import Settings from './features/settings/pages/Settings';
 import Schedule from './features/schedule/pages/Schedule';
 
 import LandingPage from './features/landing/pages/LandingPage';
+import AuthPage from './features/landing/pages/AuthPage';
+import AuthGuard from './core/components/AuthGuard';
 
 function App() {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
-      <Route element={<Layout />}>
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="jobs" element={<JobBoard />} />
-        <Route path="resumes" element={<Resumes />} />
-        <Route path="applications" element={<Applications />} />
-        <Route path="schedule" element={<Schedule />} />
-        <Route path="settings" element={<Settings />} />
+      <Route path="/auth" element={<AuthPage />} />
+      <Route element={<AuthGuard />}>
+        <Route element={<Layout />}>
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="jobs" element={<JobBoard />} />
+          <Route path="resumes" element={<Resumes />} />
+          <Route path="applications" element={<Applications />} />
+          <Route path="schedule" element={<Schedule />} />
+          <Route path="settings" element={<Settings />} />
+        </Route>
       </Route>
     </Routes>
   );
