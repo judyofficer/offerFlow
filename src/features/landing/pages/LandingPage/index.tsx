@@ -6,6 +6,7 @@ import { injectMockData } from '../../../../core/utils/mockDataInjector';
 import styles from './LandingPage.module.css';
 
 import { useAuthStore } from '../../../../core/store/useAuthStore';
+import { syncEngine } from '../../../../core/services/syncEngine';
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -28,9 +29,13 @@ const LandingPage: React.FC = () => {
     navigate('/dashboard');
   };
 
-  const handleStart = () => {
+  const handleStart = async () => {
     if (user) {
-      navigate('/dashboard');
+      setGuestMode(false);
+      // Clear out any demo data and fetch the user's real data from Supabase
+      await syncEngine.pullFromCloud(true);
+      // Hard navigation to force Zustand to rehydrate from the fresh localStorage
+      window.location.href = '/dashboard';
     } else {
       setGuestMode(false);
       navigate('/auth');
