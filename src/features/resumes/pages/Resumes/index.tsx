@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Plus, Copy, Trash2, FileText, Download, UploadCloud, Loader2, Edit3, X, FileDown, Undo2, Redo2 } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
-import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
+import { Group, Panel, Separator } from 'react-resizable-panels';
 import { useResumeStore } from '../../store/useResumeStore';
 import ResumeEditor from '../../components/ResumeEditor';
 import ResumePreview from '../../components/ResumePreview';
@@ -155,7 +155,7 @@ const Resumes: React.FC = () => {
   };
 
   return (
-    <PanelGroup direction="horizontal" className={styles.container}>
+    <Group orientation="horizontal" className={styles.container}>
       {/* PDF Preview Modal */}
       {previewPdfUrl && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}>
@@ -223,7 +223,7 @@ const Resumes: React.FC = () => {
       )}
 
       {/* Main Workspace: Left Panel (List/Editor) and Right Panel (Preview) */}
-      <Panel defaultSize={50} minSize={25} maxSize={75} order={1}>
+      <Panel defaultSize="50" minSize="25" maxSize="75">
         {!activeResumeId ? (
           /* Sidebar: Resume Versions List */
           <aside className={styles.versionsPanel}>
@@ -289,10 +289,10 @@ const Resumes: React.FC = () => {
         )}
       </Panel>
 
-      <PanelResizeHandle className={styles.resizer} />
+      <Separator className={styles.resizer} />
 
       {/* Right Panel: Preview */}
-      <Panel minSize={30} order={2}>
+      <Panel minSize="30">
         <div className={styles.previewPane}>
           <div style={{ position: 'relative', width: '100%', maxWidth: '794px', margin: '0 auto' }}>
              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
@@ -343,7 +343,7 @@ const Resumes: React.FC = () => {
           </div>
         </div>
       </Panel>
-    </PanelGroup>
+    </Group>
   );
 };
 
