@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Briefcase, FileText, Sparkles, ArrowRight, LayoutDashboard, Calendar } from 'lucide-react';
+import { Briefcase, FileText, Sparkles, ArrowRight, LayoutDashboard, Calendar, Loader2 } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { injectMockData } from '../../../../core/utils/mockDataInjector';
 import styles from './LandingPage.module.css';
@@ -12,6 +12,8 @@ const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const setGuestMode = useAuthStore((state) => state.setGuestMode);
   const user = useAuthStore((state) => state.user);
+  
+  const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
     // If it's a mobile app (Native) or window is small, skip landing page
@@ -22,28 +24,62 @@ const LandingPage: React.FC = () => {
   }, [user, navigate]);
 
   const handleDemo = () => {
-    // 注入全部虚构数据
-    injectMockData();
-    setGuestMode(true);
-    // 跳转到 Dashboard
-    navigate('/dashboard');
+    setIsTransitioning(true);
+    // Add a slight delay for better UX transition
+    setTimeout(() => {
+      injectMockData();
+      setGuestMode(true);
+      navigate('/dashboard');
+    }, 600);
   };
 
   const handleStart = async () => {
+    setIsTransitioning(true);
     if (user) {
       setGuestMode(false);
-      // Clear out any demo data and fetch the user's real data from Supabase
-      await syncEngine.pullFromCloud(true);
-      // Hard navigation to force Zustand to rehydrate from the fresh localStorage
+      try {
+        await syncEngine.pullFromCloud(true);
+      } catch (e) {
+        console.error(e);
+      }
       window.location.href = '/dashboard';
     } else {
       setGuestMode(false);
-      navigate('/auth');
+      // Wait for a smooth transition before going to auth
+      setTimeout(() => {
+        navigate('/auth');
+      }, 400);
     }
   };
 
   return (
     <div className={styles.landingContainer}>
+      {/* Loading Overlay */}
+      {isTransitioning && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 9999,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: 'var(--bg-primary)',
+          color: 'var(--text-primary)',
+          opacity: 1,
+          animation: 'fadeIn 0.3s ease-out'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+            <Briefcase size={36} color="#8b5cf6" />
+            <span style={{ fontSize: '28px', fontWeight: 800, letterSpacing: '-0.03em' }}>offerFlow</span>
+          </div>
+          <Loader2 size={32} className="lucide-spin" style={{ animation: 'spin 1.5s linear infinite', color: '#8b5cf6' }} />
+          <p style={{ marginTop: '16px', fontSize: '15px', color: 'var(--text-secondary)' }}>
+            正在为您准备工作台...
+          </p>
+        </div>
+      )}
+
       {/* Header */}
       <header className={styles.header}>
         <div className={styles.logo}>
