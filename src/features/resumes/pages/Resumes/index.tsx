@@ -1,6 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Plus, Copy, Trash2, FileText, Download, UploadCloud, Loader2, Sidebar, Edit3, SidebarClose, EyeOff, X, FileDown, Undo2, Redo2 } from 'lucide-react';
+import { Plus, Copy, Trash2, FileText, Download, UploadCloud, Loader2, Edit3, X, FileDown, Undo2, Redo2 } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { useResumeStore } from '../../store/useResumeStore';
 import ResumeEditor from '../../components/ResumeEditor';
 import ResumePreview from '../../components/ResumePreview';
@@ -16,10 +17,6 @@ const Resumes: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isParsing, setIsParsing] = useState(false);
 
-  // Layout state
-  const [showVersions, setShowVersions] = useState(true);
-  const [showEditor, setShowEditor] = useState(true);
-  
   // Modal State
   const [modalState, setModalState] = useState<{ isOpen: boolean; type: 'create' | 'duplicate' | 'rename'; targetId?: string }>({ isOpen: false, type: 'create' });
   const [modalInput, setModalInput] = useState('');
@@ -158,7 +155,7 @@ const Resumes: React.FC = () => {
   };
 
   return (
-    <div className={styles.container}>
+    <PanelGroup direction="horizontal" className={styles.container}>
       {/* PDF Preview Modal */}
       {previewPdfUrl && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}>
@@ -225,86 +222,81 @@ const Resumes: React.FC = () => {
         </div>
       )}
 
-      {/* Sidebar: Resume Versions List */}
-      {showVersions && (
-        <aside className={styles.versionsPanel}>
-          <div className={styles.versionsHeader}>
-            <h3 className="text-h3" style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
-              <FileText size={18} />
-              简历版本
-            </h3>
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button className="btn btn-outline" onClick={() => fileInputRef.current?.click()} title="导入简历 (PDF)">
-                <UploadCloud size={16} /> 导入
-              </button>
-              <input 
-                type="file" 
-                accept=".pdf" 
-                ref={fileInputRef} 
-                style={{ display: 'none' }} 
-                onChange={handleFileUpload} 
-              />
-              <button className="btn btn-accent" onClick={openCreateModal} title="新建简历">
-                <Plus size={16} />
-              </button>
-            </div>
-          </div>
-          
-          <div className={styles.versionList}>
-            {resumes.length === 0 ? (
-              <div style={{ color: 'var(--text-tertiary)', fontSize: '13px', textAlign: 'center', marginTop: '24px' }}>
-                暂无简历版本，请点击右上角新建！
+      {/* Main Workspace: Left Panel (List/Editor) and Right Panel (Preview) */}
+      <Panel defaultSize={50} minSize={25} maxSize={75} order={1}>
+        {!activeResumeId ? (
+          /* Sidebar: Resume Versions List */
+          <aside className={styles.versionsPanel}>
+            <div className={styles.versionsHeader}>
+              <h3 className="text-h3" style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
+                <FileText size={18} />
+                简历版本
+              </h3>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="btn btn-outline" onClick={() => fileInputRef.current?.click()}>
+                  <UploadCloud size={16} /> 导入
+                </button>
+                <input 
+                  type="file" 
+                  accept=".pdf" 
+                  ref={fileInputRef} 
+                  style={{ display: 'none' }} 
+                  onChange={handleFileUpload} 
+                />
+                <button className="btn btn-accent" onClick={openCreateModal} title="新建简历">
+                  <Plus size={16} />
+                </button>
               </div>
-            ) : (
-              resumes.map(resume => (
-                <div 
-                  key={resume.id}
-                  className={`${styles.versionItem} ${resume.id === activeResumeId ? styles.active : ''}`}
-                  onClick={() => setActiveResume(resume.id)}
-                >
-                  <div style={{ fontWeight: 500, fontSize: '14px', marginBottom: '4px', wordBreak: 'break-all' }}>{resume.name}</div>
-                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span>{new Date(resume.updatedAt).toLocaleDateString()}</span>
-                    <div style={{ display: 'flex', gap: '6px' }}>
-                      <button onClick={(e) => openRenameModal(resume.id, e)} className="btn btn-ghost btn-icon" title="重命名">
-                        <Edit3 size={14} color="var(--text-secondary)" />
-                      </button>
-                      <button onClick={(e) => openDuplicateModal(resume.id, e)} className="btn btn-ghost btn-icon" title="复制">
-                        <Copy size={14} color="var(--text-secondary)" />
-                      </button>
-                      <button onClick={(e) => handleDelete(resume.id, e)} className="btn btn-ghost btn-icon" style={{ color: 'var(--danger)' }} title="删除">
-                        <Trash2 size={14} color="var(--danger)" />
-                      </button>
+            </div>
+            
+            <div className={styles.versionList}>
+              {resumes.length === 0 ? (
+                <div style={{ color: 'var(--text-tertiary)', fontSize: '13px', textAlign: 'center', marginTop: '24px' }}>
+                  暂无简历版本，请点击右上角新建！
+                </div>
+              ) : (
+                resumes.map(resume => (
+                  <div 
+                    key={resume.id}
+                    className={`${styles.versionItem} ${resume.id === activeResumeId ? styles.active : ''}`}
+                    onClick={() => setActiveResume(resume.id)}
+                  >
+                    <div style={{ fontWeight: 500, fontSize: '14px', marginBottom: '4px', wordBreak: 'break-all' }}>{resume.name}</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span>{new Date(resume.updatedAt).toLocaleDateString()}</span>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <button onClick={(e) => openRenameModal(resume.id, e)} className="btn btn-ghost btn-icon" title="重命名">
+                          <Edit3 size={14} color="var(--text-secondary)" />
+                        </button>
+                        <button onClick={(e) => openDuplicateModal(resume.id, e)} className="btn btn-ghost btn-icon" title="复制">
+                          <Copy size={14} color="var(--text-secondary)" />
+                        </button>
+                        <button onClick={(e) => handleDelete(resume.id, e)} className="btn btn-ghost btn-icon" style={{ color: 'var(--danger)' }} title="删除">
+                          <Trash2 size={14} color="var(--danger)" />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
-            )}
-          </div>
-        </aside>
-      )}
-
-      {/* Main Workspace: Editor and Preview side-by-side */}
-      <main className={styles.workspace}>
-        {showEditor && (
+                ))
+              )}
+            </div>
+          </aside>
+        ) : (
+          /* Editor Pane */
           <div className={styles.editorPane}>
             <ResumeEditor />
           </div>
         )}
-        
+      </Panel>
+
+      <PanelResizeHandle className={styles.resizer} />
+
+      {/* Right Panel: Preview */}
+      <Panel minSize={30} order={2}>
         <div className={styles.previewPane}>
           <div style={{ position: 'relative', width: '100%', maxWidth: '794px', margin: '0 auto' }}>
              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <button className="btn btn-outline btn-sm" onClick={() => setShowVersions(!showVersions)} title="切换版本列表">
-                    {showVersions ? <SidebarClose size={16} /> : <Sidebar size={16} />}
-                    <span style={{ marginLeft: '6px' }}>版本列表</span>
-                  </button>
-                  <button className="btn btn-outline btn-sm" onClick={() => setShowEditor(!showEditor)} title="切换编辑器">
-                    {showEditor ? <EyeOff size={16} /> : <Edit3 size={16} />}
-                    <span style={{ marginLeft: '6px' }}>编辑器</span>
-                  </button>
-                  <div style={{ width: '1px', backgroundColor: 'var(--border-color)', margin: '0 4px' }}></div>
                   <button 
                     className="btn btn-outline btn-sm" 
                     style={{ padding: '6px 8px', opacity: useResumeStore(s => s.past).length === 0 ? 0.5 : 1 }} 
@@ -345,13 +337,13 @@ const Resumes: React.FC = () => {
                 </div>
              </div>
              
-             <div ref={componentRef}>
+             <div ref={componentRef} className={styles.a4Page}>
                 <ResumePreview />
              </div>
           </div>
         </div>
-      </main>
-    </div>
+      </Panel>
+    </PanelGroup>
   );
 };
 

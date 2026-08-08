@@ -5,6 +5,8 @@ import { useResumeStore } from '../../store/useResumeStore';
 import type { Experience } from '../../types/resume';
 import styles from '../../pages/Resumes/Resumes.module.css';
 
+import { AutoResizeTextarea } from './AutoResizeTextarea';
+
 const ExperienceEditor: React.FC = () => {
   const { resumes, activeResumeId, addSectionItem, updateSectionItem, deleteSectionItem, reorderSectionItems } = useResumeStore();
   const activeResume = resumes.find(r => r.id === activeResumeId);
@@ -107,8 +109,8 @@ const ExperienceEditor: React.FC = () => {
                             </div>
                             
                             <div className={styles.inputGroup}>
-                              <label className={styles.label}>工作内容与职责 (建议使用列表项)</label>
-                              <textarea className={`${styles.input} ${styles.textarea}`} style={{ minHeight: '80px' }} value={item.description} onChange={e => updateSectionItem('experience', item.id, { description: e.target.value })} placeholder="使用圆点 (如：• 负责开发了...) 分条列出您的工作内容和业务影响..." />
+                              <label className={styles.label}>工作内容与成果 (建议使用列表项)</label>
+                              <AutoResizeTextarea className={`${styles.input} ${styles.textarea}`} style={{ minHeight: '80px' }} value={item.description} onChange={e => updateSectionItem('experience', item.id, { description: e.target.value })} placeholder="使用圆点 (如：• 负责开发了...) 分条列出您的工作内容和业务影响..." />
                             </div>
                           </div>
                         </div>

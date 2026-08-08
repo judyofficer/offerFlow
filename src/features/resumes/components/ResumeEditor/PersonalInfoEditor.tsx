@@ -21,6 +21,17 @@ const PersonalInfoEditor: React.FC = () => {
     });
   };
 
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        handlePersonalInfoChange('avatar', reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
     <section style={{ marginBottom: '32px' }}>
       <h3 
@@ -42,6 +53,30 @@ const PersonalInfoEditor: React.FC = () => {
       
       {isExpanded && (
         <div style={{ marginTop: '16px' }}>
+          <div className={styles.inputGroup} style={{ marginBottom: '16px' }}>
+            <label className={styles.label}>个人照片 (选填)</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {personalInfo.avatar && (
+                <img src={personalInfo.avatar} alt="Avatar" style={{ width: '48px', height: '64px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--border-color)' }} />
+              )}
+              <input 
+                type="file" 
+                accept="image/*"
+                onChange={handleAvatarUpload}
+                style={{ fontSize: '13px' }}
+              />
+              {personalInfo.avatar && (
+                <button 
+                  className="btn btn-ghost btn-sm" 
+                  onClick={() => handlePersonalInfoChange('avatar', '')}
+                  style={{ color: '#ef4444', padding: '4px 8px' }}
+                >
+                  移除照片
+                </button>
+              )}
+            </div>
+          </div>
+
           <div className={styles.inputGroup}>
             <label className={styles.label}>姓名</label>
             <input 
@@ -96,14 +131,70 @@ const PersonalInfoEditor: React.FC = () => {
               />
             </div>
           </div>
-          
+          <div style={{ display: 'flex', gap: '16px' }}>
+            <div className={styles.inputGroup} style={{ flex: 1 }}>
+              <label className={styles.label}>性别 (选填)</label>
+              <input 
+                type="text" 
+                className={styles.input} 
+                value={personalInfo.gender || ''} 
+                onChange={(e) => handlePersonalInfoChange('gender', e.target.value)}
+                placeholder="例如: 男"
+              />
+            </div>
+            <div className={styles.inputGroup} style={{ flex: 1 }}>
+              <label className={styles.label}>生日 (选填)</label>
+              <input 
+                type="text" 
+                className={styles.input} 
+                value={personalInfo.birthDate || ''} 
+                onChange={(e) => handlePersonalInfoChange('birthDate', e.target.value)}
+                placeholder="例如: 2002.03"
+              />
+            </div>
+            <div className={styles.inputGroup} style={{ flex: 1 }}>
+              <label className={styles.label}>民族 (选填)</label>
+              <input 
+                type="text" 
+                className={styles.input} 
+                value={personalInfo.ethnicity || ''} 
+                onChange={(e) => handlePersonalInfoChange('ethnicity', e.target.value)}
+                placeholder="例如: 汉族"
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '16px' }}>
+            <div className={styles.inputGroup} style={{ flex: 1 }}>
+              <label className={styles.label}>现居城市 (选填)</label>
+              <input 
+                type="text" 
+                className={styles.input} 
+                value={personalInfo.city || ''} 
+                onChange={(e) => handlePersonalInfoChange('city', e.target.value)}
+                placeholder="例如: 北京"
+              />
+            </div>
+            <div className={styles.inputGroup} style={{ flex: 1 }}>
+              <label className={styles.label}>意向城市 (选填)</label>
+              <input 
+                type="text" 
+                className={styles.input} 
+                value={personalInfo.intendedCity || ''} 
+                onChange={(e) => handlePersonalInfoChange('intendedCity', e.target.value)}
+                placeholder="例如: 北京 / 上海 / 深圳"
+              />
+            </div>
+          </div>
+
           <div className={styles.inputGroup}>
-            <label className={styles.label}>个人总结</label>
-            <textarea 
-              className={`${styles.input} ${styles.textarea}`} 
-              value={personalInfo.summary} 
-              onChange={(e) => handlePersonalInfoChange('summary', e.target.value)}
-              placeholder="简短地介绍一下您的背景、优势和职业目标..."
+            <label className={styles.label}>求职意向 (选填)</label>
+            <input 
+              type="text" 
+              className={styles.input} 
+              value={personalInfo.intendedRole || ''} 
+              onChange={(e) => handlePersonalInfoChange('intendedRole', e.target.value)}
+              placeholder="例如: 前端开发"
             />
           </div>
         </div>

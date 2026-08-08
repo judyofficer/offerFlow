@@ -5,6 +5,8 @@ import { useResumeStore } from '../../store/useResumeStore';
 import type { Project } from '../../types/resume';
 import styles from '../../pages/Resumes/Resumes.module.css';
 
+import { AutoResizeTextarea } from './AutoResizeTextarea';
+
 const ProjectEditor: React.FC = () => {
   const { resumes, activeResumeId, addSectionItem, updateSectionItem, deleteSectionItem, reorderSectionItems } = useResumeStore();
   const activeResume = resumes.find(r => r.id === activeResumeId);
@@ -33,8 +35,8 @@ const ProjectEditor: React.FC = () => {
   return (
     <section style={{ marginBottom: '32px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isExpanded ? '16px' : '0', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
-        <h3 
-          className="text-h3" 
+        <h3
+          className="text-h3"
           style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}
           onClick={() => setIsExpanded(!isExpanded)}
         >
@@ -76,7 +78,7 @@ const ProjectEditor: React.FC = () => {
                           >
                             <GripVertical size={16} />
                           </div>
-                          
+
                           <div style={{ marginLeft: '24px' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
                               <div style={{ fontWeight: 600, fontSize: '14px' }}>项目 {index + 1}</div>
@@ -95,7 +97,7 @@ const ProjectEditor: React.FC = () => {
                                 <input type="text" className={styles.input} value={item.role} onChange={e => updateSectionItem('projects', item.id, { role: e.target.value })} />
                               </div>
                             </div>
-                            
+
                             <div style={{ display: 'flex', gap: '16px' }}>
                               <div className={styles.inputGroup} style={{ flex: 1 }}>
                                 <label className={styles.label}>开始时间</label>
@@ -106,15 +108,37 @@ const ProjectEditor: React.FC = () => {
                                 <input type="text" className={styles.input} placeholder="如: 至今" value={item.endDate} onChange={e => updateSectionItem('projects', item.id, { endDate: e.target.value })} />
                               </div>
                             </div>
-                            
+
                             <div className={styles.inputGroup}>
-                              <label className={styles.label}>项目链接 (选填，如 GitHub 链接)</label>
+                              <label className={styles.label}>项目链接 (选填)</label>
                               <input type="text" className={styles.input} value={item.link || ''} onChange={e => updateSectionItem('projects', item.id, { link: e.target.value })} />
                             </div>
 
                             <div className={styles.inputGroup}>
-                              <label className={styles.label}>项目内容与成果 (建议使用列表项)</label>
-                              <textarea className={`${styles.input} ${styles.textarea}`} style={{ minHeight: '80px' }} value={item.description} onChange={e => updateSectionItem('projects', item.id, { description: e.target.value })} placeholder="建议使用 STAR 法则 (情境、任务、行动、结果)..." />
+                              <label className={styles.label}>技术栈 (选填，如 React / Node)</label>
+                              <input type="text" className={styles.input} value={item.techStack || ''} onChange={e => updateSectionItem('projects', item.id, { techStack: e.target.value })} />
+                            </div>
+
+                            <div className={styles.inputGroup}>
+                              <label className={styles.label}>项目介绍 (建议使用列表项)</label>
+                              <AutoResizeTextarea 
+                                className={styles.input} 
+                                style={{ minHeight: '80px' }}
+                                rows={3}
+                                value={item.description} 
+                                onChange={e => updateSectionItem('projects', item.id, { description: e.target.value })} 
+                              />
+                            </div>
+
+                            <div className={styles.inputGroup}>
+                              <label className={styles.label}>项目亮点/成果 (建议使用列表项)</label>
+                              <AutoResizeTextarea 
+                                className={styles.input} 
+                                style={{ minHeight: '80px' }}
+                                rows={8}
+                                value={item.highlights || ''} 
+                                onChange={e => updateSectionItem('projects', item.id, { highlights: e.target.value })} 
+                              />
                             </div>
                           </div>
                         </div>

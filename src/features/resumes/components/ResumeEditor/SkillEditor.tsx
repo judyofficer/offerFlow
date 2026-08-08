@@ -5,6 +5,8 @@ import { useResumeStore } from '../../store/useResumeStore';
 import type { Skill } from '../../types/resume';
 import styles from '../../pages/Resumes/Resumes.module.css';
 
+import { AutoResizeTextarea } from './AutoResizeTextarea';
+
 const SkillEditor: React.FC = () => {
   const { resumes, activeResumeId, addSectionItem, updateSectionItem, deleteSectionItem, reorderSectionItems } = useResumeStore();
   const activeResume = resumes.find(r => r.id === activeResumeId);
@@ -93,7 +95,7 @@ const SkillEditor: React.FC = () => {
                             
                             <div className={styles.inputGroup}>
                               <label className={styles.label}>技能列表 (请使用逗号分隔)</label>
-                              <textarea 
+                              <AutoResizeTextarea 
                                 className={`${styles.input} ${styles.textarea}`} 
                                 style={{ minHeight: '60px' }} 
                                 value={item.items.join(', ')} 

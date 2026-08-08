@@ -6,6 +6,14 @@ export interface PersonalInfo {
   github?: string;
   website?: string;
   summary: string;
+  
+  // Additional optional info
+  gender?: string;
+  birthDate?: string;
+  ethnicity?: string;
+  city?: string;
+  intendedCity?: string;
+  intendedRole?: string;
 }
 
 export interface Education {
@@ -33,7 +41,9 @@ export interface Project {
   role: string;
   startDate: string;
   endDate: string;
+  techStack?: string;
   description: string;
+  highlights?: string;
   link?: string;
 }
 
@@ -43,12 +53,31 @@ export interface Skill {
   items: string[];
 }
 
+export interface CampusExperience {
+  id: string;
+  organization: string;
+  role: string;
+  startDate: string;
+  endDate: string;
+  description: string;
+}
+
+export interface Award {
+  id: string;
+  name: string;
+  awarder: string;
+  date: string;
+  description: string;
+}
+
 export interface ResumeContent {
   personalInfo: PersonalInfo;
   education: Education[];
   experience: Experience[];
   projects: Project[];
   skills: Skill[];
+  campusExperience: CampusExperience[];
+  awards: Award[];
 }
 
 export interface Resume {

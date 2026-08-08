@@ -18,7 +18,7 @@ const Settings: React.FC = () => {
     const provider = e.target.value as LLMProvider;
     let defaultUrl = '';
     let defaultModel = '';
-    
+
     switch (provider) {
       case 'openai':
         defaultUrl = 'https://api.openai.com/v1/chat/completions';
@@ -30,14 +30,14 @@ const Settings: React.FC = () => {
         break;
       case 'gemini':
         defaultUrl = 'https://generativelanguage.googleapis.com/v1beta/models/';
-        defaultModel = 'gemini-1.5-pro';
+        defaultModel = 'gemini-3.6-flash';
         break;
       case 'custom':
         defaultUrl = '';
         defaultModel = '';
         break;
     }
-    
+
     updateSettings({
       llmProvider: provider,
       apiUrl: defaultUrl,
@@ -59,8 +59,8 @@ const Settings: React.FC = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <label style={{ fontSize: '14px', fontWeight: 600 }}>模型供应商 (Provider)</label>
-            <select 
-              value={llmProvider} 
+            <select
+              value={llmProvider}
               onChange={handleProviderChange}
               style={{ padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }}
             >
@@ -73,8 +73,8 @@ const Settings: React.FC = () => {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <label style={{ fontSize: '14px', fontWeight: 600 }}>API 接口地址 (URL)</label>
-            <input 
-              type="url" 
+            <input
+              type="url"
               value={apiUrl}
               onChange={(e) => updateSettings({ apiUrl: e.target.value })}
               style={{ padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none', fontFamily: 'monospace' }}
@@ -85,8 +85,8 @@ const Settings: React.FC = () => {
           <div style={{ display: 'flex', gap: '20px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
               <label style={{ fontSize: '14px', fontWeight: 600 }}>模型名称 (Model)</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 value={model}
                 onChange={(e) => updateSettings({ model: e.target.value })}
                 style={{ padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none', fontFamily: 'monospace' }}
@@ -97,8 +97,8 @@ const Settings: React.FC = () => {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <label style={{ fontSize: '14px', fontWeight: 600 }}>API 密钥 (API Key)</label>
-            <input 
-              type="password" 
+            <input
+              type="password"
               value={apiKey}
               onChange={(e) => updateSettings({ apiKey: e.target.value })}
               style={{ padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none', fontFamily: 'monospace' }}
@@ -115,7 +115,7 @@ const Settings: React.FC = () => {
           {isGuest ? (
             <div>
               <p style={{ color: 'var(--text-secondary)', marginBottom: '16px' }}>您目前处于<strong>离线体验模式</strong>，数据不会被同步到云端。</p>
-              <button 
+              <button
                 onClick={() => navigate('/auth')}
                 style={{ padding: '10px 20px', borderRadius: '6px', backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)', border: 'none', cursor: 'pointer', fontWeight: 600 }}
               >
@@ -126,7 +126,7 @@ const Settings: React.FC = () => {
             <div>
               <p style={{ color: 'var(--text-secondary)', marginBottom: '16px' }}>已登录账号：<strong>{user.email}</strong></p>
               <p style={{ fontSize: '13px', color: 'var(--text-tertiary)', marginBottom: '24px' }}>您的所有修改都将在后台静默同步至云端，实现跨设备无缝衔接。</p>
-              <button 
+              <button
                 onClick={handleLogout}
                 style={{ padding: '10px 20px', borderRadius: '6px', backgroundColor: 'transparent', color: '#ef4444', border: '1px solid #ef4444', cursor: 'pointer', fontWeight: 600 }}
               >

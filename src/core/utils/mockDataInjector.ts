@@ -69,7 +69,9 @@ export const injectMockData = () => {
               category: '工程化与进阶',
               items: ['TypeScript', 'Webpack', 'CI/CD', 'Docker', 'IndexedDB']
             }
-          ]
+          ],
+          campusExperience: [],
+          awards: []
         }
       },
       {
@@ -88,7 +90,9 @@ export const injectMockData = () => {
           education: [],
           experience: [],
           projects: [],
-          skills: []
+          skills: [],
+          campusExperience: [],
+          awards: []
         }
       }
     ],

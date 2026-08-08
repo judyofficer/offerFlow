@@ -9,9 +9,11 @@ const initialResumeContent: ResumeContent = {
   experience: [],
   projects: [],
   skills: [],
+  campusExperience: [],
+  awards: [],
 };
 
-type SectionKey = 'education' | 'experience' | 'projects' | 'skills';
+type SectionKey = 'education' | 'experience' | 'projects' | 'skills' | 'campusExperience' | 'awards';
 
 interface ResumeState {
   resumes: Resume[];

@@ -43,13 +43,24 @@ export const parseTextWithLLM = async (text: string): Promise<ResumeContent> => 
 确保提取的经历尽可能详细，对于没有的信息留空字符串。
 数组如果为空请返回空数组 []。
 
+【重要高亮规则】
+在提取「工作经历(description)」、「项目经历(description)」、「自我评价(summary)」、「校园经历(description)」等长段落文本时，请**主动识别**其中的核心关键词（如：编程语言、开发框架、专业术语、核心业务数据、关键业绩指标等），并使用 Markdown 加粗语法将其包裹（例如：使用 **React** 或 **提升了 30%**）。不要过度加粗，仅高亮最核心的亮点即可。
+
 必须符合以下 JSON 结构:
 {
   "personalInfo": {
     "name": "string",
     "email": "string",
     "phone": "string",
-    "summary": "string"
+    "github": "string (可选)",
+    "website": "string (可选)",
+    "summary": "string",
+    "gender": "string (可选)",
+    "birthDate": "string (可选)",
+    "ethnicity": "string (可选)",
+    "city": "string (可选)",
+    "intendedCity": "string (可选)",
+    "intendedRole": "string (可选)"
   },
   "education": [
     {
@@ -79,8 +90,10 @@ export const parseTextWithLLM = async (text: string): Promise<ResumeContent> => 
       "role": "string",
       "startDate": "string",
       "endDate": "string",
-      "description": "string",
-      "link": "string"
+      "techStack": "string (可选,如 React / Node)",
+      "description": "string (项目介绍)",
+      "highlights": "string (项目亮点/成果)",
+      "link": "string (可选)"
     }
   ],
   "skills": [
@@ -88,6 +101,25 @@ export const parseTextWithLLM = async (text: string): Promise<ResumeContent> => 
       "id": "随机短字符串",
       "category": "string (例如前端技术、后端技术等)",
       "items": ["string", "string"]
+    }
+  ],
+  "campusExperience": [
+    {
+      "id": "随机短字符串",
+      "organization": "string",
+      "role": "string",
+      "startDate": "string",
+      "endDate": "string",
+      "description": "string"
+    }
+  ],
+  "awards": [
+    {
+      "id": "随机短字符串",
+      "name": "string",
+      "awarder": "string (颁发机构)",
+      "date": "string",
+      "description": "string"
     }
   ]
 }`;
