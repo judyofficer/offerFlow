@@ -6,7 +6,7 @@ import type { LLMProvider } from '../../store/useSettingsStore';
 
 const Settings: React.FC = () => {
   const { llmProvider, apiKey, apiUrl, model, updateSettings } = useSettingsStore();
-  const { user, isGuest, logout } = useAuthStore();
+  const { user, isGuest, logout, setGuestMode } = useAuthStore();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
@@ -116,7 +116,11 @@ const Settings: React.FC = () => {
             <div>
               <p style={{ color: 'var(--text-secondary)', marginBottom: '16px' }}>您目前处于<strong>离线体验模式</strong>，数据不会被同步到云端。</p>
               <button
-                onClick={() => navigate('/auth')}
+                onClick={() => {
+                  // 跳转前先清除 Guest 模式，否则 AuthPage 的 redirect guard 不会放行
+                  setGuestMode(false);
+                  navigate('/auth');
+                }}
                 style={{ padding: '10px 20px', borderRadius: '6px', backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)', border: 'none', cursor: 'pointer', fontWeight: 600 }}
               >
                 立即注册 / 登录

@@ -11,6 +11,7 @@ interface Props {
     salary: string;
     location: string;
     source: string;
+    deadline: string;
   }) => void;
   suggestedTitles?: string[];
 }
@@ -24,6 +25,7 @@ export const JobAddModal: React.FC<Props> = ({ onClose, onSave, suggestedTitles 
   const [salary, setSalary] = useState('');
   const [location, setLocation] = useState('');
   const [source, setSource] = useState('');
+  const [deadline, setDeadline] = useState('');
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -49,7 +51,7 @@ export const JobAddModal: React.FC<Props> = ({ onClose, onSave, suggestedTitles 
       alert('请至少填写公司名称和岗位名称');
       return;
     }
-    onSave({ companyName, jobTitle, url, salary, location, source });
+    onSave({ companyName, jobTitle, url, salary, location, source, deadline });
     onClose();
   };
 
@@ -149,13 +151,26 @@ export const JobAddModal: React.FC<Props> = ({ onClose, onSave, suggestedTitles 
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>原始招聘链接 URL (可选)</label>
-            <input
-              value={url} onChange={e => setUrl(e.target.value)}
-              placeholder="https://..."
-              style={{ padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
-            />
+          <div className="job-add-grid-2">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>原始招聘链接 URL (可选)</label>
+              <input
+                value={url} onChange={e => setUrl(e.target.value)}
+                placeholder="https://..."
+                style={{ padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+              />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                招聘截止日期
+                <span style={{ fontWeight: 400, color: 'var(--text-tertiary)', fontSize: '12px' }}>(选填)</span>
+              </label>
+              <input
+                type="date"
+                value={deadline} onChange={e => setDeadline(e.target.value)}
+                style={{ padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '14px' }}
+              />
+            </div>
           </div>
 
         </div>

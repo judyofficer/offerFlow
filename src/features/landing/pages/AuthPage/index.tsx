@@ -15,12 +15,24 @@ const AuthPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
+  const isGuest = useAuthStore((state) => state.isGuest);
+  const setGuestMode = useAuthStore((state) => state.setGuestMode);
+
+  const [isSyncing, setIsSyncing] = React.useState(false);
 
   React.useEffect(() => {
-    if (user) {
-      navigate('/dashboard', { replace: true });
+    // 如果已登录且非 Guest Demo 模式，需要先拉云端数据覆盖本地数据，再跳转
+    // 使用 window.location.href 硬刷新，确保所有 Zustand store 从 localStorage 重新水合
+    if (user && !isGuest && !isSyncing) {
+      setIsSyncing(true);
+      syncEngine.pullFromCloud(true).then(() => {
+        window.location.href = '/dashboard';
+      }).catch(() => {
+        // 拉取失败也跳过去，至少让用户进入 Dashboard
+        window.location.href = '/dashboard';
+      });
     }
-  }, [user, navigate]);
+  }, [user, isGuest, isSyncing]);
 
   const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -40,12 +52,15 @@ const AuthPage: React.FC = () => {
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        // 清除 Guest 模式，再拉取云端数据
+        setGuestMode(false);
         const changed1 = await syncEngine.pullFromCloud(true);
         if (changed1) window.location.href = '/';
         else navigate('/dashboard');
       } else {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
+        setGuestMode(false);
         const changed2 = await syncEngine.pullFromCloud(true);
         if (changed2) window.location.href = '/';
         else navigate('/dashboard');
@@ -89,6 +104,14 @@ const AuthPage: React.FC = () => {
 
   return (
     <div className={styles.authContainer}>
+      {/* 检测到已有登录态，正在同步云端数据 */}
+      {isSyncing && (
+        <div style={{ position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-primary)', zIndex: 9999 }}>
+          <Briefcase size={36} color="#8b5cf6" style={{ marginBottom: '16px' }} />
+          <Loader className={styles.spinner} size={28} style={{ marginBottom: '16px', color: 'var(--primary)' }} />
+          <p style={{ color: 'var(--text-secondary)', fontSize: '15px' }}>检测到已有账号，正在同步您的数据...</p>
+        </div>
+      )}
       <div className={styles.authCard}>
         <div className={styles.logo}>
           <Briefcase size={32} color="#8b5cf6" />

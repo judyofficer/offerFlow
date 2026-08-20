@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useJobStore } from '../../store/useJobStore';
 import { useApplicationStore } from '../../../applications/store/useApplicationStore';
-import { ExternalLink, Plus, Trash2, Send } from 'lucide-react';
+import { ExternalLink, Plus, Trash2, Send, CalendarClock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { JobAddModal } from '../../components/JobAddModal';
 import styles from './JobBoard.module.css';
@@ -70,6 +70,7 @@ const JobBoard: React.FC = () => {
                 <th style={{ padding: '16px', fontWeight: 600, color: 'var(--text-secondary)' }}>薪资范围</th>
                 <th style={{ padding: '16px', fontWeight: 600, color: 'var(--text-secondary)' }}>工作地点</th>
                 <th style={{ padding: '16px', fontWeight: 600, color: 'var(--text-secondary)' }}>信息来源</th>
+                <th style={{ padding: '16px', fontWeight: 600, color: 'var(--text-secondary)' }}>截止日期</th>
                 <th style={{ padding: '16px', fontWeight: 600, color: 'var(--text-secondary)', textAlign: 'right' }}>操作</th>
               </tr>
             </thead>
@@ -122,6 +123,32 @@ const JobBoard: React.FC = () => {
                       style={{ background: 'transparent', border: 'none', color: 'var(--text-primary)', outline: 'none', fontSize: '14px', width: '100px' }}
                     />
                   </td>
+                  <td style={{ padding: '16px' }}>
+                    {(() => {
+                      const deadlineVal = b.deadline || '';
+                      let color = 'var(--text-secondary)';
+                      let urgencyLabel = null;
+                      if (deadlineVal) {
+                        const daysLeft = Math.ceil((new Date(deadlineVal).getTime() - Date.now()) / 86400000);
+                        if (daysLeft < 0) color = 'var(--danger)';
+                        else if (daysLeft <= 7) color = '#f59e0b';
+                        if (daysLeft < 0) urgencyLabel = <span style={{ fontSize: '11px', marginLeft: '6px', color: 'var(--danger)' }}>已截止</span>;
+                        else if (daysLeft <= 7) urgencyLabel = <span style={{ fontSize: '11px', marginLeft: '6px', color: '#f59e0b' }}>还剩 {daysLeft} 天</span>;
+                      }
+                      return (
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                          <CalendarClock size={13} style={{ marginRight: '6px', color: deadlineVal ? color : 'var(--text-tertiary)', flexShrink: 0 }} />
+                          <input
+                            type="date"
+                            value={deadlineVal}
+                            onChange={e => updateBookmark(b.id, { deadline: e.target.value })}
+                            style={{ background: 'transparent', border: 'none', color, outline: 'none', fontSize: '13px', cursor: 'pointer', width: '120px' }}
+                          />
+                          {urgencyLabel}
+                        </div>
+                      );
+                    })()}
+                  </td>
                   <td style={{ padding: '16px', textAlign: 'right' }}>
                     <button
                       onClick={() => handleApply(b)}
@@ -144,7 +171,7 @@ const JobBoard: React.FC = () => {
 
               {bookmarks.length === 0 && (
                 <tr>
-                  <td colSpan={5} style={{ padding: '64px', textAlign: 'center', color: 'var(--text-tertiary)' }}>
+                  <td colSpan={6} style={{ padding: '64px', textAlign: 'center', color: 'var(--text-tertiary)' }}>
                     暂无收藏的招聘信息。开始海投收集吧！
                   </td>
                 </tr>
