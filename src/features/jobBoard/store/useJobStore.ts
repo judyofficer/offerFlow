@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { createDebouncedStorage } from '../../../core/services/debouncedStorage';
 import type { JobBookmark } from '../types/job';
 
 interface JobStore {
@@ -34,6 +35,7 @@ export const useJobStore = create<JobStore>()(
     }),
     {
       name: 'offerflow-job-board',
+      storage: createJSONStorage(() => createDebouncedStorage(window.localStorage, 1000)),
     }
   )
 );

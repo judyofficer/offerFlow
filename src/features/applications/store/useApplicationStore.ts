@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { createDebouncedStorage } from '../../../core/services/debouncedStorage';
 import type { Application, ApplicationStatus } from '../types/application';
 
 interface ApplicationState {
@@ -45,6 +46,7 @@ export const useApplicationStore = create<ApplicationState>()(
     }),
     {
       name: 'offerflow-application-storage',
+      storage: createJSONStorage(() => createDebouncedStorage(window.localStorage, 1000)),
     }
   )
 );

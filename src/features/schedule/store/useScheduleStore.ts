@@ -1,5 +1,6 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { createDebouncedStorage } from '../../../core/services/debouncedStorage';
 import type { ScheduleEvent } from '../types/schedule';
 
 interface ScheduleState {
@@ -38,6 +39,7 @@ export const useScheduleStore = create<ScheduleState>()(
     }),
     {
       name: 'offerflow-schedule-storage',
+      storage: createJSONStorage(() => createDebouncedStorage(window.localStorage, 1000)),
     }
   )
 );
