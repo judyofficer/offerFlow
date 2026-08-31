@@ -28,9 +28,50 @@ const SkillEditor: React.FC = () => {
     reorderSectionItems('skills', result.source.index, result.destination.index);
   };
 
+  const [isImporting, setIsImporting] = useState(false);
+  const [importText, setImportText] = useState('');
+
   const handleItemsChange = (id: string, value: string) => {
-    const itemsArray = value.split(/[,，\n]+/).map(i => i.trim()).filter(i => i);
-    updateSectionItem('skills', id, { items: itemsArray });
+    updateSectionItem('skills', id, { items: [value] });
+  };
+
+  const handleSmartImport = () => {
+    if (!importText.trim()) return;
+    
+    const lines = importText.split('\n').filter(line => line.trim());
+    let pendingCategory = '';
+    
+    lines.forEach(line => {
+      // Clean bullet points, extra spaces, and markdown bold/italic symbols
+      let cleanLine = line.replace(/^[-*•\s]+/, '').replace(/\*\*/g, '').trim();
+      if (!cleanLine) return;
+      
+      // Look for a colon indicating category: items
+      const colonMatch = cleanLine.match(/^([^:：]+)[:：](.+)$/);
+      if (colonMatch) {
+        addSectionItem('skills', {
+          category: colonMatch[1].trim(),
+          items: [colonMatch[2].trim()]
+        });
+        pendingCategory = '';
+      } else {
+        // No colon, keep the whole line as one item or treat as category if short
+        if (cleanLine.length < 20 && !cleanLine.includes('，') && !cleanLine.includes(',')) {
+          // Looks like a category header
+          pendingCategory = cleanLine;
+        } else {
+          // It's a list of items / long sentence
+          addSectionItem('skills', {
+            category: pendingCategory || '综合技能',
+            items: [cleanLine]
+          });
+          pendingCategory = ''; // Reset after use
+        }
+      }
+    });
+    
+    setImportText('');
+    setIsImporting(false);
   };
 
   return (
@@ -45,14 +86,40 @@ const SkillEditor: React.FC = () => {
           专业技能 (Skills)
         </h3>
         {isExpanded && (
-          <button className="btn btn-outline btn-sm" onClick={handleAdd}>
-            <Plus size={14} /> 添加技能分类
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button className="btn btn-outline btn-sm" onClick={() => setIsImporting(!isImporting)}>
+              智能导入
+            </button>
+            <button className="btn btn-outline btn-sm" onClick={handleAdd}>
+              <Plus size={14} /> 添加技能分类
+            </button>
+          </div>
         )}
       </div>
 
       {isExpanded && (
         <div style={{ marginTop: '16px' }}>
+          {isImporting && (
+            <div style={{ marginBottom: '16px', padding: '16px', backgroundColor: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', border: '1px dashed var(--border-color)' }}>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+                支持直接粘贴多行文本。智能识别格式：<br/>
+                <code>前端: React, Vue</code> 或 <br/>
+                <code>前端<br/>React, Vue</code>
+              </p>
+              <AutoResizeTextarea
+                className={`${styles.input} ${styles.textarea}`}
+                style={{ minHeight: '80px', marginBottom: '8px' }}
+                value={importText}
+                onChange={(e) => setImportText(e.target.value)}
+                placeholder="在此粘贴您的技能描述文本..."
+              />
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                <button className="btn btn-ghost btn-sm" onClick={() => setIsImporting(false)}>取消</button>
+                <button className="btn btn-primary btn-sm" onClick={handleSmartImport}>识别并添加</button>
+              </div>
+            </div>
+          )}
+
           <DragDropContext onDragEnd={handleDragEnd}>
             <Droppable droppableId="skills-list">
               {(provided) => (
@@ -94,13 +161,13 @@ const SkillEditor: React.FC = () => {
                             </div>
                             
                             <div className={styles.inputGroup}>
-                              <label className={styles.label}>技能列表 (请使用逗号分隔)</label>
+                              <label className={styles.label}>技能描述 (支持长句，直接保留原格式)</label>
                               <AutoResizeTextarea 
                                 className={`${styles.input} ${styles.textarea}`} 
                                 style={{ minHeight: '60px' }} 
                                 value={item.items.join(', ')} 
                                 onChange={e => handleItemsChange(item.id, e.target.value)} 
-                                placeholder="如: React, Vue, TypeScript, Next.js..." 
+                                placeholder="如: 熟悉 HTML5, CSS3, JavaScript..." 
                               />
                             </div>
                           </div>
