@@ -176,3 +176,22 @@
   min-height: 100px;
   resize: vertical;
 }
+
+.exportMenuItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: left;
+}
+
+.exportMenuItem:hover {
+  background-color: var(--bg-tertiary);
+}

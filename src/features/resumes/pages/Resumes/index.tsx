@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Plus, Copy, Trash2, FileText, Download, UploadCloud, Loader2, Edit3, X, FileDown, Undo2, Redo2, Sliders, Sparkles, RotateCcw } from 'lucide-react';
+import { Plus, Copy, Trash2, FileText, Download, UploadCloud, Loader2, Edit3, X, FileDown, Undo2, Redo2, Sliders, Sparkles, RotateCcw, ChevronDown, FileCode, Globe, AlignLeft, Database } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
 import { Group, Panel, Separator } from 'react-resizable-panels';
 import { useResumeStore, defaultResumeLayout } from '../../store/useResumeStore';
@@ -8,6 +8,7 @@ import ResumeEditor from '../../components/ResumeEditor';
 import ResumePreview from '../../components/ResumePreview';
 import { extractTextFromPdf, parseTextWithLLM } from '../../services/resumeParser';
 import { saveFileToIDB, getFileFromIDB } from '../../../../core/services/storage';
+import { resumeToMarkdown, resumeToTxt, resumeToHtml, downloadFile } from '../../utils/exportFormats';
 import styles from './Resumes.module.css';
 
 
@@ -251,6 +252,35 @@ const Resumes: React.FC = () => {
   };
 
   const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null);
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+
+  const handleExportMd = () => {
+    if (!activeResume) return;
+    const md = resumeToMarkdown(activeResume);
+    const filename = `${activeResume.name || '简历'}.md`;
+    downloadFile(md, filename, 'text/markdown');
+  };
+
+  const handleExportTxt = () => {
+    if (!activeResume) return;
+    const txt = resumeToTxt(activeResume);
+    const filename = `${activeResume.name || '简历'}.txt`;
+    downloadFile(txt, filename, 'text/plain');
+  };
+
+  const handleExportHtml = () => {
+    if (!activeResume) return;
+    const html = resumeToHtml(activeResume, currentLayout);
+    const filename = `${activeResume.name || '简历'}.html`;
+    downloadFile(html, filename, 'text/html');
+  };
+
+  const handleExportJson = () => {
+    if (!activeResume) return;
+    const json = JSON.stringify(activeResume, null, 2);
+    const filename = `${activeResume.name || '简历'}.json`;
+    downloadFile(json, filename, 'application/json');
+  };
 
   const handlePreviewSource = async () => {
     if (!activeResume?.sourceFileId || !activeResume?.sourceFileName) return;
@@ -631,14 +661,115 @@ const Resumes: React.FC = () => {
                       <FileDown size={16} /> 预览源文件
                     </button>
                   )}
-                  <button 
-                    className="btn btn-accent btn-sm" 
-                    onClick={() => handlePrint()} 
-                    disabled={!activeResumeId}
-                    style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-                  >
-                    <Download size={16} /> 导出 PDF
-                  </button>
+                  <div style={{ position: 'relative' }}>
+                    <button 
+                      className="btn btn-accent btn-sm" 
+                      onClick={() => setIsExportMenuOpen(!isExportMenuOpen)} 
+                      disabled={!activeResumeId}
+                      style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <Download size={15} /> 导出简历 <ChevronDown size={14} style={{ opacity: 0.8, transform: isExportMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }} />
+                    </button>
+
+                    {isExportMenuOpen && (
+                      <>
+                        <div 
+                          style={{ position: 'fixed', inset: 0, zIndex: 100 }} 
+                          onClick={() => setIsExportMenuOpen(false)} 
+                        />
+                        <div 
+                          style={{
+                            position: 'absolute',
+                            right: 0,
+                            top: '100%',
+                            marginTop: '6px',
+                            width: '230px',
+                            backgroundColor: 'var(--bg-primary)',
+                            borderRadius: 'var(--radius-md)',
+                            boxShadow: 'var(--shadow-lg)',
+                            border: '1px solid var(--border-color)',
+                            padding: '6px',
+                            zIndex: 101,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '2px'
+                          }}
+                        >
+                          <button
+                            type="button"
+                            className={styles.exportMenuItem}
+                            onClick={() => { setIsExportMenuOpen(false); handlePrint(); }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <FileText size={16} color="var(--primary)" />
+                              <div>
+                                <div style={{ fontWeight: 500, fontSize: '13px' }}>PDF 物理排版 (.pdf)</div>
+                                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>A4 标准排版 / 求职投递</div>
+                              </div>
+                            </div>
+                          </button>
+
+                          <button
+                            type="button"
+                            className={styles.exportMenuItem}
+                            onClick={() => { setIsExportMenuOpen(false); handleExportMd(); }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <FileCode size={16} color="#10b981" />
+                              <div>
+                                <div style={{ fontWeight: 500, fontSize: '13px' }}>Markdown 格式 (.md)</div>
+                                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>AI 润色 / 知识库 / Notion</div>
+                              </div>
+                            </div>
+                          </button>
+
+                          <button
+                            type="button"
+                            className={styles.exportMenuItem}
+                            onClick={() => { setIsExportMenuOpen(false); handleExportHtml(); }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <Globe size={16} color="#6366f1" />
+                              <div>
+                                <div style={{ fontWeight: 500, fontSize: '13px' }}>HTML 单文件 (.html)</div>
+                                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>独立离线网页 / 邮件发送</div>
+                              </div>
+                            </div>
+                          </button>
+
+                          <button
+                            type="button"
+                            className={styles.exportMenuItem}
+                            onClick={() => { setIsExportMenuOpen(false); handleExportTxt(); }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <AlignLeft size={16} color="#f59e0b" />
+                              <div>
+                                <div style={{ fontWeight: 500, fontSize: '13px' }}>纯文本格式 (.txt)</div>
+                                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>招聘网站文本框快速粘贴</div>
+                              </div>
+                            </div>
+                          </button>
+
+                          <div style={{ height: '1px', backgroundColor: 'var(--border-color)', margin: '4px 0' }} />
+
+                          <button
+                            type="button"
+                            className={styles.exportMenuItem}
+                            onClick={() => { setIsExportMenuOpen(false); handleExportJson(); }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <Database size={16} color="#8b5cf6" />
+                              <div>
+                                <div style={{ fontWeight: 500, fontSize: '13px' }}>JSON 数据备份 (.json)</div>
+                                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>完整结构备份与跨端迁移</div>
+                              </div>
+                            </div>
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
              </div>
              
