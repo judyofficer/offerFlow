@@ -70,6 +70,15 @@ export interface Award {
   description: string;
 }
 
+export interface ResumeLayoutConfig {
+  pagePadding?: number;       // default: 36px (range: 20-56)
+  sectionSpacing?: number;    // default: 16px (range: 6-28)
+  itemSpacing?: number;       // default: 12px (range: 4-20)
+  lineHeight?: number;        // default: 1.5 (range: 1.25-1.75)
+  baseFontSize?: number;      // default: 13px (range: 11.5-15)
+  showPageBreakGuide?: boolean; // default: true
+}
+
 export interface ResumeContent {
   personalInfo: PersonalInfo;
   education: Education[];
@@ -78,6 +87,7 @@ export interface ResumeContent {
   skills: Skill[];
   campusExperience: CampusExperience[];
   awards: Award[];
+  layout?: ResumeLayoutConfig;
 }
 
 export interface Resume {

@@ -11,6 +11,8 @@ const SkillEditor: React.FC = () => {
   const { resumes, activeResumeId, addSectionItem, updateSectionItem, deleteSectionItem, reorderSectionItems } = useResumeStore();
   const activeResume = resumes.find(r => r.id === activeResumeId);
   const [isExpanded, setIsExpanded] = useState(true);
+  const [isImporting, setIsImporting] = useState(false);
+  const [importText, setImportText] = useState('');
 
   if (!activeResume) return null;
 
@@ -27,9 +29,6 @@ const SkillEditor: React.FC = () => {
     if (!result.destination) return;
     reorderSectionItems('skills', result.source.index, result.destination.index);
   };
-
-  const [isImporting, setIsImporting] = useState(false);
-  const [importText, setImportText] = useState('');
 
   const handleItemsChange = (id: string, value: string) => {
     updateSectionItem('skills', id, { items: [value] });

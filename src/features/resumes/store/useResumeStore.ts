@@ -1,7 +1,16 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { Resume, ResumeContent } from '../types/resume';
+import type { Resume, ResumeContent, ResumeLayoutConfig } from '../types/resume';
 import { createDebouncedStorage } from '../../../core/services/debouncedStorage';
+
+export const defaultResumeLayout: ResumeLayoutConfig = {
+  pagePadding: 36,
+  sectionSpacing: 16,
+  itemSpacing: 12,
+  lineHeight: 1.5,
+  baseFontSize: 13,
+  showPageBreakGuide: true,
+};
 
 const initialResumeContent: ResumeContent = {
   personalInfo: { name: '', email: '', phone: '', summary: '' },
@@ -11,6 +20,7 @@ const initialResumeContent: ResumeContent = {
   skills: [],
   campusExperience: [],
   awards: [],
+  layout: defaultResumeLayout,
 };
 
 type SectionKey = 'education' | 'experience' | 'projects' | 'skills' | 'campusExperience' | 'awards';
@@ -20,6 +30,7 @@ interface ResumeState {
   activeResumeId: string | null;
   addResume: (name: string) => void;
   updateActiveResume: (content: Partial<ResumeContent>) => void;
+  updateActiveResumeLayout: (layout: Partial<ResumeLayoutConfig>) => void;
   setActiveResume: (id: string) => void;
   deleteResume: (id: string) => void;
   duplicateResume: (id: string, newName: string) => void;
@@ -113,6 +124,31 @@ export const useResumeStore = create<ResumeState>()(
               return {
                 ...resume,
                 content: { ...resume.content, ...content },
+                updatedAt: Date.now(),
+              };
+            }
+            return resume;
+          });
+          return { resumes: updatedResumes };
+        });
+      },
+
+      updateActiveResumeLayout: (layout) => {
+        if (!historyTimeout) get().commitHistory();
+        else clearTimeout(historyTimeout);
+        historyTimeout = setTimeout(() => { historyTimeout = null; }, 1000);
+
+        set((state) => {
+          if (!state.activeResumeId) return state;
+          const updatedResumes = state.resumes.map((resume) => {
+            if (resume.id === state.activeResumeId) {
+              const currentLayout = resume.content.layout || defaultResumeLayout;
+              return {
+                ...resume,
+                content: {
+                  ...resume.content,
+                  layout: { ...currentLayout, ...layout },
+                },
                 updatedAt: Date.now(),
               };
             }

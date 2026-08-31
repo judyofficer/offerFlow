@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { background: #ccc; margin: 40px; }
+  .preview-container {
+    height: 1123px;
+    column-width: 794px;
+    column-gap: 40px;
+    column-fill: auto;
+    width: max-content; /* Allow horizontal growth */
+    background: transparent;
+  }
+  .page-box {
+    /* We can't apply background to the columns easily, but we can apply it to elements? No. */
+    /* To give each column a white background and shadow, we might need a different approach. */
+  }
+  .section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    background: white;
+    margin-bottom: 20px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+</style>
+</head>
+<body>
+  <div class="preview-container">
+    <div class="section" style="height: 400px;">Section 1</div>
+    <div class="section" style="height: 600px;">Section 2</div>
+    <div class="section" style="height: 300px;">Section 3 (Should be pushed to next column)</div>
+    <div class="section" style="height: 500px;">Section 4</div>
+  </div>
+</body>
+</html>

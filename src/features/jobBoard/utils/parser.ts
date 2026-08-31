@@ -40,7 +40,7 @@ export const parseJobText = (text: string): Partial<ParsedJobInfo> => {
   }
 
   // 3. 将剩余文本用常见分隔符切片
-  const fragments = text.split(/[-|/|,，_\|\s]+/).map(s => s.trim()).filter(s => s.length > 1);
+  const fragments = text.split(/[-|/|,，_|\s]+/).map(s => s.trim()).filter(s => s.length > 1);
   
   if (fragments.length > 0) {
     // 启发式：含有“公司”、“科技”、“集团”、“网络”的一般是公司名

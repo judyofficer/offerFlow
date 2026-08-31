@@ -1,21 +1,40 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Plus, Copy, Trash2, FileText, Download, UploadCloud, Loader2, Edit3, X, FileDown, Undo2, Redo2 } from 'lucide-react';
+import { Plus, Copy, Trash2, FileText, Download, UploadCloud, Loader2, Edit3, X, FileDown, Undo2, Redo2, Sliders, Sparkles, RotateCcw } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
 import { Group, Panel, Separator } from 'react-resizable-panels';
-import { useResumeStore } from '../../store/useResumeStore';
+import { useResumeStore, defaultResumeLayout } from '../../store/useResumeStore';
+import type { ResumeLayoutConfig } from '../../types/resume';
 import ResumeEditor from '../../components/ResumeEditor';
 import ResumePreview from '../../components/ResumePreview';
 import { extractTextFromPdf, parseTextWithLLM } from '../../services/resumeParser';
 import { saveFileToIDB, getFileFromIDB } from '../../../../core/services/storage';
 import styles from './Resumes.module.css';
 
+
+const PRESETS: Record<string, { label: string; config: ResumeLayoutConfig }> = {
+  compact: {
+    label: '紧凑单页',
+    config: { pagePadding: 28, sectionSpacing: 12, itemSpacing: 9, lineHeight: 1.42, baseFontSize: 12.5 },
+  },
+  standard: {
+    label: '标准平衡',
+    config: { pagePadding: 36, sectionSpacing: 16, itemSpacing: 12, lineHeight: 1.5, baseFontSize: 13 },
+  },
+  relaxed: {
+    label: '宽松大方',
+    config: { pagePadding: 44, sectionSpacing: 22, itemSpacing: 16, lineHeight: 1.6, baseFontSize: 13.5 },
+  },
+};
+
 const Resumes: React.FC = () => {
-  const { resumes, activeResumeId, addResume, setActiveResume, deleteResume, duplicateResume, importResume } = useResumeStore();
+  const { resumes, activeResumeId, addResume, setActiveResume, deleteResume, duplicateResume, importResume, updateActiveResumeLayout } = useResumeStore();
   const activeResume = resumes.find(r => r.id === activeResumeId);
+  const currentLayout = { ...defaultResumeLayout, ...(activeResume?.content.layout || {}) };
   
   const componentRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isParsing, setIsParsing] = useState(false);
+  const [isLayoutSettingsOpen, setIsLayoutSettingsOpen] = useState(false);
 
   // Modal State
   const [modalState, setModalState] = useState<{ isOpen: boolean; type: 'create' | 'duplicate' | 'rename'; targetId?: string }>({ isOpen: false, type: 'create' });
@@ -52,8 +71,112 @@ const Resumes: React.FC = () => {
 
   const handlePrint = useReactToPrint({
     contentRef: componentRef,
-    documentTitle: 'Resume',
+    documentTitle: activeResume?.name || '简历',
+    pageStyle: `
+      @page {
+        size: A4 portrait;
+        margin: 0mm;
+      }
+      @media print {
+        html, body {
+          margin: 0 !important;
+          padding: 0 !important;
+          background: #fff !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+        .no-print,
+        .measurement-sandbox,
+        .page-divider {
+          display: none !important;
+          visibility: hidden !important;
+          height: 0 !important;
+          width: 0 !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          overflow: hidden !important;
+          position: absolute !important;
+          top: -99999px !important;
+          left: -99999px !important;
+        }
+        .resume-pages-wrapper {
+          width: 210mm !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+        .resume-pages-container {
+          display: block !important;
+          width: 210mm !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          gap: 0 !important;
+        }
+        .a4-page {
+          box-shadow: none !important;
+          margin: 0 !important;
+          width: 210mm !important;
+          max-width: 210mm !important;
+          min-height: auto !important;
+          height: auto !important;
+          box-sizing: border-box !important;
+          page-break-inside: avoid !important;
+          break-inside: avoid !important;
+          page-break-after: always !important;
+          break-after: page !important;
+          overflow: visible !important;
+          background: #fff !important;
+        }
+        .a4-page.last-page,
+        .a4-page:last-child {
+          page-break-after: auto !important;
+          break-after: auto !important;
+        }
+      }
+    `,
   });
+
+  const handleAutoFitOnePage = () => {
+    if (!componentRef.current) return;
+    
+    // Measure all unpaginated chunks from the measurement sandbox
+    const chunkEls = componentRef.current.querySelectorAll('.measurement-sandbox [data-chunk-id]');
+    let totalChunkHeight = 0;
+    chunkEls.forEach(el => {
+      totalChunkHeight += (el as HTMLElement).offsetHeight;
+    });
+
+    const currentPagePadding = currentLayout.pagePadding || 36;
+    const currentTotalHeight = totalChunkHeight > 0 
+      ? totalChunkHeight + currentPagePadding * 2 
+      : (componentRef.current.scrollHeight || 1123);
+
+    // Target total height to fill ~95-97% of an A4 page (1123px)
+    // 1070px leaves an elegant cushion, looking fully filled without overflowing
+    const TARGET_HEIGHT = 1070;
+    
+    // Scale ratio: > 1 means expand to fill white space, < 1 means compress to fit in 1 page
+    const ratio = Math.max(0.7, Math.min(1.45, TARGET_HEIGHT / currentTotalHeight));
+
+    const currentFontSize = currentLayout.baseFontSize || 13;
+    const currentLineHeight = currentLayout.lineHeight || 1.5;
+    const currentSectionSpacing = currentLayout.sectionSpacing || 16;
+    const currentItemSpacing = currentLayout.itemSpacing || 12;
+
+    // Apply intelligent adaptive scaling
+    const newFontSize = Math.max(11.5, Math.min(14.5, currentFontSize * Math.pow(ratio, 0.35)));
+    const newLineHeight = Math.max(1.35, Math.min(1.70, currentLineHeight * Math.pow(ratio, 0.35)));
+    const newSectionSpacing = Math.max(8, Math.min(26, currentSectionSpacing * Math.pow(ratio, 0.85)));
+    const newItemSpacing = Math.max(5, Math.min(20, currentItemSpacing * Math.pow(ratio, 0.85)));
+    const newPadding = Math.max(24, Math.min(46, currentPagePadding * Math.pow(ratio, 0.5)));
+
+    updateActiveResumeLayout({
+      baseFontSize: parseFloat(newFontSize.toFixed(1)),
+      lineHeight: parseFloat(newLineHeight.toFixed(2)),
+      sectionSpacing: Math.round(newSectionSpacing),
+      itemSpacing: Math.round(newItemSpacing),
+      pagePadding: Math.round(newPadding),
+    });
+  };
 
   const openCreateModal = () => {
     setModalInput('');
@@ -222,6 +345,162 @@ const Resumes: React.FC = () => {
         </div>
       )}
 
+      {/* Layout Settings Modal */}
+      {isLayoutSettingsOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
+          <div style={{ backgroundColor: 'var(--bg-primary)', padding: '28px', borderRadius: 'var(--radius-lg)', width: '460px', boxShadow: 'var(--shadow-lg)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <h2 style={{ fontSize: '18px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Sliders size={18} /> 排版间距与字号微调
+              </h2>
+              <button onClick={() => setIsLayoutSettingsOpen(false)} className="btn btn-ghost btn-icon">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+              {/* Presets Row */}
+              <div>
+                <label className={styles.label}>快捷排版预设</label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                  {Object.entries(PRESETS).map(([key, preset]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      onClick={() => updateActiveResumeLayout(preset.config)}
+                      style={{
+                        borderColor: JSON.stringify(currentLayout) === JSON.stringify(preset.config) ? 'var(--primary)' : undefined,
+                        backgroundColor: JSON.stringify(currentLayout) === JSON.stringify(preset.config) ? 'var(--bg-tertiary)' : undefined,
+                      }}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Page Padding */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <label className={styles.label} style={{ marginBottom: 0 }}>页面内边距 (Padding)</label>
+                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{currentLayout.pagePadding}px</span>
+                </div>
+                <input
+                  type="range"
+                  min="20"
+                  max="56"
+                  step="2"
+                  value={currentLayout.pagePadding}
+                  onChange={(e) => updateActiveResumeLayout({ pagePadding: parseInt(e.target.value) })}
+                  style={{ width: '100%', accentColor: 'var(--primary)' }}
+                />
+              </div>
+
+              {/* Section Spacing */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <label className={styles.label} style={{ marginBottom: 0 }}>模块间距 (Section Gap)</label>
+                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{currentLayout.sectionSpacing}px</span>
+                </div>
+                <input
+                  type="range"
+                  min="6"
+                  max="28"
+                  step="2"
+                  value={currentLayout.sectionSpacing}
+                  onChange={(e) => updateActiveResumeLayout({ sectionSpacing: parseInt(e.target.value) })}
+                  style={{ width: '100%', accentColor: 'var(--primary)' }}
+                />
+              </div>
+
+              {/* Item Spacing */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <label className={styles.label} style={{ marginBottom: 0 }}>条目间距 (Item Gap)</label>
+                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{currentLayout.itemSpacing}px</span>
+                </div>
+                <input
+                  type="range"
+                  min="4"
+                  max="20"
+                  step="2"
+                  value={currentLayout.itemSpacing}
+                  onChange={(e) => updateActiveResumeLayout({ itemSpacing: parseInt(e.target.value) })}
+                  style={{ width: '100%', accentColor: 'var(--primary)' }}
+                />
+              </div>
+
+              {/* Line Height */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <label className={styles.label} style={{ marginBottom: 0 }}>行距 (Line Height)</label>
+                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{currentLayout.lineHeight}</span>
+                </div>
+                <input
+                  type="range"
+                  min="1.25"
+                  max="1.75"
+                  step="0.05"
+                  value={currentLayout.lineHeight}
+                  onChange={(e) => updateActiveResumeLayout({ lineHeight: parseFloat(e.target.value) })}
+                  style={{ width: '100%', accentColor: 'var(--primary)' }}
+                />
+              </div>
+
+              {/* Base Font Size */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <label className={styles.label} style={{ marginBottom: 0 }}>基础字号 (Base Font Size)</label>
+                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{currentLayout.baseFontSize}px</span>
+                </div>
+                <input
+                  type="range"
+                  min="11.5"
+                  max="15"
+                  step="0.5"
+                  value={currentLayout.baseFontSize}
+                  onChange={(e) => updateActiveResumeLayout({ baseFontSize: parseFloat(e.target.value) })}
+                  style={{ width: '100%', accentColor: 'var(--primary)' }}
+                />
+              </div>
+
+              {/* Show Page Break Line Toggle */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '4px' }}>
+                <label className={styles.label} style={{ marginBottom: 0, cursor: 'pointer' }} htmlFor="pageBreakToggle">
+                  显示 A4 分页截断线 (仅预览时可见)
+                </label>
+                <input
+                  id="pageBreakToggle"
+                  type="checkbox"
+                  checked={currentLayout.showPageBreakGuide ?? true}
+                  onChange={(e) => updateActiveResumeLayout({ showPageBreakGuide: e.target.checked })}
+                  style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--primary)' }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '24px' }}>
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => updateActiveResumeLayout(defaultResumeLayout)}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <RotateCcw size={14} /> 恢复默认
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                onClick={() => setIsLayoutSettingsOpen(false)}
+              >
+                完成
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Main Workspace: Left Panel (List/Editor) and Right Panel (Preview) */}
       <Panel defaultSize="50" minSize="25" maxSize="75">
         {!activeResumeId ? (
@@ -295,8 +574,9 @@ const Resumes: React.FC = () => {
       <Panel minSize="30">
         <div className={styles.previewPane}>
           <div style={{ position: 'relative', width: '100%', maxWidth: '794px', margin: '0 auto' }}>
-             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-                <div style={{ display: 'flex', gap: '8px' }}>
+             {/* Toolbar */}
+             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', gap: '12px', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '6px' }}>
                   <button 
                     className="btn btn-outline btn-sm" 
                     style={{ padding: '6px 8px', opacity: useResumeStore(s => s.past).length === 0 ? 0.5 : 1 }} 
@@ -307,7 +587,7 @@ const Resumes: React.FC = () => {
                     <Undo2 size={16} />
                   </button>
                   <button 
-                    className={styles.buttonOutline} 
+                    className="btn btn-outline btn-sm" 
                     style={{ padding: '6px 8px', opacity: useResumeStore(s => s.future).length === 0 ? 0.5 : 1 }} 
                     onClick={() => useResumeStore.getState().redo()} 
                     disabled={useResumeStore(s => s.future).length === 0}
@@ -317,7 +597,31 @@ const Resumes: React.FC = () => {
                   </button>
                 </div>
 
-                <div style={{ display: 'flex', gap: '8px' }}>
+                {activeResumeId && (
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    {/* Quick 1-page Smart Fit */}
+                    <button
+                      className="btn btn-outline btn-sm"
+                      onClick={handleAutoFitOnePage}
+                      title="根据当前经历内容多少，自动计算并调整间距与字号，让简历刚好收进 1 页 A4 纸内"
+                      style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--primary)' }}
+                    >
+                      <Sparkles size={14} /> 一键单页适配
+                    </button>
+
+                    {/* Layout Settings Popover */}
+                    <button
+                      className="btn btn-outline btn-sm"
+                      onClick={() => setIsLayoutSettingsOpen(true)}
+                      title="自定义页面边距、模块间距、行高与基础字号"
+                      style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <Sliders size={14} /> 排版间距
+                    </button>
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                   {activeResume?.sourceFileId && (
                     <button 
                       className="btn btn-outline btn-sm" 
@@ -331,12 +635,14 @@ const Resumes: React.FC = () => {
                     className="btn btn-accent btn-sm" 
                     onClick={() => handlePrint()} 
                     disabled={!activeResumeId}
+                    style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
                   >
                     <Download size={16} /> 导出 PDF
                   </button>
                 </div>
              </div>
              
+             {/* A4 Paper Canvas */}
              <div ref={componentRef} className={styles.a4Page}>
                 <ResumePreview />
              </div>
