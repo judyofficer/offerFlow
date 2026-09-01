@@ -120,6 +120,44 @@ const ResumePreview: React.FC = () => {
     const { personalInfo, education, experience, projects, skills, campusExperience, awards } = activeResume.content;
 
     // 1. Header
+    const contactItems = [
+      personalInfo.phone && `电话：${personalInfo.phone}`,
+      personalInfo.email && `邮箱：${personalInfo.email}`,
+      personalInfo.city && `现居城市：${personalInfo.city}`,
+    ].filter(Boolean);
+
+    const linkItems = [
+      personalInfo.github && (
+        <React.Fragment key="github">
+          Github：
+          <a href={personalInfo.github.startsWith('http') ? personalInfo.github : `https://${personalInfo.github}`} target="_blank" rel="noreferrer" style={{ color: '#2563eb', textDecoration: 'none' }}>
+            {personalInfo.github.replace(/^https?:\/\//, '')}
+          </a>
+        </React.Fragment>
+      ),
+      personalInfo.website && (
+        <React.Fragment key="website">
+          主页：
+          <a href={personalInfo.website.startsWith('http') ? personalInfo.website : `https://${personalInfo.website}`} target="_blank" rel="noreferrer" style={{ color: '#2563eb', textDecoration: 'none' }}>
+            {personalInfo.website.replace(/^https?:\/\//, '')}
+          </a>
+        </React.Fragment>
+      ),
+    ].filter(Boolean);
+
+    const demographicItems = [
+      personalInfo.gender && `性别：${personalInfo.gender}`,
+      personalInfo.birthDate && `生日：${personalInfo.birthDate}`,
+      personalInfo.ethnicity && `民族：${personalInfo.ethnicity}`,
+    ].filter(Boolean);
+
+    const intentItems = [
+      personalInfo.intendedCity && `意向城市：${personalInfo.intendedCity}`,
+      personalInfo.intendedRole && `求职意向：${personalInfo.intendedRole}`,
+    ].filter(Boolean);
+
+    const infoRows = [contactItems, linkItems, demographicItems, intentItems].filter(row => row.length > 0);
+
     chunks.push({
       id: 'header',
       node: (
@@ -129,65 +167,18 @@ const ResumePreview: React.FC = () => {
               {personalInfo.name || '您的名字'}
             </h1>
             
-            <div style={{ fontSize: `${baseFontSize}px`, color: '#4b5563', display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '3px' }}>
-              {[
-                personalInfo.phone && `电话：${personalInfo.phone}`,
-                personalInfo.email && `邮箱：${personalInfo.email}`,
-                personalInfo.city && `现居城市：${personalInfo.city}`,
-                personalInfo.github && (
-                  <React.Fragment key="github">
-                    Github：
-                    <a href={personalInfo.github.startsWith('http') ? personalInfo.github : `https://${personalInfo.github}`} target="_blank" rel="noreferrer" style={{ color: '#2563eb', textDecoration: 'none' }}>
-                      {personalInfo.github.replace(/^https?:\/\//, '')}
-                    </a>
-                  </React.Fragment>
-                ),
-                personalInfo.website && (
-                  <React.Fragment key="website">
-                    主页：
-                    <a href={personalInfo.website.startsWith('http') ? personalInfo.website : `https://${personalInfo.website}`} target="_blank" rel="noreferrer" style={{ color: '#2563eb', textDecoration: 'none' }}>
-                      {personalInfo.website.replace(/^https?:\/\//, '')}
-                    </a>
-                  </React.Fragment>
-                )
-              ].filter(Boolean).map((node, idx, arr) => (
-                <React.Fragment key={idx}>
-                  <span>{node}</span>
-                  {idx < arr.length - 1 && <span style={{ color: '#d1d5db' }}>|</span>}
-                </React.Fragment>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: `${Math.max(4, Math.round(baseFontSize * 0.3))}px`, fontSize: `${baseFontSize}px`, color: '#4b5563', lineHeight: 1.35 }}>
+              {infoRows.map((rowItems, rIdx) => (
+                <div key={rIdx} style={{ display: 'flex', columnGap: '8px', rowGap: `${Math.max(4, Math.round(baseFontSize * 0.3))}px`, flexWrap: 'wrap', alignItems: 'center' }}>
+                  {rowItems.map((node, idx, arr) => (
+                    <React.Fragment key={idx}>
+                      <span>{node}</span>
+                      {idx < arr.length - 1 && <span style={{ color: '#d1d5db', userSelect: 'none' }}>|</span>}
+                    </React.Fragment>
+                  ))}
+                </div>
               ))}
             </div>
-
-            {/* Second Row */}
-            {(personalInfo.gender || personalInfo.birthDate || personalInfo.ethnicity) && (
-              <div style={{ fontSize: `${baseFontSize}px`, color: '#4b5563', display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '3px' }}>
-                {[
-                  personalInfo.gender && `性别：${personalInfo.gender}`,
-                  personalInfo.birthDate && `生日：${personalInfo.birthDate}`,
-                  personalInfo.ethnicity && `民族：${personalInfo.ethnicity}`
-                ].filter(Boolean).map((text, idx, arr) => (
-                  <React.Fragment key={idx}>
-                    <span>{text}</span>
-                    {idx < arr.length - 1 && <span style={{ color: '#d1d5db' }}>|</span>}
-                  </React.Fragment>
-                ))}
-              </div>
-            )}
-
-            {/* Third Row */}
-            {(personalInfo.intendedCity || personalInfo.intendedRole) && (
-              <div style={{ fontSize: `${baseFontSize}px`, color: '#4b5563', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                {[
-                  personalInfo.intendedCity && `意向城市：${personalInfo.intendedCity}`,
-                  personalInfo.intendedRole && `求职意向：${personalInfo.intendedRole}`
-                ].filter(Boolean).map((text, idx, arr) => (
-                  <React.Fragment key={idx}>
-                    <span>{text}</span>
-                    {idx < arr.length - 1 && <span style={{ color: '#d1d5db' }}>|</span>}
-                  </React.Fragment>
-                ))}
-              </div>
-            )}
           </div>
           
           {personalInfo.avatar && (

@@ -3,8 +3,7 @@ import { useResumeStore } from '../../store/useResumeStore';
 import { ChevronDown, ChevronRight, Plus, Trash2, GripVertical } from 'lucide-react';
 import type { Award } from '../../types/resume';
 import styles from '../../pages/Resumes/Resumes.module.css';
-
-import { AutoResizeTextarea } from './AutoResizeTextarea';
+import { RichContentEditor } from './RichContentEditor';
 
 const AwardEditor: React.FC = () => {
   const { resumes, activeResumeId, updateActiveResume } = useResumeStore();
@@ -105,13 +104,13 @@ const AwardEditor: React.FC = () => {
               </div>
 
               <div className={styles.inputGroup}>
-                <label className={styles.label}>奖项说明 (选填，建议使用列表项)</label>
-                <AutoResizeTextarea 
-                  className={`${styles.input} ${styles.textarea}`} 
-                  style={{ minHeight: '80px' }}
+                <label className={styles.label}>奖项说明 (选填)</label>
+                <RichContentEditor 
+                  minHeight={60}
+                  rows={2}
                   value={item.description || ''} 
-                  onChange={(e) => handleUpdate(item.id, 'description', e.target.value)}
-                  placeholder="如: 全国一等奖、排名前5%..."
+                  onChange={(val) => handleUpdate(item.id, 'description', val)}
+                  placeholder="如: 全国一等奖、全系排名前 5%..."
                 />
               </div>
             </div>

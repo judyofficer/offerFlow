@@ -310,27 +310,34 @@ const resumeToHtmlBody = (resume: Resume, layout?: ResumeLayoutConfig): string =
   const htmlParts: string[] = [];
 
   // Header
+  const contactParts = [
+    personalInfo.phone && `电话：${personalInfo.phone}`,
+    personalInfo.email && `邮箱：${personalInfo.email}`,
+    personalInfo.city && `现居：${personalInfo.city}`,
+  ].filter(Boolean);
+
+  const linkParts = [
+    personalInfo.github && `GitHub：<a href="${personalInfo.github.startsWith('http') ? personalInfo.github : `https://${personalInfo.github}`}" target="_blank">${personalInfo.github.replace(/^https?:\/\//, '')}</a>`,
+    personalInfo.website && `主页：<a href="${personalInfo.website.startsWith('http') ? personalInfo.website : `https://${personalInfo.website}`}" target="_blank">${personalInfo.website.replace(/^https?:\/\//, '')}</a>`,
+  ].filter(Boolean);
+
+  const intentParts = [
+    personalInfo.intendedCity && `意向城市：${personalInfo.intendedCity}`,
+    personalInfo.intendedRole && `求职意向：${personalInfo.intendedRole}`,
+    personalInfo.gender && `性别：${personalInfo.gender}`,
+    personalInfo.birthDate && `生日：${personalInfo.birthDate}`,
+    personalInfo.ethnicity && `民族：${personalInfo.ethnicity}`,
+  ].filter(Boolean);
+
+  const rows = [contactParts, linkParts, intentParts].filter(r => r.length > 0);
+
   htmlParts.push(`
     <header style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: ${Math.max(12, sectionSpacing * 0.9)}px;">
       <div style="flex: 1;">
         <h1>${personalInfo.name || '您的名字'}</h1>
-        <div style="font-size: ${baseFontSize}px; color: #4b5563; margin-bottom: 4px;">
-          ${[
-            personalInfo.phone && `电话：${personalInfo.phone}`,
-            personalInfo.email && `邮箱：${personalInfo.email}`,
-            personalInfo.city && `现居：${personalInfo.city}`,
-            personalInfo.github && `GitHub：<a href="${personalInfo.github.startsWith('http') ? personalInfo.github : `https://${personalInfo.github}`}" target="_blank">${personalInfo.github.replace(/^https?:\/\//, '')}</a>`,
-            personalInfo.website && `主页：<a href="${personalInfo.website.startsWith('http') ? personalInfo.website : `https://${personalInfo.website}`}" target="_blank">${personalInfo.website.replace(/^https?:\/\//, '')}</a>`
-          ].filter(Boolean).join(' | ')}
+        <div style="display: flex; flex-direction: column; gap: 4px; font-size: ${baseFontSize}px; color: #4b5563; line-height: 1.35;">
+          ${rows.map(r => `<div>${r.join(' | ')}</div>`).join('')}
         </div>
-        ${(personalInfo.intendedCity || personalInfo.intendedRole) ? `
-          <div style="font-size: ${baseFontSize}px; color: #4b5563;">
-            ${[
-              personalInfo.intendedCity && `意向城市：${personalInfo.intendedCity}`,
-              personalInfo.intendedRole && `求职意向：${personalInfo.intendedRole}`
-            ].filter(Boolean).join(' | ')}
-          </div>
-        ` : ''}
       </div>
       ${personalInfo.avatar ? `<img src="${personalInfo.avatar}" alt="Avatar" style="width: 75px; height: 100px; object-fit: cover; border-radius: 4px; margin-left: 16px;" />` : ''}
     </header>

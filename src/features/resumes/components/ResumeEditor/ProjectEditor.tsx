@@ -4,8 +4,7 @@ import { GripVertical, Plus, Trash2, ChevronDown, ChevronRight } from 'lucide-re
 import { useResumeStore } from '../../store/useResumeStore';
 import type { Project } from '../../types/resume';
 import styles from '../../pages/Resumes/Resumes.module.css';
-
-import { AutoResizeTextarea } from './AutoResizeTextarea';
+import { RichContentEditor } from './RichContentEditor';
 
 const ProjectEditor: React.FC = () => {
   const { resumes, activeResumeId, addSectionItem, updateSectionItem, deleteSectionItem, reorderSectionItems } = useResumeStore();
@@ -120,24 +119,24 @@ const ProjectEditor: React.FC = () => {
                             </div>
 
                             <div className={styles.inputGroup}>
-                              <label className={styles.label}>项目介绍 (建议使用列表项)</label>
-                              <AutoResizeTextarea 
-                                className={styles.input} 
-                                style={{ minHeight: '80px' }}
-                                rows={3}
+                              <label className={styles.label}>项目介绍</label>
+                              <RichContentEditor 
+                                minHeight={70}
+                                rows={2}
                                 value={item.description} 
-                                onChange={e => updateSectionItem('projects', item.id, { description: e.target.value })} 
+                                onChange={val => updateSectionItem('projects', item.id, { description: val })} 
+                                placeholder="简要描述项目的业务背景与解决的核心问题..."
                               />
                             </div>
 
                             <div className={styles.inputGroup}>
-                              <label className={styles.label}>项目亮点/成果 (建议使用列表项)</label>
-                              <AutoResizeTextarea 
-                                className={styles.input} 
-                                style={{ minHeight: '80px' }}
-                                rows={8}
+                              <label className={styles.label}>项目亮点 / 核心成果 (建议按条目重点突出)</label>
+                              <RichContentEditor 
+                                minHeight={120}
+                                rows={6}
                                 value={item.highlights || ''} 
-                                onChange={e => updateSectionItem('projects', item.id, { highlights: e.target.value })} 
+                                onChange={val => updateSectionItem('projects', item.id, { highlights: val })} 
+                                placeholder="使用小圆点列出具体成果，如：• 基于 React 完成了...，提升了 30% 性能"
                               />
                             </div>
                           </div>

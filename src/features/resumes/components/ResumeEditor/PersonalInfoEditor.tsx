@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useResumeStore } from '../../store/useResumeStore';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, Camera, Upload, Trash2 } from 'lucide-react';
 import styles from '../../pages/Resumes/Resumes.module.css';
 
 const PersonalInfoEditor: React.FC = () => {
   const { resumes, activeResumeId, updateActiveResume } = useResumeStore();
   const activeResume = resumes.find(r => r.id === activeResumeId);
   const [isExpanded, setIsExpanded] = useState(true);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!activeResume) return null;
 
@@ -55,26 +56,55 @@ const PersonalInfoEditor: React.FC = () => {
         <div style={{ marginTop: '16px' }}>
           <div className={styles.inputGroup} style={{ marginBottom: '16px' }}>
             <label className={styles.label}>个人照片 (选填)</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              {personalInfo.avatar && (
-                <img src={personalInfo.avatar} alt="Avatar" style={{ width: '48px', height: '64px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--border-color)' }} />
-              )}
-              <input 
-                type="file" 
-                accept="image/*"
-                onChange={handleAvatarUpload}
-                style={{ fontSize: '13px' }}
-              />
-              {personalInfo.avatar && (
+            <input 
+              type="file" 
+              ref={fileInputRef}
+              accept="image/*"
+              onChange={handleAvatarUpload}
+              style={{ display: 'none' }}
+            />
+            {personalInfo.avatar ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <img 
+                  src={personalInfo.avatar} 
+                  alt="Avatar" 
+                  style={{ width: '52px', height: '70px', objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }} 
+                />
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <button 
+                    type="button"
+                    className="btn btn-outline btn-sm" 
+                    onClick={() => fileInputRef.current?.click()}
+                    style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', padding: '4px 10px' }}
+                  >
+                    <Upload size={14} /> 更换照片
+                  </button>
+                  <button 
+                    type="button"
+                    className="btn btn-ghost btn-sm" 
+                    onClick={() => {
+                      handlePersonalInfoChange('avatar', '');
+                      if (fileInputRef.current) fileInputRef.current.value = '';
+                    }}
+                    style={{ color: 'var(--danger, #ef4444)', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', padding: '4px 10px' }}
+                  >
+                    <Trash2 size={14} /> 移除照片
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <button 
-                  className="btn btn-ghost btn-sm" 
-                  onClick={() => handlePersonalInfoChange('avatar', '')}
-                  style={{ color: '#ef4444', padding: '4px 8px' }}
+                  type="button"
+                  className="btn btn-outline btn-sm" 
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', padding: '6px 14px' }}
                 >
-                  移除照片
+                  <Camera size={15} /> 上传个人照片
                 </button>
-              )}
-            </div>
+                <span style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>支持 1 寸/2 寸寸照，JPG、PNG 格式</span>
+              </div>
+            )}
           </div>
 
           <div className={styles.inputGroup}>

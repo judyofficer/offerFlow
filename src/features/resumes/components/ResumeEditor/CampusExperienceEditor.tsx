@@ -3,8 +3,7 @@ import { useResumeStore } from '../../store/useResumeStore';
 import { ChevronDown, ChevronRight, Plus, Trash2, GripVertical } from 'lucide-react';
 import type { CampusExperience } from '../../types/resume';
 import styles from '../../pages/Resumes/Resumes.module.css';
-
-import { AutoResizeTextarea } from './AutoResizeTextarea';
+import { RichContentEditor } from './RichContentEditor';
 
 const CampusExperienceEditor: React.FC = () => {
   const { resumes, activeResumeId, updateActiveResume } = useResumeStore();
@@ -118,12 +117,12 @@ const CampusExperienceEditor: React.FC = () => {
               </div>
 
               <div className={styles.inputGroup}>
-                <label className={styles.label}>经历描述 (建议使用列表项)</label>
-                <AutoResizeTextarea 
-                  className={`${styles.input} ${styles.textarea}`} 
-                  style={{ minHeight: '80px' }}
+                <label className={styles.label}>经历描述 (建议按条目列出)</label>
+                <RichContentEditor 
+                  minHeight={80}
+                  rows={4}
                   value={item.description} 
-                  onChange={(e) => handleUpdate(item.id, 'description', e.target.value)}
+                  onChange={(val) => handleUpdate(item.id, 'description', val)}
                   placeholder="描述您的主要工作内容和成果..."
                 />
               </div>

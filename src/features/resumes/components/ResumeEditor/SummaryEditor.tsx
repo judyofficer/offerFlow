@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useResumeStore } from '../../store/useResumeStore';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import styles from '../../pages/Resumes/Resumes.module.css';
-import { AutoResizeTextarea } from './AutoResizeTextarea';
+import { RichContentEditor } from './RichContentEditor';
 
 const SummaryEditor: React.FC = () => {
   const { resumes, activeResumeId, updateActiveResume } = useResumeStore();
@@ -44,12 +44,12 @@ const SummaryEditor: React.FC = () => {
       {isExpanded && (
         <div style={{ marginTop: '16px' }}>
           <div className={styles.inputGroup}>
-            <AutoResizeTextarea 
-              className={`${styles.input} ${styles.textarea}`} 
+            <RichContentEditor 
               value={personalInfo.summary} 
-              onChange={(e) => handlePersonalInfoChange('summary', e.target.value)}
-              placeholder="总结您的核心竞争力和职业亮点..."
-              style={{ minHeight: '120px' }}
+              onChange={(val) => handlePersonalInfoChange('summary', val)}
+              placeholder="总结您的核心竞争力和职业亮点，支持 **加粗** 和列表条目..."
+              minHeight={120}
+              rows={5}
             />
           </div>
         </div>
