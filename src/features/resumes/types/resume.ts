@@ -91,6 +91,16 @@ export interface ResumeLayoutConfig {
   showPageBreakGuide?: boolean; // default: true
 }
 
+export type ResumeTemplateId = 'classic' | 'modern' | 'compact' | 'standard' | string;
+
+export interface ResumeTemplate {
+  id: ResumeTemplateId;
+  name: string;
+  description?: string;
+  thumbnail?: string;
+  config?: ResumeLayoutConfig;
+}
+
 export interface ResumeContent {
   personalInfo: PersonalInfo;
   education: Education[];
@@ -98,8 +108,9 @@ export interface ResumeContent {
   projects: Project[];
   skills: Skill[];
   campusExperience: CampusExperience[];
-  awards: Award[];
+  awards: Award[] | string;
   layout?: ResumeLayoutConfig;
+  templateId?: ResumeTemplateId;
 }
 
 export interface Resume {

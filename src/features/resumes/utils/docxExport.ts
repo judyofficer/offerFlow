@@ -667,32 +667,52 @@ export const generateResumeDocx = async (
     campusExperience.forEach((camp, idx) => {
       const dateRange = `${camp.startDate || ''} ${camp.startDate && camp.endDate ? '-' : ''} ${camp.endDate || ''}`.trim();
       const beforeSpacing = idx === 0 ? 30 : Math.round(itemSpacing * 6);
-      docChildren.push(
-        createTwoColumnItemHeader(
-          camp.organization || '组织名称',
-          dateRange,
-          itemTitleSize,
-          metaDateSize,
-          contentWidthDxa,
-          beforeSpacing
-        )
-      );
+      const roleText = camp.role || camp.organization || '职务/角色';
 
-      if (camp.role) {
-        docChildren.push(
-          new Paragraph({
-            spacing: { before: 10, after: Math.round(Math.max(2, itemSpacing * 0.35) * 8) },
-            children: [
-              new TextRun({
-                text: camp.role,
-                size: itemSubtitleSize,
-                color: '374151',
-                font: 'Microsoft YaHei',
-              }),
-            ],
+      const runs: TextRun[] = [
+        new TextRun({
+          text: roleText,
+          bold: true,
+          size: itemTitleSize,
+          color: '111827',
+          font: 'Microsoft YaHei',
+        }),
+      ];
+
+      if (camp.role && camp.organization) {
+        runs.push(
+          new TextRun({
+            text: `  |  ${camp.organization}`,
+            size: bodySize,
+            color: '4B5563',
+            font: 'Microsoft YaHei',
           })
         );
       }
+
+      if (dateRange) {
+        runs.push(
+          new TextRun({
+            children: [new Tab(), dateRange],
+            size: metaDateSize,
+            color: '4B5563',
+            font: 'Microsoft YaHei',
+          })
+        );
+      }
+
+      docChildren.push(
+        new Paragraph({
+          tabStops: [
+            {
+              type: TabStopType.RIGHT,
+              position: contentWidthDxa,
+            },
+          ],
+          spacing: { before: beforeSpacing, after: 15 },
+          children: runs,
+        })
+      );
 
       docChildren.push(...createDescriptionParagraphs(camp.description, bodySize, lineSpacingDxa));
     });
@@ -728,21 +748,50 @@ export const generateResumeDocx = async (
   }
 
   // ================= 7. 荣誉奖项 (Awards) =================
-  if (awards.length > 0) {
+  const awardsText = typeof awards === 'string'
+    ? awards
+    : (Array.isArray(awards)
+        ? awards.map(a => [a.date, a.name, a.awarder ? `(${a.awarder})` : '', a.description ? `- ${a.description}` : ''].filter(Boolean).join(' ')).filter(Boolean).join('\n')
+        : '');
+
+  if (awardsText && awardsText.trim()) {
     docChildren.push(createSectionBanner('荣誉奖项', sectionTitleSize, sectionSpacing));
-    awards.forEach((award, idx) => {
-      const beforeSpacing = idx === 0 ? 30 : Math.round(itemSpacing * 6);
+    const awardLines = awardsText.split('\n').filter(line => line.trim().length > 0);
+    awardLines.forEach(line => {
+      const cleanLine = line.replace(/^[-*•·]\s*/, '');
+      const parts = cleanLine.split(/(\*\*.*?\*\*)/g);
+      const runs: TextRun[] = [];
+
+      parts.forEach(part => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          runs.push(
+            new TextRun({
+              text: part.slice(2, -2),
+              bold: true,
+              size: bodySize,
+              color: '111827',
+              font: 'Microsoft YaHei',
+            })
+          );
+        } else if (part.length > 0) {
+          runs.push(
+            new TextRun({
+              text: part,
+              size: bodySize,
+              color: '374151',
+              font: 'Microsoft YaHei',
+            })
+          );
+        }
+      });
+
       docChildren.push(
-        createTwoColumnItemHeader(
-          award.name || '奖项名称',
-          award.date || '',
-          itemTitleSize,
-          metaDateSize,
-          contentWidthDxa,
-          beforeSpacing
-        )
+        new Paragraph({
+          bullet: { level: 0 },
+          spacing: { before: 12, after: 12, line: lineSpacingDxa },
+          children: runs,
+        })
       );
-      docChildren.push(...createDescriptionParagraphs(award.description, bodySize, lineSpacingDxa));
     });
   }
 

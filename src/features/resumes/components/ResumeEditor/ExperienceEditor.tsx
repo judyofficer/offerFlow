@@ -33,21 +33,22 @@ const ExperienceEditor: React.FC = () => {
 
   return (
     <section style={{ marginBottom: '32px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isExpanded ? '16px' : '0', borderBottom: '1px solid var(--border-color)', paddingBottom: '8px' }}>
-        <h3 
-          className="text-h3" 
-          style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}
-          onClick={() => setIsExpanded(!isExpanded)}
-        >
-          {isExpanded ? <ChevronDown size={18} style={{ marginRight: '8px' }} /> : <ChevronRight size={18} style={{ marginRight: '8px' }} />}
-          工作经历 (Work Experience)
-        </h3>
-        {isExpanded && (
-          <button className="btn btn-outline btn-sm" onClick={handleAdd}>
-            <Plus size={14} /> 添加工作经历
-          </button>
-        )}
-      </div>
+      <h3 
+        className="text-h3" 
+        style={{ 
+          marginBottom: isExpanded ? '16px' : '0', 
+          borderBottom: '1px solid var(--border-color)', 
+          paddingBottom: '8px',
+          display: 'flex',
+          alignItems: 'center',
+          cursor: 'pointer',
+          userSelect: 'none'
+        }}
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
+        {isExpanded ? <ChevronDown size={18} style={{ marginRight: '8px' }} /> : <ChevronRight size={18} style={{ marginRight: '8px' }} />}
+        工作经历 (Work Experience)
+      </h3>
 
       {isExpanded && (
         <div style={{ marginTop: '16px' }}>
@@ -128,6 +129,11 @@ const ExperienceEditor: React.FC = () => {
               )}
             </Droppable>
           </DragDropContext>
+
+          <button className="btn btn-outline" style={{ width: '100%', marginTop: '8px' }} onClick={handleAdd}>
+            <Plus size={16} style={{ marginRight: '8px' }} />
+            添加工作经历
+          </button>
         </div>
       )}
     </section>

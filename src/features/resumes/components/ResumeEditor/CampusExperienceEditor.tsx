@@ -27,7 +27,7 @@ const CampusExperienceEditor: React.FC = () => {
   };
 
   const handleUpdate = (id: string, field: keyof CampusExperience, value: string) => {
-    const updated = campusExperience.map(item => 
+    const updated = campusExperience.map(item =>
       item.id === id ? { ...item, [field]: value } : item
     );
     updateActiveResume({ campusExperience: updated });
@@ -39,11 +39,11 @@ const CampusExperienceEditor: React.FC = () => {
 
   return (
     <section style={{ marginBottom: '32px' }}>
-      <h3 
-        className="text-h3" 
-        style={{ 
-          marginBottom: isExpanded ? '16px' : '0', 
-          borderBottom: '1px solid var(--border-color)', 
+      <h3
+        className="text-h3"
+        style={{
+          marginBottom: isExpanded ? '16px' : '0',
+          borderBottom: '1px solid var(--border-color)',
           paddingBottom: '8px',
           display: 'flex',
           alignItems: 'center',
@@ -55,7 +55,7 @@ const CampusExperienceEditor: React.FC = () => {
         {isExpanded ? <ChevronDown size={18} style={{ marginRight: '8px' }} /> : <ChevronRight size={18} style={{ marginRight: '8px' }} />}
         校园经历 (Campus Experience)
       </h3>
-      
+
       {isExpanded && (
         <div style={{ marginTop: '16px' }}>
           {campusExperience.map((item, index) => (
@@ -72,23 +72,23 @@ const CampusExperienceEditor: React.FC = () => {
 
               <div style={{ display: 'flex', gap: '16px' }}>
                 <div className={styles.inputGroup} style={{ flex: 1 }}>
-                  <label className={styles.label}>组织名称</label>
-                  <input 
-                    type="text" 
-                    className={styles.input} 
-                    value={item.organization} 
-                    onChange={(e) => handleUpdate(item.id, 'organization', e.target.value)}
-                    placeholder="例如: 学生职业发展协会"
+                  <label className={styles.label}>职务 / 角色</label>
+                  <input
+                    type="text"
+                    className={styles.input}
+                    value={item.role}
+                    onChange={(e) => handleUpdate(item.id, 'role', e.target.value)}
+                    placeholder="例如: 负责人 / 部长 / 班长"
                   />
                 </div>
                 <div className={styles.inputGroup} style={{ flex: 1 }}>
-                  <label className={styles.label}>角色/职务</label>
-                  <input 
-                    type="text" 
-                    className={styles.input} 
-                    value={item.role} 
-                    onChange={(e) => handleUpdate(item.id, 'role', e.target.value)}
-                    placeholder="例如: 活动部 负责人"
+                  <label className={styles.label}>所属组织 / 部门</label>
+                  <input
+                    type="text"
+                    className={styles.input}
+                    value={item.organization}
+                    onChange={(e) => handleUpdate(item.id, 'organization', e.target.value)}
+                    placeholder="例如: 学生协会 / 青年志愿者协会"
                   />
                 </div>
               </div>
@@ -96,20 +96,20 @@ const CampusExperienceEditor: React.FC = () => {
               <div style={{ display: 'flex', gap: '16px' }}>
                 <div className={styles.inputGroup} style={{ flex: 1 }}>
                   <label className={styles.label}>开始时间</label>
-                  <input 
-                    type="text" 
-                    className={styles.input} 
-                    value={item.startDate} 
+                  <input
+                    type="text"
+                    className={styles.input}
+                    value={item.startDate}
                     onChange={(e) => handleUpdate(item.id, 'startDate', e.target.value)}
                     placeholder="2023.09"
                   />
                 </div>
                 <div className={styles.inputGroup} style={{ flex: 1 }}>
                   <label className={styles.label}>结束时间</label>
-                  <input 
-                    type="text" 
-                    className={styles.input} 
-                    value={item.endDate} 
+                  <input
+                    type="text"
+                    className={styles.input}
+                    value={item.endDate}
                     onChange={(e) => handleUpdate(item.id, 'endDate', e.target.value)}
                     placeholder="2024.06"
                   />
@@ -117,13 +117,13 @@ const CampusExperienceEditor: React.FC = () => {
               </div>
 
               <div className={styles.inputGroup}>
-                <label className={styles.label}>经历描述 (建议按条目列出)</label>
-                <RichContentEditor 
+                <label className={styles.label}>工作内容与成果 (突出做了什么)</label>
+                <RichContentEditor
                   minHeight={80}
                   rows={4}
-                  value={item.description} 
+                  value={item.description}
                   onChange={(val) => handleUpdate(item.id, 'description', val)}
-                  placeholder="描述您的主要工作内容和成果..."
+                  placeholder="建议使用列表列出具体成果，例如:&#10;- 负责协会日常运营与活动策划，主导举办 5 场校级技术沙龙，累计参与 500+ 人&#10;- 统筹管理技术干事团队，建立内部新人培训机制与技术文档库..."
                 />
               </div>
             </div>

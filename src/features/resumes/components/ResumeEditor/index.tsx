@@ -96,15 +96,7 @@ const ResumeEditor: React.FC = () => {
           description: '负责校园官方网站的日常维护和新功能开发。'
         }
       ],
-      awards: [
-        {
-          id: 'award-1',
-          name: '校级一等奖学金',
-          awarder: '示例大学',
-          date: '2024.05',
-          description: '全系排名前 5%'
-        }
-      ]
+      awards: '2024.05 校级一等奖学金 (示例大学，全系排名前 5%)\n2023.11 全国大学生数学建模竞赛 省级二等奖\n2023.06 校级优秀学生干部'
     });
   };
 

@@ -22,6 +22,14 @@ export const downloadBlobFile = (blob: Blob, filename: string) => {
   URL.revokeObjectURL(url);
 };
 
+const getAwardsText = (aw: any): string => {
+  if (typeof aw === 'string') return aw;
+  if (Array.isArray(aw)) {
+    return aw.map(a => [a.date, a.name, a.awarder ? `(${a.awarder})` : '', a.description ? `- ${a.description}` : ''].filter(Boolean).join(' ')).filter(Boolean).join('\n');
+  }
+  return '';
+};
+
 /**
  * 将简历转换为 Markdown 格式
  */
@@ -130,7 +138,9 @@ export const resumeToMarkdown = (resume: Resume): string => {
     lines.push('## 🏫 校园经历');
     lines.push('');
     campusExperience.forEach(camp => {
-      lines.push(`### ${camp.organization} - ${camp.role}`);
+      const headerTitle = camp.role || camp.organization;
+      const orgInfo = camp.role && camp.organization ? ` | ${camp.organization}` : '';
+      lines.push(`### ${headerTitle}${orgInfo}`);
       lines.push(`*${camp.startDate || ''} ${camp.startDate && camp.endDate ? '-' : ''} ${camp.endDate || ''}*`);
       if (camp.description) {
         lines.push('');
@@ -141,14 +151,12 @@ export const resumeToMarkdown = (resume: Resume): string => {
   }
 
   // Awards
-  if (awards && awards.length > 0) {
+  const mdAwardsText = getAwardsText(awards);
+  if (mdAwardsText.trim()) {
     lines.push('## 🏆 荣誉奖项');
     lines.push('');
-    awards.forEach(award => {
-      lines.push(`- **${award.name}** (${award.date || '获奖'})${award.awarder ? ` - 颁发机构: ${award.awarder}` : ''}`);
-      if (award.description) {
-        lines.push(`  ${award.description}`);
-      }
+    mdAwardsText.split('\n').filter(Boolean).forEach((line: string) => {
+      lines.push(`- ${line.replace(/^[-*•·]\s*/, '')}`);
     });
     lines.push('');
   }
@@ -241,18 +249,20 @@ export const resumeToTxt = (resume: Resume): string => {
   if (campusExperience && campusExperience.length > 0) {
     lines.push('【校园经历】');
     campusExperience.forEach(camp => {
-      lines.push(`• ${camp.organization} - ${camp.role} (${camp.startDate || ''} - ${camp.endDate || ''})`);
+      const headerTitle = camp.role || camp.organization;
+      const orgInfo = camp.role && camp.organization ? ` | ${camp.organization}` : '';
+      lines.push(`• ${headerTitle}${orgInfo} (${camp.startDate || ''} - ${camp.endDate || ''})`);
       if (camp.description) lines.push(`  ${camp.description.replace(/\n/g, '\n  ')}`);
     });
     lines.push('');
   }
 
   // Awards
-  if (awards && awards.length > 0) {
+  const txtAwardsText = getAwardsText(awards);
+  if (txtAwardsText.trim()) {
     lines.push('【荣誉奖项】');
-    awards.forEach(award => {
-      lines.push(`• ${award.name} (${award.date || ''}) ${award.awarder ? `- ${award.awarder}` : ''}`);
-      if (award.description) lines.push(`  ${award.description}`);
+    txtAwardsText.split('\n').filter(Boolean).forEach((line: string) => {
+      lines.push(`• ${line.replace(/^[-*•·]\s*/, '')}`);
     });
     lines.push('');
   }
@@ -458,34 +468,31 @@ const resumeToHtmlBody = (resume: Resume, layout?: ResumeLayoutConfig): string =
   if (campusExperience && campusExperience.length > 0) {
     htmlParts.push(`<h2>校园经历</h2>`);
     campusExperience.forEach(camp => {
+      const headerTitle = camp.role || camp.organization;
+      const orgInfo = camp.role && camp.organization ? ` <span style="font-weight: normal; color: #4b5563; font-size: ${baseFontSize}px;">| ${camp.organization}</span>` : '';
       htmlParts.push(`
         <div style="margin-bottom: ${itemSpacing}px;">
           <div style="display: flex; justify-content: space-between; font-weight: bold;">
-            <span>${camp.organization}</span>
-            <span style="font-weight: normal; color: #6b7280; font-size: ${baseFontSize - 1}px;">${camp.startDate || ''} - ${camp.endDate || ''}</span>
+            <span>${headerTitle}${orgInfo}</span>
+            <span style="font-weight: normal; color: #6b7280; font-size: ${baseFontSize - 1}px;">${camp.startDate || ''} ${camp.startDate && camp.endDate ? '-' : ''} ${camp.endDate || ''}</span>
           </div>
-          <div style="color: #4b5563;">${camp.role}</div>
-          ${renderDesc(camp.description)}
+          <div style="margin-top: 2px;">
+            ${renderDesc(camp.description)}
+          </div>
         </div>
       `);
     });
   }
 
   // Awards
-  if (awards && awards.length > 0) {
+  const htmlAwardsText = getAwardsText(awards);
+  if (htmlAwardsText.trim()) {
     htmlParts.push(`<h2>荣誉奖项</h2>`);
-    awards.forEach(award => {
-      htmlParts.push(`
-        <div style="margin-bottom: ${itemSpacing}px;">
-          <div style="display: flex; justify-content: space-between; font-weight: bold;">
-            <span>${award.name}</span>
-            <span style="font-weight: normal; color: #6b7280; font-size: ${baseFontSize - 1}px;">${award.date || ''}</span>
-          </div>
-          <div style="color: #4b5563;">${award.awarder || ''}</div>
-          ${award.description ? `<p style="margin: 2px 0;">${award.description}</p>` : ''}
-        </div>
-      `);
-    });
+    const lis = htmlAwardsText.split('\n').filter(Boolean).map((line: string) => {
+      const clean = line.replace(/^[-*•·]\s*/, '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      return `<li style="margin-bottom: 3px;">${clean}</li>`;
+    }).join('');
+    htmlParts.push(`<ul style="margin: 0 0 10px 0; padding-left: 20px;">${lis}</ul>`);
   }
 
   // Summary

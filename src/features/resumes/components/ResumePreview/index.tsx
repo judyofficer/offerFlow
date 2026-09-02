@@ -313,17 +313,26 @@ const ResumePreview: React.FC = () => {
     // 5. Campus Experience
     if (campusExperience && campusExperience.length > 0) {
       campusExperience.forEach((camp, idx) => {
+        const titleRole = camp.role || camp.organization || '经历';
         chunks.push({
           id: `camp-${camp.id || idx}`,
           node: (
             <div style={{ marginBottom: `${idx === campusExperience.length - 1 ? sectionSpacing : itemSpacing}px` }}>
               {idx === 0 && <h2 style={sectionTitleStyle}>校园经历</h2>}
               <div style={itemHeaderStyle}>
-                <span style={itemTitleStyle}>{camp.organization}</span>
+                <div>
+                  <span style={itemTitleStyle}>{titleRole}</span>
+                  {camp.role && camp.organization && (
+                    <span style={{ fontSize: `${baseFontSize}px`, color: '#4b5563', marginLeft: '8px', fontWeight: 'normal' }}>
+                      | {camp.organization}
+                    </span>
+                  )}
+                </div>
                 <span style={itemDateStyle}>{camp.startDate} {camp.startDate && camp.endDate ? '-' : ''} {camp.endDate}</span>
               </div>
-              <div style={itemSubtitleStyle}>{camp.role}</div>
-              {formatDescription(camp.description)}
+              <div style={{ marginTop: `${Math.max(2, itemSpacing * 0.25)}px` }}>
+                {formatDescription(camp.description)}
+              </div>
             </div>
           )
         });
@@ -331,22 +340,31 @@ const ResumePreview: React.FC = () => {
     }
 
     // 6. Awards
-    if (awards && awards.length > 0) {
-      awards.forEach((award, idx) => {
-        chunks.push({
-          id: `award-${award.id || idx}`,
-          node: (
-            <div style={{ marginBottom: `${idx === awards.length - 1 ? sectionSpacing : itemSpacing}px` }}>
-              {idx === 0 && <h2 style={sectionTitleStyle}>荣誉奖项</h2>}
-              <div style={itemHeaderStyle}>
-                <span style={itemTitleStyle}>{award.name}</span>
-                <span style={itemDateStyle}>{award.date}</span>
-              </div>
-              <div style={itemSubtitleStyle}>{award.awarder}</div>
-              {formatDescription(award.description)}
-            </div>
-          )
-        });
+    const awardsText = typeof awards === 'string'
+      ? awards
+      : (Array.isArray(awards)
+          ? awards.map(a => [a.date, a.name, a.awarder ? `(${a.awarder})` : '', a.description ? `- ${a.description}` : ''].filter(Boolean).join(' ')).filter(Boolean).join('\n')
+          : '');
+
+    if (awardsText && awardsText.trim()) {
+      const awardLines = awardsText.split('\n').filter(line => line.trim().length > 0);
+      chunks.push({
+        id: 'awards-section',
+        node: (
+          <div style={{ marginBottom: `${sectionSpacing}px` }}>
+            <h2 style={sectionTitleStyle}>荣誉奖项</h2>
+            <ul style={{ margin: '0 0 4px 0', paddingLeft: '18px', fontSize: `${baseFontSize}px`, color: '#374151', lineHeight: lineHeight, listStyleType: 'disc' }}>
+              {awardLines.map((line, idx) => {
+                const cleanLine = line.replace(/^[-*•·]\s*/, '');
+                return (
+                  <li key={idx} style={{ marginBottom: `${Math.max(2, itemSpacing * 0.25)}px` }}>
+                    {renderBold(cleanLine)}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )
       });
     }
 
