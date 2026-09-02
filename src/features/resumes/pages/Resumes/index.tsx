@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { Plus, Copy, Trash2, FileText, Download, UploadCloud, Loader2, Edit3, X, FileDown, Undo2, Redo2, Sliders, Sparkles, RotateCcw, ChevronDown, FileCode, Globe, AlignLeft, Database, ChevronLeft, Eye } from 'lucide-react';
+import { Plus, Copy, Trash2, FileText, Download, UploadCloud, Loader2, Edit3, X, FileDown, Undo2, Redo2, Sliders, Sparkles, RotateCcw, ChevronDown, FileCode, Globe, AlignLeft, Database, ChevronLeft, Eye, FileEdit } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
 import { Group, Panel, Separator } from 'react-resizable-panels';
 import { useResumeStore, defaultResumeLayout } from '../../store/useResumeStore';
@@ -8,7 +8,8 @@ import ResumeEditor from '../../components/ResumeEditor';
 import ResumePreview from '../../components/ResumePreview';
 import { extractTextFromPdf, parseTextWithLLM } from '../../services/resumeParser';
 import { saveFileToIDB, getFileFromIDB } from '../../../../core/services/storage';
-import { resumeToMarkdown, resumeToTxt, resumeToHtml, downloadFile } from '../../utils/exportFormats';
+import { resumeToMarkdown, resumeToTxt, resumeToHtml, downloadFile, downloadBlobFile } from '../../utils/exportFormats';
+import { generateResumeDocx } from '../../utils/docxExport';
 import styles from './Resumes.module.css';
 
 
@@ -255,6 +256,22 @@ const Resumes: React.FC = () => {
 
   const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const [isExportingDocx, setIsExportingDocx] = useState(false);
+
+  const handleExportDocx = async () => {
+    if (!activeResume) return;
+    try {
+      setIsExportingDocx(true);
+      const blob = await generateResumeDocx(activeResume, currentLayout);
+      const filename = `${activeResume.name || '简历'}.docx`;
+      downloadBlobFile(blob, filename);
+    } catch (err) {
+      console.error('Word export failed:', err);
+      alert('导出 Word 文档失败，请重试');
+    } finally {
+      setIsExportingDocx(false);
+    }
+  };
 
   const handleExportMd = () => {
     if (!activeResume) return;
@@ -385,6 +402,23 @@ const Resumes: React.FC = () => {
                 <div>
                   <div style={{ fontWeight: 500, fontSize: '13px' }}>PDF 物理排版 (.pdf)</div>
                   <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>A4 标准排版 / 求职投递</div>
+                </div>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              className={styles.exportMenuItem}
+              onClick={() => { setIsExportMenuOpen(false); handleExportDocx(); }}
+              disabled={isExportingDocx}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <FileEdit size={16} color="#2b579a" />
+                <div>
+                  <div style={{ fontWeight: 500, fontSize: '13px' }}>
+                    {isExportingDocx ? '正在生成 Word 文档...' : 'Word 可编辑版 (.docx)'}
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Word / WPS 原生格式 / 随时编辑</div>
                 </div>
               </div>
             </button>

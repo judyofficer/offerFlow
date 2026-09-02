@@ -1,10 +1,17 @@
 import type { Resume, ResumeLayoutConfig } from '../types/resume';
 
 /**
- * 触发文件下载辅助函数
+ * 触发文件下载辅助函数 (文本)
  */
 export const downloadFile = (content: string, filename: string, mimeType: string) => {
   const blob = new Blob([content], { type: `${mimeType};charset=utf-8` });
+  downloadBlobFile(blob, filename);
+};
+
+/**
+ * 触发 Blob 二进制文件下载辅助函数
+ */
+export const downloadBlobFile = (blob: Blob, filename: string) => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
