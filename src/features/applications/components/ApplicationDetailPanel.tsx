@@ -1,7 +1,8 @@
 import React from 'react';
-import { X, Trash2, Link } from 'lucide-react';
+import { X, Trash2, Link, RotateCcw } from 'lucide-react';
 import { useApplicationStore } from '../store/useApplicationStore';
 import { useResumeStore } from '../../resumes/store/useResumeStore';
+import { useJobStore } from '../../jobBoard/store/useJobStore';
 import { STATUS_CONFIG } from '../types/application';
 import styles from './ApplicationDetailPanel.module.css';
 
@@ -13,6 +14,7 @@ interface Props {
 export const ApplicationDetailPanel: React.FC<Props> = ({ appId, onClose }) => {
   const { applications, updateApplication, deleteApplication } = useApplicationStore();
   const { resumes } = useResumeStore();
+  const { addBookmark } = useJobStore();
   
   const application = applications.find(a => a.id === appId);
   
@@ -25,6 +27,22 @@ export const ApplicationDetailPanel: React.FC<Props> = ({ appId, onClose }) => {
 
   const handleDelete = () => {
     if (confirm('确定要删除这条投递记录吗？')) {
+      deleteApplication(appId);
+      onClose();
+    }
+  };
+
+  const handleMoveBackToJobBoard = () => {
+    if (confirm(`确定要将【${application.companyName} - ${application.jobTitle}】撤回至招聘信息池吗？`)) {
+      addBookmark({
+        companyName: application.companyName,
+        jobTitle: application.jobTitle,
+        url: application.url || '',
+        salary: application.salary || '',
+        location: application.location || '',
+        source: application.source || '',
+        deadline: application.deadline || '',
+      });
       deleteApplication(appId);
       onClose();
     }
@@ -58,7 +76,16 @@ export const ApplicationDetailPanel: React.FC<Props> = ({ appId, onClose }) => {
             </h2>
             <p className="text-body" style={{ color: 'var(--text-secondary)' }}>{application.jobTitle}</p>
           </div>
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <button 
+              type="button"
+              onClick={handleMoveBackToJobBoard}
+              className="btn btn-ghost btn-sm"
+              style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-secondary)' }}
+              title="撤回至招聘信息池"
+            >
+              <RotateCcw size={14} /> 移回信息池
+            </button>
             <button 
               onClick={handleDelete}
               className="btn btn-ghost btn-icon"
@@ -170,6 +197,16 @@ export const ApplicationDetailPanel: React.FC<Props> = ({ appId, onClose }) => {
                 value={application.source || ''}
                 onChange={handleChange}
                 placeholder="Boss, 牛客, 官网等"
+                style={{ width: '100%', boxSizing: 'border-box', padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+              />
+            </div>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>截止日期</label>
+              <input 
+                type="date"
+                name="deadline"
+                value={application.deadline || ''}
+                onChange={handleChange}
                 style={{ width: '100%', boxSizing: 'border-box', padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
               />
             </div>

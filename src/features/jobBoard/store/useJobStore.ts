@@ -6,6 +6,7 @@ import type { JobBookmark } from '../types/job';
 interface JobStore {
   bookmarks: JobBookmark[];
   addBookmark: (bookmark: Omit<JobBookmark, 'id' | 'createdAt'>) => void;
+  restoreBookmark: (bookmark: JobBookmark) => void;
   updateBookmark: (id: string, updates: Partial<JobBookmark>) => void;
   deleteBookmark: (id: string) => void;
 }
@@ -23,6 +24,9 @@ export const useJobStore = create<JobStore>()(
           },
           ...state.bookmarks,
         ],
+      })),
+      restoreBookmark: (bookmark) => set((state) => ({
+        bookmarks: [bookmark, ...state.bookmarks.filter((b) => b.id !== bookmark.id)],
       })),
       updateBookmark: (id, updates) => set((state) => ({
         bookmarks: state.bookmarks.map((b) =>

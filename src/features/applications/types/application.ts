@@ -9,6 +9,7 @@ export interface Application {
   salary?: string;
   location?: string;
   source?: string;
+  deadline?: string;
   status: ApplicationStatus;
   appliedAt: number;
   updatedAt: number;

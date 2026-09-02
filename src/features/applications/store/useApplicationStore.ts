@@ -5,7 +5,7 @@ import type { Application, ApplicationStatus } from '../types/application';
 
 interface ApplicationState {
   applications: Application[];
-  addApplication: (app: Omit<Application, 'id' | 'createdAt' | 'updatedAt' | 'appliedAt'>) => void;
+  addApplication: (app: Omit<Application, 'id' | 'createdAt' | 'updatedAt' | 'appliedAt'> & { id?: string }) => string;
   updateApplicationStatus: (id: string, status: ApplicationStatus) => void;
   updateApplication: (id: string, data: Partial<Application>) => void;
   deleteApplication: (id: string) => void;
@@ -18,15 +18,19 @@ export const useApplicationStore = create<ApplicationState>()(
     (set) => ({
       applications: [],
 
-      addApplication: (appData) => set((state) => {
-        const newApp: Application = {
-          ...appData,
-          id: generateId(),
-          appliedAt: Date.now(),
-          updatedAt: Date.now(),
-        };
-        return { applications: [...state.applications, newApp] };
-      }),
+      addApplication: (appData) => {
+        const newId = appData.id || generateId();
+        set((state) => {
+          const newApp: Application = {
+            ...appData,
+            id: newId,
+            appliedAt: Date.now(),
+            updatedAt: Date.now(),
+          };
+          return { applications: [...state.applications, newApp] };
+        });
+        return newId;
+      },
 
       updateApplicationStatus: (id, status) => set((state) => ({
         applications: state.applications.map(app => 
