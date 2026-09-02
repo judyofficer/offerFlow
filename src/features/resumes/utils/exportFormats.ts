@@ -58,6 +58,11 @@ export const resumeToMarkdown = (resume: Resume): string => {
     education.forEach(edu => {
       lines.push(`### ${edu.school} | ${edu.major}${edu.degree ? ` (${edu.degree})` : ''}`);
       lines.push(`*${edu.startDate || ''} ${edu.startDate && edu.endDate ? '-' : ''} ${edu.endDate || ''}*`);
+      if (edu.gpa) lines.push(`- **GPA / 成绩**: ${edu.gpa}`);
+      if (edu.courses) lines.push(`- **主修课程**: ${edu.courses}`);
+      (edu.customFields || []).filter(f => f.label && f.value).forEach(f => {
+        lines.push(`- **${f.label}**: ${f.value}`);
+      });
       if (edu.description) {
         lines.push('');
         lines.push(edu.description);
@@ -183,6 +188,11 @@ export const resumeToTxt = (resume: Resume): string => {
     lines.push('【教育经历】');
     education.forEach(edu => {
       lines.push(`• ${edu.school} | ${edu.major} | ${edu.degree || ''} (${edu.startDate || ''} - ${edu.endDate || ''})`);
+      if (edu.gpa) lines.push(`  GPA / 成绩：${edu.gpa}`);
+      if (edu.courses) lines.push(`  主修课程：${edu.courses}`);
+      (edu.customFields || []).filter(f => f.label && f.value).forEach(f => {
+        lines.push(`  ${f.label}：${f.value}`);
+      });
       if (edu.description) lines.push(`  ${edu.description.replace(/\n/g, '\n  ')}`);
     });
     lines.push('');
@@ -379,7 +389,12 @@ const resumeToHtmlBody = (resume: Resume, layout?: ResumeLayoutConfig): string =
             <span>${edu.school}</span>
             <span style="font-weight: normal; color: #6b7280; font-size: ${baseFontSize - 1}px;">${edu.startDate || ''} - ${edu.endDate || ''}</span>
           </div>
-          <div style="color: #4b5563; font-size: ${baseFontSize}px;">${edu.major} ${edu.degree ? `| ${edu.degree}` : ''}</div>
+          <div style="color: #4b5563; font-size: ${baseFontSize}px; margin-top: 2px;">
+            ${edu.major} ${edu.degree ? `| ${edu.degree}` : ''}
+            ${edu.gpa ? ` | <span style="color: #4b5563;">GPA：${edu.gpa}</span>` : ''}
+          </div>
+          ${edu.courses ? `<div style="font-size: ${baseFontSize - 1}px; color: #4b5563; margin-top: 2px;"><strong>主修课程：</strong>${edu.courses}</div>` : ''}
+          ${(edu.customFields || []).filter(f => f.label && f.value).map(f => `<div style="font-size: ${baseFontSize - 1}px; color: #4b5563; margin-top: 2px;"><strong>${f.label}：</strong>${f.value}</div>`).join('')}
           ${renderDesc(edu.description)}
         </div>
       `);

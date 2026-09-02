@@ -32,6 +32,9 @@ export interface Education {
   major: string;
   startDate: string;
   endDate: string;
+  gpa?: string;
+  courses?: string;
+  customFields?: CustomField[];
   description: string;
 }
 

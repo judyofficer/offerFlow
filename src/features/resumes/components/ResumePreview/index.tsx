@@ -226,8 +226,21 @@ const ResumePreview: React.FC = () => {
                 <span style={itemDateStyle}>{edu.startDate} {edu.startDate && edu.endDate ? '-' : ''} {edu.endDate}</span>
               </div>
               <div style={itemSubtitleStyle}>
-                {edu.major} {edu.major && edu.degree ? ' | ' : ''} {edu.degree}
+                <span>{edu.major} {edu.major && edu.degree ? ' | ' : ''} {edu.degree}</span>
+                {edu.gpa && <span style={{ marginLeft: '12px', color: '#4b5563', fontWeight: 'normal' }}>GPA：{edu.gpa}</span>}
               </div>
+              {edu.courses && (
+                <div style={{ fontSize: `${baseFontSize - 1}px`, color: '#4b5563', marginTop: '3px', lineHeight: 1.45 }}>
+                  <span style={{ fontWeight: 600, color: '#374151' }}>主修课程：</span>
+                  <span>{edu.courses}</span>
+                </div>
+              )}
+              {(edu.customFields || []).filter(f => f.label && f.value).map(f => (
+                <div key={f.id} style={{ fontSize: `${baseFontSize - 1}px`, color: '#4b5563', marginTop: '2px', lineHeight: 1.45 }}>
+                  <span style={{ fontWeight: 600, color: '#374151' }}>{f.label}：</span>
+                  <span>{f.value}</span>
+                </div>
+              ))}
               {formatDescription(edu.description)}
             </div>
           )
