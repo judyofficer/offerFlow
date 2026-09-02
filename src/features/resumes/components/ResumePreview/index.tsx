@@ -149,14 +149,33 @@ const ResumePreview: React.FC = () => {
       personalInfo.gender && `性别：${personalInfo.gender}`,
       personalInfo.birthDate && `生日：${personalInfo.birthDate}`,
       personalInfo.ethnicity && `民族：${personalInfo.ethnicity}`,
+      personalInfo.politicalStatus && `政治面貌：${personalInfo.politicalStatus}`,
     ].filter(Boolean);
+
+    const customItems = (personalInfo.customFields || [])
+      .filter(f => f.label && f.value)
+      .map(f => {
+        const isUrl = /^https?:\/\//i.test(f.value) || /^(www\.|github\.com|gitee\.com|linkedin\.com)/i.test(f.value);
+        if (isUrl) {
+          const href = f.value.startsWith('http') ? f.value : `https://${f.value}`;
+          return (
+            <React.Fragment key={f.id}>
+              {f.label}：
+              <a href={href} target="_blank" rel="noreferrer" style={{ color: '#2563eb', textDecoration: 'none' }}>
+                {f.value.replace(/^https?:\/\//, '')}
+              </a>
+            </React.Fragment>
+          );
+        }
+        return `${f.label}：${f.value}`;
+      });
 
     const intentItems = [
       personalInfo.intendedCity && `意向城市：${personalInfo.intendedCity}`,
       personalInfo.intendedRole && `求职意向：${personalInfo.intendedRole}`,
     ].filter(Boolean);
 
-    const infoRows = [contactItems, linkItems, demographicItems, intentItems].filter(row => row.length > 0);
+    const infoRows = [contactItems, linkItems, demographicItems, customItems, intentItems].filter(row => row.length > 0);
 
     chunks.push({
       id: 'header',

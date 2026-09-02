@@ -1,3 +1,9 @@
+export interface CustomField {
+  id: string;
+  label: string;
+  value: string;
+}
+
 export interface PersonalInfo {
   name: string;
   email: string;
@@ -11,9 +17,12 @@ export interface PersonalInfo {
   gender?: string;
   birthDate?: string;
   ethnicity?: string;
+  politicalStatus?: string;
   city?: string;
   intendedCity?: string;
   intendedRole?: string;
+
+  customFields?: CustomField[];
 }
 
 export interface Education {

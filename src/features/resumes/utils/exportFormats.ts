@@ -43,6 +43,8 @@ export const resumeToMarkdown = (resume: Resume): string => {
     personalInfo.gender && `👤 **性别**: ${personalInfo.gender}`,
     personalInfo.birthDate && `🎂 **生日**: ${personalInfo.birthDate}`,
     personalInfo.ethnicity && `🏷️ **民族**: ${personalInfo.ethnicity}`,
+    personalInfo.politicalStatus && `🚩 **政治面貌**: ${personalInfo.politicalStatus}`,
+    ...(personalInfo.customFields || []).filter(f => f.label && f.value).map(f => `📌 **${f.label}**: ${f.value}`),
   ].filter(Boolean);
   if (metaParts.length > 0) {
     lines.push(metaParts.join(' | '));
@@ -165,6 +167,13 @@ export const resumeToTxt = (resume: Resume): string => {
   if (personalInfo.city) lines.push(`城市：${personalInfo.city}`);
   if (personalInfo.intendedRole) lines.push(`求职意向：${personalInfo.intendedRole}`);
   if (personalInfo.intendedCity) lines.push(`意向城市：${personalInfo.intendedCity}`);
+  if (personalInfo.gender) lines.push(`性别：${personalInfo.gender}`);
+  if (personalInfo.birthDate) lines.push(`生日：${personalInfo.birthDate}`);
+  if (personalInfo.ethnicity) lines.push(`民族：${personalInfo.ethnicity}`);
+  if (personalInfo.politicalStatus) lines.push(`政治面貌：${personalInfo.politicalStatus}`);
+  (personalInfo.customFields || []).filter(f => f.label && f.value).forEach(f => {
+    lines.push(`${f.label}：${f.value}`);
+  });
   if (personalInfo.github) lines.push(`GitHub：${personalInfo.github}`);
   if (personalInfo.website) lines.push(`个人主页：${personalInfo.website}`);
   lines.push('');
@@ -327,9 +336,20 @@ const resumeToHtmlBody = (resume: Resume, layout?: ResumeLayoutConfig): string =
     personalInfo.gender && `性别：${personalInfo.gender}`,
     personalInfo.birthDate && `生日：${personalInfo.birthDate}`,
     personalInfo.ethnicity && `民族：${personalInfo.ethnicity}`,
+    personalInfo.politicalStatus && `政治面貌：${personalInfo.politicalStatus}`,
   ].filter(Boolean);
 
-  const rows = [contactParts, linkParts, intentParts].filter(r => r.length > 0);
+  const customParts = (personalInfo.customFields || [])
+    .filter(f => f.label && f.value)
+    .map(f => {
+      const isUrl = /^https?:\/\//i.test(f.value) || /^(www\.|github\.com|gitee\.com|linkedin\.com)/i.test(f.value);
+      const href = f.value.startsWith('http') ? f.value : `https://${f.value}`;
+      return isUrl 
+        ? `${f.label}：<a href="${href}" target="_blank">${f.value.replace(/^https?:\/\//, '')}</a>`
+        : `${f.label}：${f.value}`;
+    });
+
+  const rows = [contactParts, linkParts, intentParts, customParts].filter(r => r.length > 0);
 
   htmlParts.push(`
     <header style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: ${Math.max(12, sectionSpacing * 0.9)}px;">
