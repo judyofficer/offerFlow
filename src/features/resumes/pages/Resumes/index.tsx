@@ -28,6 +28,117 @@ const PRESETS: Record<string, { label: string; config: ResumeLayoutConfig }> = {
   },
 };
 
+interface LayoutSliderControlProps {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  unit?: string;
+  onChange: (val: number) => void;
+}
+
+const LayoutSliderControl: React.FC<LayoutSliderControlProps> = ({
+  label,
+  value,
+  min,
+  max,
+  step,
+  unit = '',
+  onChange,
+}) => {
+  const [localText, setLocalText] = useState(String(value));
+
+  useEffect(() => {
+    setLocalText(String(value));
+  }, [value]);
+
+  const commitValue = (valStr: string) => {
+    let parsed = parseFloat(valStr);
+    if (isNaN(parsed)) {
+      parsed = value;
+    } else {
+      parsed = Math.min(max, Math.max(min, parsed));
+      const decimals = step.toString().split('.')[1]?.length || 0;
+      parsed = Number(parsed.toFixed(decimals));
+    }
+    setLocalText(String(parsed));
+    if (parsed !== value) {
+      onChange(parsed);
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value;
+    setLocalText(raw);
+    const parsed = parseFloat(raw);
+    if (!isNaN(parsed) && parsed >= min && parsed <= max) {
+      const decimals = step.toString().split('.')[1]?.length || 0;
+      const rounded = Number(parsed.toFixed(decimals));
+      onChange(rounded);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      commitValue(localText);
+      (e.target as HTMLInputElement).blur();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const current = parseFloat(localText) || value;
+      const next = Math.min(max, current + step);
+      const decimals = step.toString().split('.')[1]?.length || 0;
+      const rounded = Number(next.toFixed(decimals));
+      setLocalText(String(rounded));
+      onChange(rounded);
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const current = parseFloat(localText) || value;
+      const next = Math.max(min, current - step);
+      const decimals = step.toString().split('.')[1]?.length || 0;
+      const rounded = Number(next.toFixed(decimals));
+      setLocalText(String(rounded));
+      onChange(rounded);
+    }
+  };
+
+  return (
+    <div className={styles.layoutControlRow}>
+      <div className={styles.layoutControlHeader}>
+        <label className={styles.label} style={{ marginBottom: 0 }}>{label}</label>
+        <div className={styles.layoutNumberInputWrapper}>
+          <input
+            type="number"
+            className={styles.layoutNumberInput}
+            min={min}
+            max={max}
+            step={step}
+            value={localText}
+            onChange={handleInputChange}
+            onBlur={() => commitValue(localText)}
+            onKeyDown={handleKeyDown}
+          />
+          {unit && <span className={styles.layoutNumberUnit}>{unit}</span>}
+        </div>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => {
+          const val = parseFloat(e.target.value);
+          setLocalText(String(val));
+          onChange(val);
+        }}
+        className={styles.layoutSlider}
+      />
+    </div>
+  );
+};
+
+
 const Resumes: React.FC = () => {
   const { resumes, activeResumeId, addResume, setActiveResume, deleteResume, duplicateResume, importResume, updateActiveResumeLayout, past, future } = useResumeStore();
   const activeResume = resumes.find(r => r.id === activeResumeId);
@@ -572,99 +683,84 @@ const Resumes: React.FC = () => {
               <div>
                 <label className={styles.label}>快捷排版预设</label>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-                  {Object.entries(PRESETS).map(([key, preset]) => (
-                    <button
-                      key={key}
-                      type="button"
-                      className="btn btn-outline btn-sm"
-                      onClick={() => updateActiveResumeLayout(preset.config)}
-                      style={{ fontSize: '12px', padding: '8px 4px', textAlign: 'center', borderColor: JSON.stringify(currentLayout) === JSON.stringify(preset.config) ? 'var(--primary)' : undefined, backgroundColor: JSON.stringify(currentLayout) === JSON.stringify(preset.config) ? 'var(--bg-tertiary)' : undefined }}
-                    >
-                      {preset.label}
-                    </button>
-                  ))}
+                  {Object.entries(PRESETS).map(([key, preset]) => {
+                    const isSelected =
+                      currentLayout.pagePadding === preset.config.pagePadding &&
+                      currentLayout.sectionSpacing === preset.config.sectionSpacing &&
+                      currentLayout.itemSpacing === preset.config.itemSpacing &&
+                      currentLayout.lineHeight === preset.config.lineHeight &&
+                      currentLayout.baseFontSize === preset.config.baseFontSize;
+
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        className="btn btn-outline btn-sm"
+                        onClick={() => updateActiveResumeLayout(preset.config)}
+                        style={{
+                          fontSize: '12px',
+                          padding: '8px 4px',
+                          textAlign: 'center',
+                          borderColor: isSelected ? 'var(--primary)' : undefined,
+                          backgroundColor: isSelected ? 'var(--bg-tertiary)' : undefined,
+                          fontWeight: isSelected ? 600 : 400,
+                        }}
+                      >
+                        {preset.label}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <label className={styles.label} style={{ marginBottom: 0 }}>页面边距 (Page Padding)</label>
-                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{currentLayout.pagePadding}px</span>
-                </div>
-                <input
-                  type="range"
-                  min="16"
-                  max="52"
-                  step="2"
-                  value={currentLayout.pagePadding}
-                  onChange={(e) => updateActiveResumeLayout({ pagePadding: parseInt(e.target.value) })}
-                  style={{ width: '100%', accentColor: 'var(--primary)' }}
-                />
-              </div>
+              <LayoutSliderControl
+                label="页面边距 (Page Padding)"
+                value={currentLayout.pagePadding ?? 36}
+                min={12}
+                max={60}
+                step={1}
+                unit="px"
+                onChange={(pagePadding) => updateActiveResumeLayout({ pagePadding })}
+              />
 
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <label className={styles.label} style={{ marginBottom: 0 }}>模块间距 (Section Spacing)</label>
-                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{currentLayout.sectionSpacing}px</span>
-                </div>
-                <input
-                  type="range"
-                  min="6"
-                  max="28"
-                  step="1"
-                  value={currentLayout.sectionSpacing}
-                  onChange={(e) => updateActiveResumeLayout({ sectionSpacing: parseInt(e.target.value) })}
-                  style={{ width: '100%', accentColor: 'var(--primary)' }}
-                />
-              </div>
+              <LayoutSliderControl
+                label="模块间距 (Section Spacing)"
+                value={currentLayout.sectionSpacing ?? 16}
+                min={4}
+                max={36}
+                step={1}
+                unit="px"
+                onChange={(sectionSpacing) => updateActiveResumeLayout({ sectionSpacing })}
+              />
 
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <label className={styles.label} style={{ marginBottom: 0 }}>条目间距 (Item Spacing)</label>
-                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{currentLayout.itemSpacing}px</span>
-                </div>
-                <input
-                  type="range"
-                  min="4"
-                  max="20"
-                  step="1"
-                  value={currentLayout.itemSpacing}
-                  onChange={(e) => updateActiveResumeLayout({ itemSpacing: parseInt(e.target.value) })}
-                  style={{ width: '100%', accentColor: 'var(--primary)' }}
-                />
-              </div>
+              <LayoutSliderControl
+                label="条目间距 (Item Spacing)"
+                value={currentLayout.itemSpacing ?? 12}
+                min={2}
+                max={28}
+                step={1}
+                unit="px"
+                onChange={(itemSpacing) => updateActiveResumeLayout({ itemSpacing })}
+              />
 
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <label className={styles.label} style={{ marginBottom: 0 }}>文本行高 (Line Height)</label>
-                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{currentLayout.lineHeight}</span>
-                </div>
-                <input
-                  type="range"
-                  min="1.25"
-                  max="1.75"
-                  step="0.05"
-                  value={currentLayout.lineHeight}
-                  onChange={(e) => updateActiveResumeLayout({ lineHeight: parseFloat(e.target.value) })}
-                  style={{ width: '100%', accentColor: 'var(--primary)' }}
-                />
-              </div>
+              <LayoutSliderControl
+                label="文本行高 (Line Height)"
+                value={currentLayout.lineHeight ?? 1.5}
+                min={1.1}
+                max={2.2}
+                step={0.01}
+                onChange={(lineHeight) => updateActiveResumeLayout({ lineHeight })}
+              />
 
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <label className={styles.label} style={{ marginBottom: 0 }}>基础字号 (Base Font Size)</label>
-                  <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{currentLayout.baseFontSize}px</span>
-                </div>
-                <input
-                  type="range"
-                  min="11.5"
-                  max="15"
-                  step="0.5"
-                  value={currentLayout.baseFontSize}
-                  onChange={(e) => updateActiveResumeLayout({ baseFontSize: parseFloat(e.target.value) })}
-                  style={{ width: '100%', accentColor: 'var(--primary)' }}
-                />
-              </div>
+              <LayoutSliderControl
+                label="基础字号 (Base Font Size)"
+                value={currentLayout.baseFontSize ?? 13}
+                min={10}
+                max={16}
+                step={0.1}
+                unit="px"
+                onChange={(baseFontSize) => updateActiveResumeLayout({ baseFontSize })}
+              />
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '24px' }}>

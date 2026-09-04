@@ -324,3 +324,75 @@
   font-weight: 600;
   font-size: 13px;
 }
+
+/* Layout Settings Tuning Controls */
+.layoutControlRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.layoutControlHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.layoutNumberInputWrapper {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 3px 8px;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.layoutNumberInputWrapper:hover {
+  border-color: var(--border-color-hover);
+}
+
+.layoutNumberInputWrapper:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(30, 30, 36, 0.12);
+}
+
+.layoutNumberInput {
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  width: 48px;
+  text-align: right;
+  padding: 0;
+  margin: 0;
+  outline: none;
+  font-family: var(--font-family);
+  appearance: textfield;
+  -moz-appearance: textfield;
+  -webkit-appearance: none;
+}
+
+.layoutNumberInput::-webkit-outer-spin-button,
+.layoutNumberInput::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.layoutNumberUnit {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-left: 3px;
+  user-select: none;
+}
+
+.layoutSlider {
+  width: 100%;
+  accent-color: var(--primary);
+  cursor: pointer;
+  height: 4px;
+}
+
