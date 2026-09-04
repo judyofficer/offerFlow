@@ -6,10 +6,8 @@ import { useResumeStore, defaultResumeLayout } from '../../store/useResumeStore'
 import type { ResumeLayoutConfig } from '../../types/resume';
 import ResumeEditor from '../../components/ResumeEditor';
 import ResumePreview from '../../components/ResumePreview';
-import { extractTextFromPdf, parseTextWithLLM } from '../../services/resumeParser';
 import { saveFileToIDB, getFileFromIDB } from '../../../../core/services/storage';
 import { resumeToMarkdown, resumeToTxt, resumeToHtml, downloadFile, downloadBlobFile } from '../../utils/exportFormats';
-import { generateResumeDocx } from '../../utils/docxExport';
 import styles from './Resumes.module.css';
 
 
@@ -346,13 +344,15 @@ const Resumes: React.FC = () => {
 
     try {
       setIsParsing(true);
-      // 1. Extract text from PDF
+      // 1. Dynamically load parser service (and pdfjs-dist) on demand
+      const { extractTextFromPdf, parseTextWithLLM } = await import('../../services/resumeParser');
+      // 2. Extract text from PDF
       const extractedText = await extractTextFromPdf(file);
-      // 2. Parse text with LLM
+      // 3. Parse text with LLM
       const parsedContent = await parseTextWithLLM(extractedText);
-      // 3. Save source file to IndexedDB to avoid localStorage quota issues
+      // 4. Save source file to IndexedDB to avoid localStorage quota issues
       const fileId = await saveFileToIDB(file);
-      // 4. Save to store with file reference
+      // 5. Save to store with file reference
       importResume(`解析版 - ${file.name}`, parsedContent, fileId, file.name);
       alert('简历解析成功！');
     } catch (error: any) {
@@ -373,6 +373,8 @@ const Resumes: React.FC = () => {
     if (!activeResume) return;
     try {
       setIsExportingDocx(true);
+      // Dynamically load docxExport engine on demand
+      const { generateResumeDocx } = await import('../../utils/docxExport');
       const blob = await generateResumeDocx(activeResume, currentLayout);
       const filename = `${activeResume.name || '简历'}.docx`;
       downloadBlobFile(blob, filename);

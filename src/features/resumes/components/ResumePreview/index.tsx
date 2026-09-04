@@ -1,4 +1,4 @@
-import React, { useRef, useState, useLayoutEffect, useMemo } from 'react';
+import React, { useRef, useState, useLayoutEffect, useMemo, useDeferredValue } from 'react';
 import { useResumeStore, defaultResumeLayout } from '../../store/useResumeStore';
 
 const A4_PAGE_HEIGHT = 1123; // Standard A4 height at 794px width (96 DPI)
@@ -8,7 +8,11 @@ const ResumePreview: React.FC = () => {
   const measureRef = useRef<HTMLDivElement>(null);
   const [measuredHeights, setMeasuredHeights] = useState<Record<string, number>>({});
   
-  const activeResume = resumes.find(r => r.id === activeResumeId);
+  const rawActiveResume = resumes.find(r => r.id === activeResumeId);
+  // React 19 Concurrent Feature: Defer heavy A4 measurement & pagination calculations
+  // to avoid blocking urgent keystroke and typing events in the editor.
+  const activeResume = useDeferredValue(rawActiveResume);
+  const isPending = rawActiveResume !== activeResume;
 
   const layout = useMemo(() => ({
     ...defaultResumeLayout,
@@ -441,7 +445,16 @@ const ResumePreview: React.FC = () => {
   }
 
   return (
-    <div className="resume-pages-wrapper" style={{ width: '100%', maxWidth: '794px', margin: '0 auto' }}>
+    <div 
+      className="resume-pages-wrapper" 
+      style={{ 
+        width: '100%', 
+        maxWidth: '794px', 
+        margin: '0 auto',
+        opacity: isPending ? 0.94 : 1,
+        transition: 'opacity 0.15s ease',
+      }}
+    >
       {/* Hidden Measurement Sandbox (1:1 styling with flow-root wrapper, strictly hidden from print) */}
       <div 
         ref={measureRef}
