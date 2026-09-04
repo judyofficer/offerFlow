@@ -1,15 +1,15 @@
-import * as pdfjsLib from 'pdfjs-dist';
 import { useSettingsStore } from '../../settings/store/useSettingsStore';
 import type { ResumeContent } from '../types/resume';
-
-// Set up PDF.js worker securely using CDN matching the installed version to avoid bundler issues
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 /**
  * Extract text from a PDF File object
  */
 export const extractTextFromPdf = async (file: File): Promise<string> => {
   try {
+    // Dynamic import to prevent pdfjs-dist from leaking into the initial entry bundle
+    const pdfjsLib = await import('pdfjs-dist');
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     

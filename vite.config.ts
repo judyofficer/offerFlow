@@ -19,17 +19,11 @@ export default defineConfig({
             if (id.includes('docx')) {
               return 'vendor-docx';
             }
-            if (id.includes('pdfjs-dist')) {
-              return 'vendor-pdfjs';
-            }
             if (id.includes('echarts') || id.includes('zrender')) {
               return 'vendor-echarts';
             }
             if (id.includes('lucide-react')) {
               return 'vendor-icons';
-            }
-            if (id.includes('@hello-pangea/dnd') || id.includes('react-resizable-panels')) {
-              return 'vendor-interactive';
             }
             if (id.includes('@supabase/supabase-js') || id.includes('idb-keyval') || id.includes('zustand')) {
               return 'vendor-storage';
