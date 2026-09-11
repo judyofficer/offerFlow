@@ -28,9 +28,13 @@ const Settings: React.FC = () => {
         defaultUrl = 'https://api.deepseek.com/chat/completions';
         defaultModel = 'deepseek-chat';
         break;
+      case 'siliconflow':
+        defaultUrl = 'https://api.siliconflow.cn/v1/chat/completions';
+        defaultModel = 'deepseek-ai/DeepSeek-V3';
+        break;
       case 'gemini':
         defaultUrl = 'https://generativelanguage.googleapis.com/v1beta/models/';
-        defaultModel = 'gemini-3.6-flash';
+        defaultModel = 'gemini-2.5-flash';
         break;
       case 'custom':
         defaultUrl = '';
@@ -53,7 +57,7 @@ const Settings: React.FC = () => {
       <section style={{ backgroundColor: 'var(--bg-primary)', padding: '24px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
         <h2 className="text-h2" style={{ marginBottom: '24px', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px' }}>AI 简历解析配置</h2>
         <p style={{ fontSize: '13px', color: 'var(--text-tertiary)', marginBottom: '24px' }}>
-          为实现高准确度的简历智能提取，您需要配置大语言模型 (LLM) 的 API。推荐使用 OpenAI 或 DeepSeek。
+          为实现高准确度的简历智能提取，您需要配置大语言模型 (LLM) 的 API。推荐使用 DeepSeek、硅基流动或 OpenAI。
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -64,10 +68,11 @@ const Settings: React.FC = () => {
               onChange={handleProviderChange}
               style={{ padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }}
             >
-              <option value="openai">OpenAI (推荐)</option>
+              <option value="siliconflow">硅基流动 SiliconFlow (国内极速 / 推荐)</option>
               <option value="deepseek">DeepSeek (性价比极高)</option>
+              <option value="openai">OpenAI</option>
               <option value="gemini">Google Gemini</option>
-              <option value="custom">自定义 (兼容 OpenAI 格式的代理端)</option>
+              <option value="custom">自定义 (兼容 OpenAI 格式的任意代理端)</option>
             </select>
           </div>
 

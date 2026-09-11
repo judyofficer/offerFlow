@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { createDebouncedStorage } from '../../../core/services/debouncedStorage';
 
-export type LLMProvider = 'openai' | 'deepseek' | 'gemini' | 'custom';
+export type LLMProvider = 'openai' | 'deepseek' | 'siliconflow' | 'gemini' | 'custom';
 
 export interface SettingsState {
   llmProvider: LLMProvider;

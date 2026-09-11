@@ -82,8 +82,23 @@ const ResumeEditor: React.FC = () => {
       skills: [
         {
           id: 'skill-1',
-          category: '专业技能',
-          items: ['JavaScript', 'React', 'Node.js', 'SQL']
+          category: '前端基础',
+          items: ['熟练掌握 **HTML5 / CSS3 / JavaScript (ES6+)** 与 **TypeScript**，深入理解**事件循环**、**Promise** 原型链与**浏览器渲染机制**']
+        },
+        {
+          id: 'skill-2',
+          category: '框架与交互',
+          items: ['精通 **React 19 / Next.js / Zustand / React Router**，具备复杂编辑交互开发、自定义 Hook 抽象与跨组件状态流转能力']
+        },
+        {
+          id: 'skill-3',
+          category: '工程化与性能',
+          items: ['熟练使用 **Vite / Webpack / pnpm**，掌握代码分割、路由懒加载、本地持久化与 **LCP 首屏加载极致调优**']
+        },
+        {
+          id: 'skill-4',
+          category: '服务端与 AI',
+          items: ['熟悉 **Node.js / NestJS / PostgreSQL**，掌握 **LLM API** 对接、Prompt 结构化解析与 **SSE 流式通信**']
         }
       ],
       campusExperience: [

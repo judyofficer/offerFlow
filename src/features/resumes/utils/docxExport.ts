@@ -722,7 +722,29 @@ export const generateResumeDocx = async (
   if (skills.length > 0) {
     docChildren.push(createSectionBanner('专业技能', sectionTitleSize, sectionSpacing));
     skills.forEach(skill => {
-      const itemsText = Array.isArray(skill.items) ? skill.items.join('、') : String(skill.items || '');
+      const itemsText = Array.isArray(skill.items)
+        ? (skill.items.length === 1 ? skill.items[0] : skill.items.join('、'))
+        : String(skill.items || '');
+      
+      const parts = itemsText.split(/(\*\*.*?\*\*)/g);
+      const valueRuns: TextRun[] = parts.map(part => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+          return new TextRun({
+            text: part.slice(2, -2),
+            bold: true,
+            size: bodySize,
+            color: '111827',
+            font: 'Microsoft YaHei',
+          });
+        }
+        return new TextRun({
+          text: part,
+          size: bodySize,
+          color: '374151',
+          font: 'Microsoft YaHei',
+        });
+      });
+
       docChildren.push(
         new Paragraph({
           bullet: { level: 0 },
@@ -735,12 +757,7 @@ export const generateResumeDocx = async (
               color: '111827',
               font: 'Microsoft YaHei',
             }),
-            new TextRun({
-              text: itemsText,
-              size: bodySize,
-              color: '374151',
-              font: 'Microsoft YaHei',
-            }),
+            ...valueRuns,
           ],
         })
       );

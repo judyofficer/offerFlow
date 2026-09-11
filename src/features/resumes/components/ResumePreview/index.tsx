@@ -372,9 +372,22 @@ const ResumePreview: React.FC = () => {
       });
     }
 
-    // 7. Skills
+  const getSkillText = (items: string[] | string): string => {
+    if (!items) return '';
+    if (typeof items === 'string') return items;
+    if (Array.isArray(items)) {
+      if (items.length === 0) return '';
+      if (items.length === 1) return items[0];
+      return items.join('、');
+    }
+    return String(items);
+  };
+
+  // 7. Skills
     if (skills && skills.length > 0) {
       skills.forEach((skill, idx) => {
+        const skillText = getSkillText(skill.items);
+        if (!skill.category && !skillText) return;
         chunks.push({
           id: `skill-${skill.id || idx}`,
           node: (
@@ -382,7 +395,7 @@ const ResumePreview: React.FC = () => {
               {idx === 0 && <h2 style={sectionTitleStyle}>专业技能</h2>}
               <div style={{ display: 'flex', alignItems: 'flex-start', fontSize: `${baseFontSize}px`, color: '#374151' }}>
                 <span style={{ fontWeight: 'bold', color: '#111827', marginRight: '6px', whiteSpace: 'nowrap' }}>· {skill.category}：</span>
-                <span style={{ lineHeight: lineHeight }}>{renderBold(skill.items.join(''))}</span>
+                <span style={{ lineHeight: lineHeight }}>{renderBold(skillText)}</span>
               </div>
             </div>
           )

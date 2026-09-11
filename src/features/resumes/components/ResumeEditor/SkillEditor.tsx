@@ -41,8 +41,8 @@ const SkillEditor: React.FC = () => {
     let pendingCategory = '';
     
     lines.forEach(line => {
-      // Clean bullet points, extra spaces, and markdown bold/italic symbols
-      let cleanLine = line.replace(/^[-*•\s]+/, '').replace(/\*\*/g, '').trim();
+      // Clean bullet points and leading whitespace while PRESERVING markdown bold syntax
+      const cleanLine = line.replace(/^[-*•·\s]+/, '').trim();
       if (!cleanLine) return;
       
       // Look for a colon indicating category: items
@@ -55,13 +55,13 @@ const SkillEditor: React.FC = () => {
         pendingCategory = '';
       } else {
         // No colon, keep the whole line as one item or treat as category if short
-        if (cleanLine.length < 20 && !cleanLine.includes('，') && !cleanLine.includes(',')) {
+        if (cleanLine.length < 15 && !cleanLine.includes('，') && !cleanLine.includes(',') && !cleanLine.includes('、')) {
           // Looks like a category header
           pendingCategory = cleanLine;
         } else {
           // It's a list of items / long sentence
           addSectionItem('skills', {
-            category: pendingCategory || '综合技能',
+            category: pendingCategory || '专业技能',
             items: [cleanLine]
           });
           pendingCategory = ''; // Reset after use
@@ -160,13 +160,13 @@ const SkillEditor: React.FC = () => {
                             </div>
                             
                             <div className={styles.inputGroup}>
-                              <label className={styles.label}>技能描述 (支持长句，直接保留原格式)</label>
+                              <label className={styles.label}>技能描述 (支持完整原句，支持 **关键词** 加粗)</label>
                               <AutoResizeTextarea 
                                 className={`${styles.input} ${styles.textarea}`} 
                                 style={{ minHeight: '60px' }} 
-                                value={item.items.join(', ')} 
+                                value={Array.isArray(item.items) ? (item.items.length === 1 ? item.items[0] : item.items.join('、')) : String(item.items || '')} 
                                 onChange={e => handleItemsChange(item.id, e.target.value)} 
-                                placeholder="如: 熟悉 HTML5, CSS3, JavaScript..." 
+                                placeholder="如: 熟练掌握 **HTML5**、**CSS3**、**JavaScript (ES6+)** 与 **TypeScript**，深入理解事件循环与渲染机制..." 
                               />
                             </div>
                           </div>

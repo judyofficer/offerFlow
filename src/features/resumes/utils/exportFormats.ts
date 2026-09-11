@@ -128,7 +128,10 @@ export const resumeToMarkdown = (resume: Resume): string => {
     lines.push('## 🛠️ 专业技能');
     lines.push('');
     skills.forEach(skill => {
-      lines.push(`- **${skill.category}**：${skill.items.join(' ')}`);
+      const itemsText = Array.isArray(skill.items) 
+        ? (skill.items.length === 1 ? skill.items[0] : skill.items.join('、')) 
+        : String(skill.items || '');
+      lines.push(`- **${skill.category}**：${itemsText}`);
     });
     lines.push('');
   }
@@ -240,7 +243,10 @@ export const resumeToTxt = (resume: Resume): string => {
   if (skills && skills.length > 0) {
     lines.push('【专业技能】');
     skills.forEach(skill => {
-      lines.push(`• ${skill.category}：${skill.items.join(' ')}`);
+      const itemsText = Array.isArray(skill.items) 
+        ? (skill.items.length === 1 ? skill.items[0] : skill.items.join('、')) 
+        : String(skill.items || '');
+      lines.push(`• ${skill.category}：${itemsText}`);
     });
     lines.push('');
   }
@@ -459,7 +465,10 @@ const resumeToHtmlBody = (resume: Resume, layout?: ResumeLayoutConfig): string =
     htmlParts.push(`<h2>专业技能</h2>`);
     htmlParts.push(`<div style="display: flex; flex-direction: column; gap: 4px;">`);
     skills.forEach(skill => {
-      htmlParts.push(`<div><strong>· ${skill.category}：</strong>${skill.items.join(' ').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>`);
+      const itemsText = Array.isArray(skill.items) 
+        ? (skill.items.length === 1 ? skill.items[0] : skill.items.join('、')) 
+        : String(skill.items || '');
+      htmlParts.push(`<div><strong>· ${skill.category}：</strong>${itemsText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')}</div>`);
     });
     htmlParts.push(`</div>`);
   }
