@@ -141,6 +141,19 @@ export const ApplicationDetailPanel: React.FC<Props> = ({ appId, onClose }) => {
 
           <div style={{ display: 'flex', gap: '16px' }}>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>意向梯队 / 难度</label>
+              <select 
+                name="priority"
+                value={application.priority || 'target'}
+                onChange={handleChange}
+                style={{ width: '100%', boxSizing: 'border-box', padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+              >
+                <option value="dream">冲刺 (重点意向 / 高难度)</option>
+                <option value="target">主攻 (核心匹配 / 主力投递)</option>
+                <option value="safety">保底 (稳健备选 / 练习托底)</option>
+              </select>
+            </div>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>当前状态</label>
               <select 
                 name="status"

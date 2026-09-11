@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useJobStore } from '../../store/useJobStore';
 import { useApplicationStore } from '../../../applications/store/useApplicationStore';
-import { ExternalLink, Plus, Trash2, CheckCircle2, CalendarClock, Link2, ArrowRight, X, RotateCcw } from 'lucide-react';
+import { PRIORITY_CONFIG } from '../../../applications/types/application';
+import type { ApplicationPriority } from '../../../applications/types/application';
+import { ExternalLink, Plus, Trash2, CheckCircle2, CalendarClock, Link2, ArrowRight, X, RotateCcw, Flame, Target, ShieldCheck, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { JobAddModal } from '../../components/JobAddModal';
 import styles from './JobBoard.module.css';
@@ -10,6 +12,19 @@ interface AppliedUndoItem {
   bookmark: any;
   applicationId: string;
 }
+
+const renderPriorityIcon = (priority: string) => {
+  switch (priority) {
+    case 'dream':
+      return <Flame size={11} style={{ flexShrink: 0 }} />;
+    case 'target':
+      return <Target size={11} style={{ flexShrink: 0 }} />;
+    case 'safety':
+      return <ShieldCheck size={11} style={{ flexShrink: 0 }} />;
+    default:
+      return <Target size={11} style={{ flexShrink: 0 }} />;
+  }
+};
 
 const JobBoard: React.FC = () => {
   const { bookmarks, addBookmark, updateBookmark, deleteBookmark, restoreBookmark } = useJobStore();
@@ -94,6 +109,7 @@ const JobBoard: React.FC = () => {
     const newAppId = addApplication({
       companyName: freshBookmark.companyName,
       jobTitle: freshBookmark.jobTitle,
+      priority: freshBookmark.priority || 'target',
       jobDescription: '',
       url: freshBookmark.url || '',
       salary: freshBookmark.salary || '',
@@ -146,6 +162,7 @@ const JobBoard: React.FC = () => {
             <thead style={{ position: 'sticky', top: 0, backgroundColor: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)', zIndex: 1 }}>
               <tr>
                 <th style={{ padding: '16px', fontWeight: 600, color: 'var(--text-secondary)' }}>公司与岗位</th>
+                <th style={{ padding: '16px', fontWeight: 600, color: 'var(--text-secondary)' }}>意向梯队</th>
                 <th style={{ padding: '16px', fontWeight: 600, color: 'var(--text-secondary)' }}>薪资范围</th>
                 <th style={{ padding: '16px', fontWeight: 600, color: 'var(--text-secondary)' }}>工作地点</th>
                 <th style={{ padding: '16px', fontWeight: 600, color: 'var(--text-secondary)' }}>信息来源</th>
@@ -154,69 +171,105 @@ const JobBoard: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {bookmarks.map(b => (
-                <tr
-                  key={b.id}
-                  style={{ borderBottom: '1px solid var(--border-color)', transition: 'background-color 0.2s' }}
-                  onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--bg-secondary)'}
-                  onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
-                >
-                  <td style={{ padding: '16px' }}>
-                    <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                      <span>{b.companyName}</span>
-                      {b.url && b.url.trim() ? (
-                        <a
-                          href={b.url.startsWith('http') ? b.url.trim() : `https://${b.url.trim()}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
+              {bookmarks.map(b => {
+                const priority = b.priority || 'target';
+                const pConfig = PRIORITY_CONFIG[priority] || PRIORITY_CONFIG.target;
+
+                return (
+                  <tr
+                    key={b.id}
+                    style={{ borderBottom: '1px solid var(--border-color)', transition: 'background-color 0.2s' }}
+                    onMouseEnter={e => e.currentTarget.style.backgroundColor = 'var(--bg-secondary)'}
+                    onMouseLeave={e => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <td style={{ padding: '16px' }}>
+                      <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <span>{b.companyName}</span>
+                        {b.url && b.url.trim() ? (
+                          <a
+                            href={b.url.startsWith('http') ? b.url.trim() : `https://${b.url.trim()}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              padding: '2px 8px',
+                              borderRadius: '6px',
+                              fontSize: '12px',
+                              backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                              color: 'var(--primary, #3b82f6)',
+                              textDecoration: 'none',
+                              fontWeight: 500,
+                              border: '1px solid rgba(59, 130, 246, 0.2)',
+                              transition: 'all 0.15s ease',
+                            }}
+                            title={`在新标签页打开招聘主页: ${b.url}`}
+                          >
+                            <ExternalLink size={12} />
+                            <span>招聘官网</span>
+                          </a>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const inputUrl = prompt(`为【${b.companyName} - ${b.jobTitle}】设置招聘链接：`);
+                              if (inputUrl && inputUrl.trim()) {
+                                updateBookmark(b.id, { url: inputUrl.trim() });
+                              }
+                            }}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              padding: '1px 6px',
+                              borderRadius: '4px',
+                              fontSize: '11px',
+                              color: 'var(--text-tertiary)',
+                              background: 'transparent',
+                              border: '1px dashed var(--border-color)',
+                              cursor: 'pointer',
+                            }}
+                            title="点击补充投递网址"
+                          >
+                            <Link2 size={11} /> 补充链接
+                          </button>
+                        )}
+                      </div>
+                      <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{b.jobTitle}</div>
+                    </td>
+
+                    {/* 意向梯队下拉切换 */}
+                    <td style={{ padding: '16px' }}>
+                      <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+                        <div style={{ position: 'absolute', left: '7px', pointerEvents: 'none', color: pConfig.color, display: 'flex', alignItems: 'center' }}>
+                          {renderPriorityIcon(priority)}
+                        </div>
+                        <select
+                          value={priority}
+                          onChange={e => updateBookmark(b.id, { priority: e.target.value as ApplicationPriority })}
                           style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            padding: '2px 8px',
-                            borderRadius: '6px',
-                            fontSize: '12px',
-                            backgroundColor: 'rgba(59, 130, 246, 0.08)',
-                            color: 'var(--primary, #3b82f6)',
-                            textDecoration: 'none',
-                            fontWeight: 500,
-                            border: '1px solid rgba(59, 130, 246, 0.2)',
-                            transition: 'all 0.15s ease',
-                          }}
-                          title={`在新标签页打开招聘主页: ${b.url}`}
-                        >
-                          <ExternalLink size={12} />
-                          <span>招聘官网</span>
-                        </a>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const inputUrl = prompt(`为【${b.companyName} - ${b.jobTitle}】设置招聘链接：`);
-                            if (inputUrl && inputUrl.trim()) {
-                              updateBookmark(b.id, { url: inputUrl.trim() });
-                            }
-                          }}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            padding: '1px 6px',
+                            appearance: 'none',
+                            WebkitAppearance: 'none',
+                            backgroundColor: pConfig.bgColor,
+                            color: pConfig.color,
+                            border: `1px solid ${pConfig.borderColor}`,
                             borderRadius: '4px',
-                            fontSize: '11px',
-                            color: 'var(--text-tertiary)',
-                            background: 'transparent',
-                            border: '1px dashed var(--border-color)',
+                            padding: '3px 18px 3px 22px',
+                            fontSize: '11.5px',
+                            fontWeight: 500,
                             cursor: 'pointer',
+                            outline: 'none',
                           }}
-                          title="点击补充投递网址"
+                          title="点击快速修改意向梯队"
                         >
-                          <Link2 size={11} /> 补充链接
-                        </button>
-                      )}
-                    </div>
-                    <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{b.jobTitle}</div>
-                  </td>
+                          <option value="dream">冲刺</option>
+                          <option value="target">主攻</option>
+                          <option value="safety">保底</option>
+                        </select>
+                        <ChevronDown size={11} style={{ position: 'absolute', right: '5px', pointerEvents: 'none', color: pConfig.color }} />
+                      </div>
+                    </td>
                   <td style={{ padding: '16px' }}>
                     <input
                       value={b.salary || ''}
@@ -320,7 +373,8 @@ const JobBoard: React.FC = () => {
                     </div>
                   </td>
                 </tr>
-              ))}
+              );
+            })}
 
               {bookmarks.length === 0 && (
                 <tr>

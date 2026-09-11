@@ -1,7 +1,10 @@
+import type { ApplicationPriority } from '../../applications/types/application';
+
 export interface JobBookmark {
   id: string;
   companyName: string;
   jobTitle: string;
+  priority?: ApplicationPriority;
   url?: string;
   salary?: string;
   location?: string;
@@ -10,3 +13,4 @@ export interface JobBookmark {
   deadline?: string; // 招聘截止日期，格式 YYYY-MM-DD
   createdAt: number;
 }
+

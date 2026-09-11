@@ -1,26 +1,50 @@
-import React, { useState } from 'react';
-import { Plus, X, Calendar } from 'lucide-react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { Plus, X, Calendar, Search, LayoutGrid, TableProperties } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
 import { useApplicationStore } from '../../store/useApplicationStore';
 import { useScheduleStore } from '../../../schedule/store/useScheduleStore';
 import type { EventType } from '../../../schedule/types/schedule';
 import { STATUS_CONFIG } from '../../types/application';
-import type { ApplicationStatus } from '../../types/application';
+import type { ApplicationStatus, ApplicationPriority, Application } from '../../types/application';
 import { ApplicationCard } from '../../components/ApplicationCard';
 import { ApplicationDetailPanel } from '../../components/ApplicationDetailPanel';
+import { ApplicationTableView } from '../../components/ApplicationTableView';
 import styles from './Applications.module.css';
 
 const COLUMNS: ApplicationStatus[] = ['applied', 'oa', 'interview', 'hr', 'offer', 'rejected'];
 
 const Applications: React.FC = () => {
-  const { applications, addApplication, updateApplicationStatus } = useApplicationStore();
+  const { applications, addApplication, updateApplicationStatus, updateApplication, deleteApplication } = useApplicationStore();
   const { addEvent } = useScheduleStore();
   const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
 
+  // 视图模式：'kanban' (看板) 或 'table' (表格)
+  const [viewMode, setViewMode] = useState<'kanban' | 'table'>(() => {
+    return (localStorage.getItem('offerflow-app-view') as 'kanban' | 'table') || 'kanban';
+  });
+
+  const handleViewModeChange = (mode: 'kanban' | 'table') => {
+    setViewMode(mode);
+    localStorage.setItem('offerflow-app-view', mode);
+  };
+
+  // 搜索与多维过滤
+  const [searchQuery, setSearchQuery] = useState('');
+  const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+
   // Add Application Modal State
   const [addModalOpen, setAddModalOpen] = useState(false);
-  const [addFormData, setAddFormData] = useState({ companyName: '', jobTitle: '' });
+  const [addFormData, setAddFormData] = useState<{
+    companyName: string;
+    jobTitle: string;
+    priority: ApplicationPriority;
+  }>({
+    companyName: '',
+    jobTitle: '',
+    priority: 'target'
+  });
 
   // Schedule Prompt Modal State
   const [scheduleModalState, setScheduleModalState] = useState<{
@@ -28,6 +52,7 @@ const Applications: React.FC = () => {
     appId: string;
     status: ApplicationStatus;
   } | null>(null);
+
   const [scheduleFormData, setScheduleFormData] = useState<{
     title: string;
     type: EventType;
@@ -43,7 +68,7 @@ const Applications: React.FC = () => {
   });
 
   const handleAddNew = () => {
-    setAddFormData({ companyName: '', jobTitle: '' });
+    setAddFormData({ companyName: '', jobTitle: '', priority: 'target' });
     setAddModalOpen(true);
   };
 
@@ -54,10 +79,27 @@ const Applications: React.FC = () => {
     addApplication({
       companyName: addFormData.companyName.trim(),
       jobTitle: addFormData.jobTitle.trim(),
+      priority: addFormData.priority,
       jobDescription: '',
       status: 'applied'
     });
     setAddModalOpen(false);
+  };
+
+  const triggerSchedulePrompt = (appId: string, status: ApplicationStatus) => {
+    if (['oa', 'interview', 'hr', 'offer'].includes(status)) {
+      setTimeout(() => {
+        const app = applications.find(a => a.id === appId);
+        setScheduleFormData({
+          title: `${app?.companyName || ''} - ${STATUS_CONFIG[status].label}`,
+          type: status === 'oa' ? 'oa' : (status === 'offer' ? 'deadline' : 'interview'),
+          date: new Date().toISOString().split('T')[0],
+          time: '14:00',
+          notes: ''
+        });
+        setScheduleModalState({ isOpen: true, appId, status });
+      }, 50);
+    }
   };
 
   const handleDragEnd = (result: DropResult) => {
@@ -69,18 +111,8 @@ const Applications: React.FC = () => {
     const newStatus = destination.droppableId as ApplicationStatus;
     updateApplicationStatus(draggableId, newStatus);
 
-    if (newStatus !== source.droppableId && ['oa', 'interview', 'hr', 'offer'].includes(newStatus)) {
-      setTimeout(() => {
-        const app = applications.find(a => a.id === draggableId);
-        setScheduleFormData({
-          title: `${app?.companyName || ''} - ${STATUS_CONFIG[newStatus].label}`,
-          type: newStatus === 'oa' ? 'oa' : (newStatus === 'offer' ? 'deadline' : 'interview'),
-          date: new Date().toISOString().split('T')[0],
-          time: '14:00',
-          notes: ''
-        });
-        setScheduleModalState({ isOpen: true, appId: draggableId, status: newStatus });
-      }, 50);
+    if (newStatus !== source.droppableId) {
+      triggerSchedulePrompt(draggableId, newStatus);
     }
   };
 
@@ -94,9 +126,33 @@ const Applications: React.FC = () => {
     setScheduleModalState(null);
   };
 
-  const kanbanRef = React.useRef<HTMLDivElement>(null);
+  // 过滤后的岗位数据
+  const filteredApplications = useMemo(() => {
+    return applications.filter(app => {
+      // 1. 搜索过滤
+      if (searchQuery.trim()) {
+        const q = searchQuery.trim().toLowerCase();
+        const matchCompany = (app.companyName || '').toLowerCase().includes(q);
+        const matchTitle = (app.jobTitle || '').toLowerCase().includes(q);
+        const matchLocation = (app.location || '').toLowerCase().includes(q);
+        if (!matchCompany && !matchTitle && !matchLocation) return false;
+      }
+      // 2. 意向度过滤
+      if (priorityFilter !== 'all') {
+        const priority = app.priority || 'target';
+        if (priority !== priorityFilter) return false;
+      }
+      // 3. 状态过滤 (在表格视图或全局过滤)
+      if (statusFilter !== 'all') {
+        if (app.status !== statusFilter) return false;
+      }
+      return true;
+    });
+  }, [applications, searchQuery, priorityFilter, statusFilter]);
 
-  React.useEffect(() => {
+  const kanbanRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
     const el = kanbanRef.current;
     if (!el) return;
 
@@ -112,75 +168,200 @@ const Applications: React.FC = () => {
 
   return (
     <div className={styles.container}>
+      {/* 顶部标题栏 */}
       <header className={styles.header}>
         <div>
           <h1 className="text-h1">投递记录看板</h1>
-          <p style={{ color: 'var(--text-secondary)', marginTop: '4px' }}>追踪所有的岗位投递状态与进展，支持拖拽改变状态。</p>
+          <p style={{ color: 'var(--text-secondary)', marginTop: '4px' }}>
+            追踪所有投递岗位进展，支持拖拽看板与高密度表格多维查阅。
+          </p>
         </div>
         <button className="btn btn-accent" onClick={handleAddNew}>
           <Plus size={16} /> 添加岗位
         </button>
       </header>
 
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <div className={styles.kanbanBoard} ref={kanbanRef}>
-          {COLUMNS.map(status => {
-            const config = STATUS_CONFIG[status];
-            const columnApps = applications.filter(app => app.status === status);
-            
-            return (
-              <div key={status} className={styles.column}>
-                <div className={styles.columnHeader}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: config.color }}></span>
-                    {config.label}
-                  </div>
-                  <span className={styles.columnBadge}>{columnApps.length}</span>
-                </div>
-                
-                <Droppable droppableId={status}>
-                  {(provided, snapshot) => (
-                    <div 
-                      className={styles.cardList}
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      style={{ 
-                        backgroundColor: snapshot.isDraggingOver ? 'var(--bg-secondary)' : 'transparent',
-                        minHeight: '200px',
-                        transition: 'background-color 0.2s ease',
-                        flex: 1,
-                      }}
-                    >
-                      {columnApps.map((app, index) => (
-                        <Draggable key={app.id} draggableId={app.id} index={index}>
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              style={{
-                                ...provided.draggableProps.style,
-                                marginBottom: '12px',
-                              }}
-                            >
-                              <ApplicationCard 
-                                application={app} 
-                                onClick={() => setSelectedAppId(app.id)}
-                                isDragging={snapshot.isDragging}
-                              />
-                            </div>
-                          )}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
-                    </div>
-                  )}
-                </Droppable>
-              </div>
-            );
-          })}
+      {/* 现代化多功能工具栏 */}
+      <div className={styles.toolbar}>
+        {/* 左侧：视图切换分段器 */}
+        <div className={styles.segmentedControl}>
+          <button
+            type="button"
+            className={`${styles.segmentBtn} ${viewMode === 'kanban' ? styles.activeSegment : ''}`}
+            onClick={() => handleViewModeChange('kanban')}
+          >
+            <LayoutGrid size={15} /> 看板视图
+          </button>
+          <button
+            type="button"
+            className={`${styles.segmentBtn} ${viewMode === 'table' ? styles.activeSegment : ''}`}
+            onClick={() => handleViewModeChange('table')}
+          >
+            <TableProperties size={15} /> 表格视图
+          </button>
         </div>
-      </DragDropContext>
+
+        {/* 右侧：复合筛选与搜索 */}
+        <div className={styles.filterGroup}>
+          <div className={styles.searchInputWrapper}>
+            <Search size={14} className={styles.searchIcon} />
+            <input
+              type="text"
+              placeholder="搜索公司 / 岗位 / 地点..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className={styles.searchInput}
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                style={{ position: 'absolute', right: '8px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)' }}
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
+
+          {/* 意向梯队快筛 */}
+          <select
+            value={priorityFilter}
+            onChange={e => setPriorityFilter(e.target.value)}
+            className={styles.filterSelect}
+            title="按意向度 / 难度梯队筛选"
+          >
+            <option value="all">全部意向梯队</option>
+            <option value="dream">冲刺 (重点)</option>
+            <option value="target">主攻 (核心)</option>
+            <option value="safety">保底 (稳健)</option>
+          </select>
+
+          {/* 状态快筛 */}
+          <select
+            value={statusFilter}
+            onChange={e => setStatusFilter(e.target.value)}
+            className={styles.filterSelect}
+            title="按投递状态筛选"
+          >
+            <option value="all">全部流转状态</option>
+            {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
+              <option key={key} value={key}>{cfg.label}</option>
+            ))}
+          </select>
+
+          {/* 统计徽章 */}
+          <div className={styles.countBadge}>
+            共 {applications.length} 个岗位
+            {filteredApplications.length !== applications.length && (
+              <span style={{ color: 'var(--primary)', marginLeft: '4px', fontWeight: 600 }}>
+                (已匹配 {filteredApplications.length})
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* 主视图渲染分流 */}
+      {viewMode === 'kanban' ? (
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <div className={styles.kanbanBoard} ref={kanbanRef}>
+            {COLUMNS.map(status => {
+              const config = STATUS_CONFIG[status];
+              const columnApps = filteredApplications.filter(app => app.status === status);
+              const totalInColumn = applications.filter(app => app.status === status).length;
+              
+              return (
+                <div key={status} className={styles.column}>
+                  <div className={styles.columnHeader}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: config.color }}></span>
+                      {config.label}
+                    </div>
+                    <span className={styles.columnBadge}>
+                      {columnApps.length}
+                      {columnApps.length !== totalInColumn && (
+                        <span style={{ opacity: 0.6, fontSize: '10px', marginLeft: '2px' }}>/{totalInColumn}</span>
+                      )}
+                    </span>
+                  </div>
+                  
+                  <Droppable droppableId={status}>
+                    {(provided, snapshot) => (
+                      <div 
+                        className={styles.cardList}
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        style={{ 
+                          backgroundColor: snapshot.isDraggingOver ? 'var(--bg-secondary)' : 'transparent',
+                          minHeight: '200px',
+                          transition: 'background-color 0.2s ease',
+                          flex: 1,
+                        }}
+                      >
+                        {columnApps.map((app, index) => (
+                          <Draggable key={app.id} draggableId={app.id} index={index}>
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                style={{
+                                  ...provided.draggableProps.style,
+                                }}
+                              >
+                                <ApplicationCard 
+                                  application={app} 
+                                  onClick={() => setSelectedAppId(app.id)}
+                                  isDragging={snapshot.isDragging}
+                                />
+                              </div>
+                            )}
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
+
+                        {columnApps.length === 0 && (
+                          <div style={{ padding: '24px 8px', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: '12.5px', border: '1px dashed var(--border-color)', borderRadius: 'var(--radius-md)' }}>
+                            暂无岗位
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </Droppable>
+                </div>
+              );
+            })}
+          </div>
+        </DragDropContext>
+      ) : (
+        <ApplicationTableView
+          applications={filteredApplications}
+          onSelectApp={(appId) => setSelectedAppId(appId)}
+          onStatusChange={(appId, newStatus) => {
+            updateApplicationStatus(appId, newStatus);
+            triggerSchedulePrompt(appId, newStatus);
+          }}
+          onPriorityChange={(appId, newPriority) => {
+            updateApplication(appId, { priority: newPriority });
+          }}
+          onAddSchedule={(app: Application) => {
+            setScheduleFormData({
+              title: `${app.companyName || ''} - ${STATUS_CONFIG[app.status]?.label || '日程'}`,
+              type: app.status === 'oa' ? 'oa' : (app.status === 'offer' ? 'deadline' : 'interview'),
+              date: new Date().toISOString().split('T')[0],
+              time: '14:00',
+              notes: ''
+            });
+            setScheduleModalState({ isOpen: true, appId: app.id, status: app.status });
+          }}
+          onDelete={(appId) => {
+            const app = applications.find(a => a.id === appId);
+            if (confirm(`确定要删除【${app?.companyName} - ${app?.jobTitle}】的投递记录吗？`)) {
+              deleteApplication(appId);
+            }
+          }}
+        />
+      )}
 
       {/* Slide-over Detail Panel */}
       {selectedAppId && (
@@ -193,19 +374,31 @@ const Applications: React.FC = () => {
       {/* Add Application Modal */}
       {addModalOpen && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
-          <div style={{ backgroundColor: 'var(--bg-primary)', borderRadius: 'var(--radius-lg)', width: '400px', padding: '24px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)' }}>
+          <div style={{ backgroundColor: 'var(--bg-primary)', borderRadius: 'var(--radius-lg)', width: '420px', padding: '24px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h3 className="text-h3">添加岗位</h3>
+              <h3 className="text-h3">添加投递岗位</h3>
               <button onClick={() => setAddModalOpen(false)} className="btn btn-ghost btn-icon"><X size={20} /></button>
             </div>
             <form onSubmit={submitAddNew}>
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>公司名称</label>
-                <input required autoFocus className={styles.input} placeholder="例如：字节跳动" value={addFormData.companyName} onChange={e => setAddFormData({...addFormData, companyName: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }} />
+                <input required autoFocus className={styles.input} placeholder="例如：字节跳动" value={addFormData.companyName} onChange={e => setAddFormData({...addFormData, companyName: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }} />
+              </div>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>投递岗位</label>
+                <input required className={styles.input} placeholder="例如：前端开发工程师" value={addFormData.jobTitle} onChange={e => setAddFormData({...addFormData, jobTitle: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }} />
               </div>
               <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>投递岗位</label>
-                <input required className={styles.input} placeholder="例如：前端开发工程师" value={addFormData.jobTitle} onChange={e => setAddFormData({...addFormData, jobTitle: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }} />
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>意向梯队 / 难度</label>
+                <select
+                  value={addFormData.priority}
+                  onChange={e => setAddFormData({...addFormData, priority: e.target.value as ApplicationPriority})}
+                  style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }}
+                >
+                  <option value="dream">冲刺 (重点意向 / 高难度)</option>
+                  <option value="target">主攻 (核心匹配 / 主力投递)</option>
+                  <option value="safety">保底 (稳健备选 / 练习托底)</option>
+                </select>
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
                 <button type="button" onClick={() => setAddModalOpen(false)} className="btn btn-outline">取消</button>
@@ -230,7 +423,7 @@ const Applications: React.FC = () => {
             <form onSubmit={submitScheduleEvent}>
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>日程标题</label>
-                <input required className={styles.input} value={scheduleFormData.title} onChange={e => setScheduleFormData({...scheduleFormData, title: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }} />
+                <input required className={styles.input} value={scheduleFormData.title} onChange={e => setScheduleFormData({...scheduleFormData, title: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }} />
               </div>
               <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
                 <div style={{ flex: 1 }}>
@@ -255,3 +448,4 @@ const Applications: React.FC = () => {
 };
 
 export default Applications;
+

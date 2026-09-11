@@ -1923,3 +1923,91 @@ PDF 文件 ──> pdfjs-dist 解析 TextContent (含 fontName & styles 元数�
   - 硅基流动在国内网络环境下具有极低的延迟、免代理直连、极高的性价比以及对 DeepSeek-V3 / DeepSeek-R1 模型的原生极速支持，非常适合国内开发者和学生在本地开箱即用。
 
 
+
+---
+
+## 迭代记录（2026/09/11 - 投递追踪高密度双视图架构、意向梯队矢量设计与招聘池全链路打通）
+
+### 1. 【本次修改范围】
+- **`src/features/applications/types/application.ts`**:
+  - **新增意向度数据模型**：定义 `ApplicationPriority = 'dream' | 'target' | 'safety'`（冲刺 / 主攻 / 保底）；
+  - **专业视觉配置字典 `PRIORITY_CONFIG`**：彻底废除 Emoji，引入 Lucide 矢量图标（`Flame`, `Target`, `ShieldCheck`），配置低饱和度专业配色（Rose/Blue/Emerald）与排序权重（`weight`）；
+  - 扩展 `Application` 接口：新增 `priority?: ApplicationPriority`。
+- **`src/features/jobBoard/types/job.ts`**:
+  - 扩展招聘信息池收藏模型 `JobBookmark`：新增 `priority?: ApplicationPriority` 字段。
+- **`src/features/applications/components/ApplicationCard.tsx`**:
+  - **卡片盒模型统一与等高规范化**：设置 `min-height: 94px` 弹性盒模型，废除旧版中间容易导致高度突变的虚线分割器；
+  - **矢量徽章重塑**：顶部左侧展示公司名，右侧嵌入 Lucide 矢量图标徽章；中间加粗展示岗位；底部以 `justify-content: space-between` 优雅展示地点/薪资与更新时间，彻底消灭高度不均。
+- **`src/features/applications/components/ApplicationTableView.tsx` & `ApplicationTableView.module.css` (NEW)**:
+  - **全新高密度表格视图引擎**：单行紧凑布局（~44px），同屏容量提升 300% 以上；
+  - **多维点击排序**：支持按公司名（字母序）、岗位、意向度（按 Dream > Target > Safety 权重）、更新时间、状态进行升降序点击排序；
+  - **行内快捷变更**：支持在表格行内直接下拉修改意向梯队与投递状态，无需点入详情；
+  - **智能简历关联解析**：通过简历 ID 反查简历名称，直观呈现所用版本。
+- **`src/features/applications/pages/Applications/index.tsx` & `Applications.module.css`**:
+  - **双视图分段控制器**：上线 `[ ☷ 看板视图 | ☰ 表格视图 ]` 切换器，结合 `localStorage` 记忆用户视图偏好；
+  - **复合检索与过滤栏**：集成关键词模糊搜索（公司/岗位/地点/备注）、意向梯队多选过滤、投递状态筛选与结果计数徽标；
+  - **新建弹窗增强**：在快速录入投递弹窗中增加意向度选择组件。
+- **`src/features/applications/components/ApplicationDetailPanel.tsx`**:
+  - **详情抽屉意向度流转**：增加意向梯队下拉选择器，与全局状态实时同步。
+- **`src/features/jobBoard/components/JobAddModal.tsx`**:
+  - **信息池录入源头打通**：在【添加岗位】模态框中新增“意向梯队”选项（主攻/冲刺/保底），默认自动选中“主攻”。
+- **`src/features/jobBoard/pages/JobBoard/index.tsx`**:
+  - **招聘池表格与流转承接**：表格中展示带矢量图标的意向度徽章，支持行内直接修改；当点击“标为已投”时，无缝将 `priority` 传递并注入到投递追踪看板。
+- **`src/core/utils/mockDataInjector.ts`**:
+  - 增强演示数据生成器，为系统预置的示例岗位全量注入合理的意向梯队与元数据。
+
+---
+
+### 2. 【架构与设计变更】
+
+#### 1) 投递追踪全生命周期数据流（招聘池 -> 投递看板 -> 高密度表格）
+```
+【求职全生命周期闭环】
+1. 招聘信息池 (Job Board)
+   ├─ 用户录入岗位 / 插件抓取 (指定 priority: 'dream' | 'target' | 'safety')
+   └─ 点击【标为已投】──(携带 priority 属性)──┐
+                                             │
+2. 投递追踪核心状态层 (useApplicationStore)   │
+   ├─ 新建投递 / 继承信息池数据 <────────────┘
+   │
+3. 双视图动态渲染引擎 (Applications Page)
+   ├─ 模糊检索 + 意向度快筛 + 状态快筛 (应用到全部视图)
+   ├─ 【看板视图】(Kanban View)
+   │    └─ 统一 94px 固定比例弹性卡片，Lucide 矢量徽标
+   └─ 【高密度表格视图】(Table View)
+        ├─ 同屏 30+ 岗位，表头点击升降序（权重/时间/公司）
+        └─ 行内快捷状态/梯队流转
+```
+
+#### 2) 视觉设计系统升级（脱离 Emoji，迈向企业级专业度）
+- **旧版设计缺陷**：使用系统 Emoji（如 🎯、🚀、🛡️），不同操作系统（macOS / Windows / Android）渲染出的 Emoji 风格迥异，且高饱和度的原生黄色/红色在暗色模式下非常扎眼，显得粗糙业余。
+- **新版设计规范**：
+  - 图标：使用精细度极高的 Lucide 矢量 SVG（11px 大小，细描边）；
+  - 色彩搭配：采用现代 B 端常用的 Alpha 半透明方案（`rgba(..., 0.08)` 背景 + `rgba(..., 0.22)` 极细边框 + `rgba(..., 0.95)` 柔和前景文字）；
+  - 颜色语义：
+    - 冲刺 (Dream)：Rose (玫瑰赤红) `rgb(244, 63, 94)`，代表高挑战与高关注度；
+    - 主攻 (Target)：Sky Blue (核心蓝) `rgb(59, 130, 246)`，代表主力投递与稳健攻坚；
+    - 保底 (Safety)：Emerald (稳健翠绿) `rgb(16, 185, 129)`，代表安全护航。
+
+---
+
+### 3. 【开发遇到的问题 & 踩坑记录】
+
+1. **看板卡片高度参差不齐（抖动）的根本原因与布局排查**：
+   - **问题现象**：部分卡片高度 120px，部分只有 90px，看板列内卡片错落不齐，视觉极其杂乱。
+   - **排查原因**：旧版在卡片中间使用了 `{(location || salary) && <div className={styles.meta} />}` 且包含 `border-top: 1px dashed` 分割线。当岗位缺失薪资或地点信息时，不仅少了一行文本，而且还少了上边框和内外边距；底部更新时间被直接挤到上方，导致高度剧烈跳变。
+   - **解决方案**：统一卡片盒模型，废除生硬的中间横线。外层容器设为固定 `min-height: 94px` 配合 `flex-direction: column` 与 `justify-content: space-between`。顶部区域固定放公司与意向徽标，中间放岗位名称（单行省略），底部统一放辅助信息与日期。即便某个岗位无地点，也通过标准行高保持严格等高对齐。
+
+2. **跨模块数据传递的字段遗漏（从招聘池向投递看板流转）**：
+   - **问题现象**：用户在招聘池给岗位设定了“冲刺”，但在点击“标为已投”流转到投递看板后，卡片上的意向度变回了未定义。
+   - **排查原因**：`JobBoard/index.tsx` 的 `handleMarkAsApplied` 函数在调用 `addApplication` 时，只组装了 `company`、`position`、`location` 等基础字段，漏掉了新增加的 `priority` 字段。
+   - **解决方案**：在 `handleMarkAsApplied` 中同步注入 `priority: job.priority || 'target'`，确保流转过程中的属性 100% 完整继承。
+
+---
+
+### 4. 【关键决策理由】
+
+- **为什么采用“看板 + 高密度表格”双视图架构，而不是单纯把看板卡片改小？**
+  - **需求场景分化**：求职初期（1~10 个岗位）时，看板的直观拖拽与状态列视觉体验极佳，能给用户带来强烈的掌控感；但在中后期海投（50~200+ 岗位）时，看板模式无论怎么缩小卡片，纵向滚动都无法避免，且难以进行“按更新时间快速排序”、“批量查验”等高频管理操作。提供双视图切换（并持久化用户习惯）能完美兼顾“初期直观流转”与“后期海投高密度管理”两种截然不同的使用阶段。
+- **为什么在招聘信息池录入阶段就支持意向度选择？**
+  - 求职策略始于“搜集与筛选岗位”。求职者在发现一个招聘 JD 时，第一时间就已经对该岗位的难度和意向程度有了心理定位（例如是用来练手的保底岗，还是心中的 Dream Offer）。在信息池录入时直接分类，不仅免去了后续流转到看板时的二次标注成本，更能帮助求职者在信息池阶段就合理规划不同梯队的投递节奏。

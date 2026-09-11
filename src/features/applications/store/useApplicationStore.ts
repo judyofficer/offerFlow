@@ -23,6 +23,7 @@ export const useApplicationStore = create<ApplicationState>()(
         set((state) => {
           const newApp: Application = {
             ...appData,
+            priority: appData.priority || 'target',
             id: newId,
             appliedAt: Date.now(),
             updatedAt: Date.now(),

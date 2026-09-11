@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Wand2 } from 'lucide-react';
 import { parseJobText } from '../utils/parser';
+import type { ApplicationPriority } from '../../applications/types/application';
 
 interface Props {
   onClose: () => void;
   onSave: (data: {
     companyName: string;
     jobTitle: string;
+    priority?: ApplicationPriority;
     url: string;
     salary: string;
     location: string;
@@ -21,6 +23,7 @@ export const JobAddModal: React.FC<Props> = ({ onClose, onSave, suggestedTitles 
 
   const [companyName, setCompanyName] = useState('');
   const [jobTitle, setJobTitle] = useState('');
+  const [priority, setPriority] = useState<ApplicationPriority>('target');
   const [url, setUrl] = useState('');
   const [salary, setSalary] = useState('');
   const [location, setLocation] = useState('');
@@ -51,7 +54,7 @@ export const JobAddModal: React.FC<Props> = ({ onClose, onSave, suggestedTitles 
       alert('请至少填写公司名称和岗位名称');
       return;
     }
-    onSave({ companyName, jobTitle, url, salary, location, source, deadline });
+    onSave({ companyName, jobTitle, priority, url, salary, location, source, deadline });
     onClose();
   };
 
@@ -151,9 +154,21 @@ export const JobAddModal: React.FC<Props> = ({ onClose, onSave, suggestedTitles 
             </div>
           </div>
 
-          <div className="job-add-grid-2">
+          <div className="job-add-grid-3">
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>原始招聘链接 URL (可选)</label>
+              <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>意向梯队 / 难度</label>
+              <select
+                value={priority}
+                onChange={e => setPriority(e.target.value as ApplicationPriority)}
+                style={{ padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '13.5px' }}
+              >
+                <option value="dream">冲刺 (重点 / 高难度)</option>
+                <option value="target">主攻 (核心 / 主力投递)</option>
+                <option value="safety">保底 (稳健 / 练习托底)</option>
+              </select>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>招聘链接 URL</label>
               <input
                 value={url} onChange={e => setUrl(e.target.value)}
                 placeholder="https://..."
