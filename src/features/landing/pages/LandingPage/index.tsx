@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Briefcase, FileText, Sparkles, ArrowRight, LayoutDashboard, Calendar, Loader2 } from 'lucide-react';
+import { FileText, Sparkles, ArrowRight, LayoutDashboard, Calendar, Loader2 } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { injectMockData } from '../../../../core/utils/mockDataInjector';
 import styles from './LandingPage.module.css';
@@ -70,7 +70,7 @@ const LandingPage: React.FC = () => {
           animation: 'fadeIn 0.3s ease-out'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-            <Briefcase size={36} color="#8b5cf6" />
+            <img src="/favicon.png" alt="offerFlow" style={{ width: 36, height: 36, borderRadius: 8, objectFit: 'contain' }} />
             <span style={{ fontSize: '28px', fontWeight: 800, letterSpacing: '-0.03em' }}>offerFlow</span>
           </div>
           <Loader2 size={32} className="lucide-spin" style={{ animation: 'spin 1.5s linear infinite', color: '#8b5cf6' }} />
@@ -83,7 +83,7 @@ const LandingPage: React.FC = () => {
       {/* Header */}
       <header className={styles.header}>
         <div className={styles.logo}>
-          <Briefcase size={28} color="#8b5cf6" />
+          <img src="/favicon.png" alt="offerFlow" style={{ width: 28, height: 28, borderRadius: 6, objectFit: 'contain' }} />
           offerFlow
         </div>
         <nav className={styles.navLinks}>

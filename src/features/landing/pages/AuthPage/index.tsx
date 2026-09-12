@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Briefcase, ArrowRight, Loader, Eye, EyeOff } from 'lucide-react';
+import { ArrowRight, Loader, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../../../../core/services/supabaseClient';
 import { syncEngine } from '../../../../core/services/syncEngine';
 import { useAuthStore } from '../../../../core/store/useAuthStore';
@@ -107,14 +107,14 @@ const AuthPage: React.FC = () => {
       {/* 检测到已有登录态，正在同步云端数据 */}
       {isSyncing && (
         <div style={{ position: 'fixed', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-primary)', zIndex: 9999 }}>
-          <Briefcase size={36} color="#8b5cf6" style={{ marginBottom: '16px' }} />
+          <img src="/favicon.png" alt="offerFlow" style={{ width: 40, height: 40, marginBottom: '16px', borderRadius: 8, objectFit: 'contain' }} />
           <Loader className={styles.spinner} size={28} style={{ marginBottom: '16px', color: 'var(--primary)' }} />
           <p style={{ color: 'var(--text-secondary)', fontSize: '15px' }}>检测到已有账号，正在同步您的数据...</p>
         </div>
       )}
       <div className={styles.authCard}>
         <div className={styles.logo}>
-          <Briefcase size={32} color="#8b5cf6" />
+          <img src="/favicon.png" alt="offerFlow" style={{ width: 32, height: 32, borderRadius: 6, objectFit: 'contain' }} />
           <span>offerFlow</span>
         </div>
         

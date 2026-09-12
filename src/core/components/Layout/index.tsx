@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -6,7 +6,8 @@ import {
   Settings,
   Workflow,
   Calendar,
-  Bookmark
+  Bookmark,
+  PanelLeftClose,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import styles from './Layout.module.css';
@@ -24,12 +25,70 @@ const Layout: React.FC = () => {
   const isGuest = useAuthStore((state) => state.isGuest);
   const navigate = useNavigate();
 
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('offerflow_sidebar_collapsed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleCollapse = () => {
+    setIsCollapsed(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('offerflow_sidebar_collapsed', String(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        toggleCollapse();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   return (
     <div className={styles.layoutContainer}>
-      <aside className={styles.sidebar}>
+      <aside className={`${styles.sidebar} ${isCollapsed ? styles.collapsed : ''}`}>
         <div className={styles.sidebarHeader}>
-          <Workflow className={styles.logoIcon} size={24} strokeWidth={2.5} />
-          <span className={styles.logoText}>offerFlow</span>
+          {isCollapsed ? (
+            <button
+              type="button"
+              onClick={toggleCollapse}
+              className={`${styles.collapseBtn} ${styles.collapsedLogoBtn}`}
+              title="展开侧边栏 (⌘B)"
+              aria-label="展开侧边栏"
+            >
+              <img src="/favicon.png" alt="offerFlow" className={styles.logoIcon} />
+            </button>
+          ) : (
+            <>
+              <div className={styles.logoGroup}>
+                <img src="/favicon.png" alt="offerFlow" className={styles.logoIcon} />
+                <span className={styles.logoText}>offerFlow</span>
+              </div>
+              <button
+                type="button"
+                onClick={toggleCollapse}
+                className={styles.collapseBtn}
+                title="收起侧边栏 (⌘B)"
+                aria-label="收起侧边栏"
+              >
+                <PanelLeftClose size={18} />
+              </button>
+            </>
+          )}
         </div>
 
         <nav className={styles.nav}>
@@ -39,6 +98,7 @@ const Layout: React.FC = () => {
               <NavLink
                 key={item.path}
                 to={item.path}
+                title={isCollapsed ? item.label : undefined}
                 className={({ isActive }) =>
                   `${styles.navItem} ${isActive ? styles.active : ''} ${item.path === '/settings' ? styles.settingsItem : ''}`
                 }
