@@ -6,7 +6,7 @@ import { useApplicationStore } from '../../store/useApplicationStore';
 import { useScheduleStore } from '../../../schedule/store/useScheduleStore';
 import type { EventType } from '../../../schedule/types/schedule';
 import { STATUS_CONFIG } from '../../types/application';
-import type { ApplicationStatus, ApplicationPriority, Application } from '../../types/application';
+import type { ApplicationStatus, ApplicationPriority } from '../../types/application';
 import { ApplicationCard } from '../../components/ApplicationCard';
 import { ApplicationDetailPanel } from '../../components/ApplicationDetailPanel';
 import { ApplicationTableView } from '../../components/ApplicationTableView';
@@ -14,7 +14,7 @@ import styles from './Applications.module.css';
 
 const COLUMNS: ApplicationStatus[] = ['applied', 'oa', 'interview', 'hr', 'offer', 'rejected'];
 
-const Applications: React.FC = () => {
+export const Applications: React.FC = () => {
   const { applications, addApplication, updateApplicationStatus, updateApplication, deleteApplication } = useApplicationStore();
   const { addEvent } = useScheduleStore();
   const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
@@ -39,10 +39,12 @@ const Applications: React.FC = () => {
   const [addFormData, setAddFormData] = useState<{
     companyName: string;
     jobTitle: string;
+    url: string;
     priority: ApplicationPriority;
   }>({
     companyName: '',
     jobTitle: '',
+    url: '',
     priority: 'target'
   });
 
@@ -68,7 +70,7 @@ const Applications: React.FC = () => {
   });
 
   const handleAddNew = () => {
-    setAddFormData({ companyName: '', jobTitle: '', priority: 'target' });
+    setAddFormData({ companyName: '', jobTitle: '', url: '', priority: 'target' });
     setAddModalOpen(true);
   };
 
@@ -79,6 +81,7 @@ const Applications: React.FC = () => {
     addApplication({
       companyName: addFormData.companyName.trim(),
       jobTitle: addFormData.jobTitle.trim(),
+      url: addFormData.url.trim(),
       priority: addFormData.priority,
       jobDescription: '',
       status: 'applied'
@@ -241,61 +244,48 @@ const Applications: React.FC = () => {
             value={statusFilter}
             onChange={e => setStatusFilter(e.target.value)}
             className={styles.filterSelect}
-            title="按投递状态筛选"
+            title="按投递流转状态筛选"
           >
-            <option value="all">全部流转状态</option>
-            {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
-              <option key={key} value={key}>{cfg.label}</option>
+            <option value="all">全部投递状态</option>
+            {Object.entries(STATUS_CONFIG).map(([key, config]) => (
+              <option key={key} value={key}>{config.label}</option>
             ))}
           </select>
 
-          {/* 统计徽章 */}
-          <div className={styles.countBadge}>
-            共 {applications.length} 个岗位
-            {filteredApplications.length !== applications.length && (
-              <span style={{ color: 'var(--primary)', marginLeft: '4px', fontWeight: 600 }}>
-                (已匹配 {filteredApplications.length})
-              </span>
-            )}
-          </div>
+          {/* 匹配条数徽章 */}
+          <span className={styles.countBadge}>
+            共 {filteredApplications.length} 条记录
+          </span>
         </div>
       </div>
 
-      {/* 主视图渲染分流 */}
+      {/* 核心视图区域：根据 viewMode 切换看板或高密度表格 */}
       {viewMode === 'kanban' ? (
         <DragDropContext onDragEnd={handleDragEnd}>
           <div className={styles.kanbanBoard} ref={kanbanRef}>
             {COLUMNS.map(status => {
-              const config = STATUS_CONFIG[status];
               const columnApps = filteredApplications.filter(app => app.status === status);
-              const totalInColumn = applications.filter(app => app.status === status).length;
-              
+              const config = STATUS_CONFIG[status];
+
               return (
                 <div key={status} className={styles.column}>
                   <div className={styles.columnHeader}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: config.color }}></span>
-                      {config.label}
+                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: config.color }} />
+                      <span>{config.label}</span>
                     </div>
-                    <span className={styles.columnBadge}>
-                      {columnApps.length}
-                      {columnApps.length !== totalInColumn && (
-                        <span style={{ opacity: 0.6, fontSize: '10px', marginLeft: '2px' }}>/{totalInColumn}</span>
-                      )}
-                    </span>
+                    <span className={styles.columnBadge}>{columnApps.length}</span>
                   </div>
-                  
+
                   <Droppable droppableId={status}>
                     {(provided, snapshot) => (
-                      <div 
-                        className={styles.cardList}
+                      <div
                         ref={provided.innerRef}
                         {...provided.droppableProps}
-                        style={{ 
+                        className={styles.cardList}
+                        style={{
                           backgroundColor: snapshot.isDraggingOver ? 'var(--bg-secondary)' : 'transparent',
-                          minHeight: '200px',
                           transition: 'background-color 0.2s ease',
-                          flex: 1,
                         }}
                       >
                         {columnApps.map((app, index) => (
@@ -305,12 +295,9 @@ const Applications: React.FC = () => {
                                 ref={provided.innerRef}
                                 {...provided.draggableProps}
                                 {...provided.dragHandleProps}
-                                style={{
-                                  ...provided.draggableProps.style,
-                                }}
                               >
-                                <ApplicationCard 
-                                  application={app} 
+                                <ApplicationCard
+                                  application={app}
                                   onClick={() => setSelectedAppId(app.id)}
                                   isDragging={snapshot.isDragging}
                                 />
@@ -319,12 +306,6 @@ const Applications: React.FC = () => {
                           </Draggable>
                         ))}
                         {provided.placeholder}
-
-                        {columnApps.length === 0 && (
-                          <div style={{ padding: '24px 8px', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: '12.5px', border: '1px dashed var(--border-color)', borderRadius: 'var(--radius-md)' }}>
-                            暂无岗位
-                          </div>
-                        )}
                       </div>
                     )}
                   </Droppable>
@@ -344,9 +325,9 @@ const Applications: React.FC = () => {
           onPriorityChange={(appId, newPriority) => {
             updateApplication(appId, { priority: newPriority });
           }}
-          onAddSchedule={(app: Application) => {
+          onAddSchedule={(app) => {
             setScheduleFormData({
-              title: `${app.companyName || ''} - ${STATUS_CONFIG[app.status]?.label || '日程'}`,
+              title: `${app.companyName} - ${STATUS_CONFIG[app.status]?.label || '面试'}`,
               type: app.status === 'oa' ? 'oa' : (app.status === 'offer' ? 'deadline' : 'interview'),
               date: new Date().toISOString().split('T')[0],
               time: '14:00',
@@ -374,7 +355,7 @@ const Applications: React.FC = () => {
       {/* Add Application Modal */}
       {addModalOpen && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
-          <div style={{ backgroundColor: 'var(--bg-primary)', borderRadius: 'var(--radius-lg)', width: '420px', padding: '24px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)' }}>
+          <div style={{ backgroundColor: 'var(--bg-primary)', borderRadius: 'var(--radius-lg)', width: '440px', padding: '24px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h3 className="text-h3">添加投递岗位</h3>
               <button onClick={() => setAddModalOpen(false)} className="btn btn-ghost btn-icon"><X size={20} /></button>
@@ -382,11 +363,15 @@ const Applications: React.FC = () => {
             <form onSubmit={submitAddNew}>
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>公司名称</label>
-                <input required autoFocus className={styles.input} placeholder="例如：字节跳动" value={addFormData.companyName} onChange={e => setAddFormData({...addFormData, companyName: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }} />
+                <input required autoFocus className={styles.input} placeholder="例如：字节跳动 / 招银网络" value={addFormData.companyName} onChange={e => setAddFormData({...addFormData, companyName: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }} />
               </div>
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>投递岗位</label>
                 <input required className={styles.input} placeholder="例如：前端开发工程师" value={addFormData.jobTitle} onChange={e => setAddFormData({...addFormData, jobTitle: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }} />
+              </div>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>进度查询链接 (可选)</label>
+                <input className={styles.input} placeholder="https://... (投递完成后生成的进度查询链接)" value={addFormData.url} onChange={e => setAddFormData({...addFormData, url: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }} />
               </div>
               <div style={{ marginBottom: '24px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>意向梯队 / 难度</label>
@@ -448,4 +433,3 @@ const Applications: React.FC = () => {
 };
 
 export default Applications;
-

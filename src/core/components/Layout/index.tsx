@@ -13,7 +13,7 @@ import styles from './Layout.module.css';
 
 const navItems = [
   { path: '/dashboard', label: '数据看板', icon: LayoutDashboard },
-  { path: '/jobs', label: '招聘信息', icon: Bookmark },
+  { path: '/jobs', label: '岗位收藏', icon: Bookmark },
   { path: '/applications', label: '投递追踪', icon: Workflow },
   { path: '/schedule', label: '日程管理', icon: Calendar },
   { path: '/resumes', label: '简历管理', icon: FileText },

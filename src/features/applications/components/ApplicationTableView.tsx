@@ -12,8 +12,11 @@ import {
   FileText,
   Clock,
   Eye,
-  ChevronDown
+  ChevronDown,
+  Pencil
 } from 'lucide-react';
+import { useApplicationStore } from '../store/useApplicationStore';
+import { resolveApplicationUrl, openCareerUrl } from '../utils/careerUrlHelper';
 import styles from './ApplicationTableView.module.css';
 
 interface Props {
@@ -37,6 +40,7 @@ export const ApplicationTableView: React.FC<Props> = ({
   onDelete,
 }) => {
   const { resumes } = useResumeStore();
+  const { updateApplication } = useApplicationStore();
   const [sortField, setSortField] = useState<SortField>('updatedAt');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
@@ -158,6 +162,7 @@ export const ApplicationTableView: React.FC<Props> = ({
               const pConfig = PRIORITY_CONFIG[priority] || PRIORITY_CONFIG.target;
               const statusConfig = STATUS_CONFIG[app.status] || STATUS_CONFIG.applied;
               const resumeName = app.resumeId ? resumeMap.get(app.resumeId) : null;
+              const resolvedUrl = resolveApplicationUrl(app.companyName, app.url);
 
               return (
                 <tr 
@@ -172,18 +177,70 @@ export const ApplicationTableView: React.FC<Props> = ({
                         <span style={{ fontWeight: 600, color: 'var(--text-primary)', fontSize: '14px' }}>
                           {app.companyName || '未知公司'}
                         </span>
-                        {app.url && (
-                          <a
-                            href={app.url.startsWith('http') ? app.url : `https://${app.url}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={e => e.stopPropagation()}
-                            className={styles.linkTag}
-                            title={`打开招聘链接: ${app.url}`}
+                        {resolvedUrl.url ? (
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                            <button
+                              type="button"
+                              onClick={e => {
+                                e.stopPropagation();
+                                openCareerUrl(resolvedUrl.url);
+                              }}
+                              className={styles.linkTag}
+                              title="查看进度"
+                            >
+                              <span>进度</span>
+                              <ExternalLink size={10} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={e => {
+                                e.stopPropagation();
+                                const newUrl = prompt(`为【${app.companyName} - ${app.jobTitle}】设置进度查询链接：`, app.url || '');
+                                if (newUrl !== null) {
+                                  updateApplication(app.id, { url: newUrl.trim() });
+                                }
+                              }}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                color: 'var(--text-tertiary)',
+                                cursor: 'pointer',
+                                padding: '2px',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                              }}
+                              title="修改进度查询链接"
+                            >
+                              <Pencil size={11} />
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={e => {
+                              e.stopPropagation();
+                              const newUrl = prompt(`为【${app.companyName} - ${app.jobTitle}】设置进度查询链接：`, '');
+                              if (newUrl !== null) {
+                                updateApplication(app.id, { url: newUrl.trim() });
+                              }
+                            }}
+                            style={{
+                              background: 'none',
+                              border: '1px dashed var(--border-color)',
+                              color: 'var(--text-tertiary)',
+                              borderRadius: '4px',
+                              padding: '1px 5px',
+                              fontSize: '11px',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '2px',
+                            }}
+                            title="设置进度查询链接"
                           >
-                            <ExternalLink size={11} />
-                            <span>官网</span>
-                          </a>
+                            <Pencil size={10} />
+                            <span>加进度</span>
+                          </button>
                         )}
                       </div>
                       <div style={{ fontSize: '12.5px', color: 'var(--text-secondary)' }}>
@@ -278,6 +335,18 @@ export const ApplicationTableView: React.FC<Props> = ({
                   {/* 7. 操作 */}
                   <td className={styles.td} style={{ textAlign: 'right' }} onClick={e => e.stopPropagation()}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      {resolvedUrl.url && (
+                        <button
+                          type="button"
+                          onClick={() => openCareerUrl(resolvedUrl.url)}
+                          className="btn btn-ghost btn-icon btn-sm"
+                          title="查看进度"
+                          style={{ color: 'var(--primary)' }}
+                        >
+                          <ExternalLink size={15} />
+                        </button>
+                      )}
+
                       <button
                         type="button"
                         onClick={() => onSelectApp(app.id)}

@@ -48,7 +48,7 @@ const JobBoard: React.FC = () => {
     // 提示用户
     setNotification({
       isOpen: true,
-      message: `已撤回！【${latest.bookmark.companyName} - ${latest.bookmark.jobTitle}】已恢复至信息池。`,
+      message: `已撤回！【${latest.bookmark.companyName} - ${latest.bookmark.jobTitle}】已恢复至岗位收藏。`,
       canUndo: false,
     });
   }, [undoStack, deleteApplication, restoreBookmark]);
@@ -148,7 +148,7 @@ const JobBoard: React.FC = () => {
 
       <header className={styles.header}>
         <div>
-          <h1 className="text-h1" style={{ marginBottom: '4px' }}>招聘信息池</h1>
+          <h1 className="text-h1" style={{ marginBottom: '4px' }}>岗位收藏</h1>
           <p style={{ color: 'var(--text-secondary)' }}>囤积有意向的岗位，一键转化为正式投递记录。</p>
         </div>
         <button onClick={() => setIsModalOpen(true)} className="btn btn-accent">
@@ -362,7 +362,7 @@ const JobBoard: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => {
-                          if (confirm(`确认删除【${b.companyName} - ${b.jobTitle}】的招聘收藏吗？`)) deleteBookmark(b.id);
+                          if (confirm(`确认删除【${b.companyName} - ${b.jobTitle}】的岗位收藏吗？`)) deleteBookmark(b.id);
                         }}
                         className="btn btn-ghost btn-icon btn-sm"
                         title="删除"
@@ -379,7 +379,7 @@ const JobBoard: React.FC = () => {
               {bookmarks.length === 0 && (
                 <tr>
                   <td colSpan={6} style={{ padding: '64px', textAlign: 'center', color: 'var(--text-tertiary)' }}>
-                    暂无收藏的招聘信息。开始海投收集吧！
+                    暂无收藏的岗位。开始海投收集吧！
                   </td>
                 </tr>
               )}
