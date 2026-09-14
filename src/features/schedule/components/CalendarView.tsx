@@ -306,7 +306,7 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
       <div style={{ 
         display: 'grid', 
         gridTemplateColumns: 'repeat(7, 1fr)', 
-        gridTemplateRows: `repeat(${weekCount}, 112px)`, 
+        gridTemplateRows: `repeat(${weekCount}, minmax(78px, 94px))`, 
         gap: '6px', 
         flex: 1 
       }}>
@@ -316,8 +316,9 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
               <div 
                 key={dayObj.dateStr}
                 style={{
-                  height: '112px',
-                  maxHeight: '112px',
+                  minHeight: '78px',
+                  maxHeight: '94px',
+                  height: '100%',
                   boxSizing: 'border-box',
                   pointerEvents: 'none',
                   backgroundColor: 'transparent'
@@ -353,8 +354,9 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
               key={dateStr}
               onClick={() => onSelectDate(dateStr)}
               style={{
-                height: '112px',
-                maxHeight: '112px',
+                minHeight: '78px',
+                maxHeight: '94px',
+                height: '100%',
                 borderRadius: '8px',
                 border: isSelected 
                   ? '1.5px solid var(--primary, #3b82f6)' 
@@ -368,7 +370,7 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
                     : 'var(--bg-secondary)',
                 display: 'flex',
                 flexDirection: 'column',
-                padding: '5px 6px',
+                padding: '4px 6px',
                 cursor: 'pointer',
                 transition: 'background-color 0.1s ease, border-color 0.1s ease',
                 boxSizing: 'border-box',
@@ -382,10 +384,10 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
               }
             >
               {/* 日期数字行 */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3px', height: '22px', flexShrink: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px', height: '20px', flexShrink: 0 }}>
                 <span style={{ 
-                  width: '22px', 
-                  height: '22px', 
+                  width: '20px', 
+                  height: '20px', 
                   display: 'inline-flex', 
                   alignItems: 'center', 
                   justifyContent: 'center', 
@@ -393,17 +395,21 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
                   backgroundColor: isToday ? 'var(--primary, #3b82f6)' : (isSelected ? 'rgba(59, 130, 246, 0.15)' : 'transparent'),
                   color: isToday ? '#ffffff' : (isSelected ? 'var(--primary)' : 'var(--text-primary)'),
                   fontWeight: isToday || isSelected ? 700 : 500,
-                  fontSize: '12.5px',
+                  fontSize: '12px',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0
                 }}>
                   {dayObj.dayNumber}
                 </span>
 
                 {totalItemsCount > 0 && (
                   <span style={{ 
-                    fontSize: '10px', 
+                    fontSize: '9.5px', 
                     fontWeight: 700, 
                     color: isToday ? 'var(--primary)' : 'var(--text-tertiary)',
-                    paddingRight: '2px'
+                    paddingRight: '1px',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0
                   }}>
                     {totalItemsCount} 项
                   </span>
@@ -411,11 +417,11 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
               </div>
               
               {/* 日程内容区：当天直接日程渲染完整卡片，截止前按类型独立显示漏斗胶囊，点击可展开具体内容 */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', overflow: 'hidden', flex: 1, justifyContent: 'flex-start' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', overflow: 'hidden', flex: 1, justifyContent: 'flex-start' }}>
                 {directEvents.length === 0 && ongoingDeadlines.length > 0 ? (
                   /* 仅有时限进行中：默认按类型独立展示倒计时胶囊（紫色笔试、黄色面试等），点击展开直接显示日程，再次点击日程即可收起 */
                   !isOngoingExpanded ? (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap', marginTop: '3px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexWrap: 'wrap', marginTop: '2px' }}>
                       {groupedOngoing.map(([type, items]) => {
                         const typeConf = EVENT_TYPE_CONFIG[type] || EVENT_TYPE_CONFIG.other;
                         return (
@@ -424,24 +430,26 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
                             type="button"
                             onClick={(e) => toggleOngoingExpand(dateStr, e)}
                             style={{
-                              padding: '2px 7px',
-                              borderRadius: '12px',
+                              padding: '2px 6px',
+                              borderRadius: '10px',
                               backgroundColor: typeConf.bgColor,
                               color: typeConf.color,
                               border: `1px solid ${typeConf.borderColor}`,
                               display: 'inline-flex',
                               alignItems: 'center',
-                              gap: '3px',
-                              fontSize: '11px',
+                              gap: '2px',
+                              fontSize: '10px',
                               fontWeight: 700,
                               cursor: 'pointer',
                               width: 'fit-content',
+                              whiteSpace: 'nowrap',
+                              flexShrink: 0,
                               transition: 'transform 0.1s ease, background-color 0.15s ease',
                             }}
                             title={`${items.length}条${typeConf.label}时限（点击展开查看）`}
                           >
-                            <Hourglass size={11} color={typeConf.color} style={{ flexShrink: 0 }} />
-                            <span style={{ fontSize: '10.5px', lineHeight: 1 }}>{items.length}</span>
+                            <Hourglass size={10} color={typeConf.color} style={{ flexShrink: 0 }} />
+                            <span style={{ fontSize: '10px', lineHeight: 1 }}>{items.length}</span>
                           </button>
                         );
                       })}
@@ -452,9 +460,9 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
                       style={{ 
                         display: 'flex', 
                         flexDirection: 'column', 
-                        gap: '3px', 
+                        gap: '2px', 
                         width: '100%', 
-                        marginTop: '2px',
+                        marginTop: '1px',
                         overflow: 'hidden'
                       }}
                     >
@@ -465,18 +473,18 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
                             key={ev.id}
                             onClick={(e) => toggleOngoingExpand(dateStr, e)}
                             style={{
-                              fontSize: '11px',
+                              fontSize: '10.5px',
                               fontWeight: 600,
                               color: 'var(--text-primary)',
                               backgroundColor: typeConf.bgColor,
-                              borderRadius: '5px',
-                              padding: '3px 6px',
+                              borderRadius: '4px',
+                              padding: '2px 5px',
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
                               whiteSpace: 'nowrap',
                               border: `1px solid ${typeConf.borderColor}`,
                               borderLeft: `3px solid ${typeConf.color}`,
-                              lineHeight: 1.25,
+                              lineHeight: 1.2,
                               cursor: 'pointer',
                               transition: 'all 0.1s ease',
                               display: 'flex',
@@ -490,7 +498,7 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
                             <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
                               {ev.title}
                             </span>
-                            <span style={{ color: typeConf.color, fontSize: '10px', fontWeight: 700, flexShrink: 0 }}>
+                            <span style={{ color: typeConf.color, fontSize: '9.5px', fontWeight: 700, flexShrink: 0, whiteSpace: 'nowrap' }}>
                               ({diffDays}天)
                             </span>
                           </div>
@@ -500,12 +508,13 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
                         <div 
                           onClick={(e) => toggleOngoingExpand(dateStr, e)}
                           style={{ 
-                            fontSize: '9.5px', 
+                            fontSize: '9px', 
                             color: 'var(--text-secondary)', 
                             fontWeight: 600, 
                             cursor: 'pointer', 
                             textAlign: 'center', 
-                            padding: '1px 0' 
+                            padding: '1px 0',
+                            whiteSpace: 'nowrap'
                           }}
                         >
                           +{ongoingDeadlines.length - 2}项 · 点击收起
@@ -520,9 +529,9 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
                       const ev = directEvents[0];
                       const typeConf = EVENT_TYPE_CONFIG[ev.type];
                       const timeLabel = ev.isCompleted 
-                        ? '✓ 已完成' 
+                        ? '✓已完成' 
                         : ev.timeType === 'deadline' 
-                          ? `截止 ${ev.time ? ev.time.slice(0, 5) : '23:59'}` 
+                          ? `截止${ev.time ? ev.time.slice(0, 5) : '23:59'}` 
                           : ev.timeType === 'all_day' 
                             ? '全天' 
                             : ev.time ? ev.time.slice(0, 5) : '全天';
@@ -530,31 +539,47 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
                       return (
                         <div 
                           style={{
-                            padding: '3px 6px',
-                            borderRadius: '5px',
+                            padding: '2px 5px',
+                            borderRadius: '4px',
                             backgroundColor: ev.isCompleted ? 'rgba(16, 185, 129, 0.1)' : typeConf.bgColor,
                             color: ev.isCompleted ? '#10b981' : typeConf.color,
                             border: `1px solid ${ev.isCompleted ? 'rgba(16, 185, 129, 0.3)' : typeConf.borderColor}`,
                             display: 'flex',
                             flexDirection: 'column',
-                            gap: '2px',
+                            gap: '1px',
                             overflow: 'hidden',
-                            lineHeight: 1.25,
+                            lineHeight: 1.2,
                             boxSizing: 'border-box',
                             opacity: ev.isCompleted ? 0.78 : 1
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '3px' }}>
-                            <span style={{ fontSize: '10px', fontWeight: 700, color: ev.isCompleted ? '#10b981' : typeConf.color, display: 'flex', alignItems: 'center', gap: '3px' }}>
-                              <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: ev.isCompleted ? '#10b981' : typeConf.color }} />
+                            <span style={{ 
+                              fontSize: '9.5px', 
+                              fontWeight: 700, 
+                              color: ev.isCompleted ? '#10b981' : typeConf.color, 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: '2px',
+                              whiteSpace: 'nowrap',
+                              flexShrink: 0
+                            }}>
+                              <span style={{ width: '3.5px', height: '3.5px', borderRadius: '50%', backgroundColor: ev.isCompleted ? '#10b981' : typeConf.color, flexShrink: 0 }} />
                               {timeLabel}
                             </span>
-                            <span style={{ fontSize: '9.5px', fontWeight: 600, color: ev.isCompleted ? '#10b981' : typeConf.color, opacity: 0.9 }}>
+                            <span style={{ 
+                              fontSize: '9px', 
+                              fontWeight: 600, 
+                              color: ev.isCompleted ? '#10b981' : typeConf.color, 
+                              opacity: 0.9,
+                              whiteSpace: 'nowrap',
+                              flexShrink: 0
+                            }}>
                               {typeConf.label}
                             </span>
                           </div>
                           <div style={{ 
-                            fontSize: '11.5px', 
+                            fontSize: '11px', 
                             fontWeight: 600, 
                             color: ev.isCompleted ? 'var(--text-secondary)' : 'var(--text-primary)', 
                             overflow: 'hidden', 
@@ -570,7 +595,7 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
                     })()}
                     {ongoingDeadlines.length > 0 && (
                       !isOngoingExpanded ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexWrap: 'wrap', marginTop: '1px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '2px', flexWrap: 'wrap', marginTop: '1px' }}>
                           {groupedOngoing.map(([type, items]) => {
                             const typeConf = EVENT_TYPE_CONFIG[type] || EVENT_TYPE_CONFIG.other;
                             return (
@@ -579,7 +604,7 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
                                 type="button"
                                 onClick={(e) => toggleOngoingExpand(dateStr, e)}
                                 style={{
-                                  fontSize: '10px',
+                                  fontSize: '9.5px',
                                   color: typeConf.color,
                                   backgroundColor: typeConf.bgColor,
                                   border: `1px solid ${typeConf.borderColor}`,
@@ -590,11 +615,13 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
                                   gap: '2px',
                                   fontWeight: 600,
                                   cursor: 'pointer',
-                                  width: 'fit-content'
+                                  width: 'fit-content',
+                                  whiteSpace: 'nowrap',
+                                  flexShrink: 0
                                 }}
                                 title={`${items.length}条${typeConf.label}时限（点击展开）`}
                               >
-                                <Hourglass size={10} color={typeConf.color} />
+                                <Hourglass size={9} color={typeConf.color} style={{ flexShrink: 0 }} />
                                 <span>{items.length}</span>
                               </button>
                             );
@@ -618,7 +645,7 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
                                 key={ev.id}
                                 onClick={(e) => toggleOngoingExpand(dateStr, e)}
                                 style={{
-                                  fontSize: '10px',
+                                  fontSize: '9.5px',
                                   color: typeConf.color,
                                   backgroundColor: typeConf.bgColor,
                                   border: `1px dashed ${typeConf.borderColor}`,
@@ -634,8 +661,8 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
                                 }}
                                 title={`[${typeConf.label}] ${ev.title} (剩${diffDays}天) · 点击收起`}
                               >
-                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                  <Hourglass size={9} color={typeConf.color} />
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  <Hourglass size={8} color={typeConf.color} style={{ flexShrink: 0 }} />
                                   {ev.title} ({diffDays}天)
                                 </span>
                               </div>
@@ -662,7 +689,7 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
                         <div 
                           key={ev.id}
                           style={{
-                            padding: '2px 5px',
+                            padding: '1px 4px',
                             borderRadius: '4px',
                             backgroundColor: ev.isCompleted ? 'rgba(16, 185, 129, 0.08)' : typeConf.bgColor,
                             color: ev.isCompleted ? '#10b981' : typeConf.color,
@@ -671,28 +698,28 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
                             flexDirection: 'column',
                             gap: '1px',
                             overflow: 'hidden',
-                            lineHeight: '1.2',
+                            lineHeight: '1.15',
                             boxSizing: 'border-box',
-                            height: '35px',
+                            height: '28px',
                             opacity: ev.isCompleted ? 0.78 : 1
                           }}
                         >
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '3px' }}>
-                            <span style={{ fontSize: '9.5px', fontWeight: 700, color: ev.isCompleted ? '#10b981' : typeConf.color, display: 'flex', alignItems: 'center', gap: '2px' }}>
-                              <span style={{ width: '3.5px', height: '3.5px', borderRadius: '50%', backgroundColor: ev.isCompleted ? '#10b981' : typeConf.color }} />
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '2px' }}>
+                            <span style={{ fontSize: '9px', fontWeight: 700, color: ev.isCompleted ? '#10b981' : typeConf.color, display: 'flex', alignItems: 'center', gap: '2px', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                              <span style={{ width: '3px', height: '3px', borderRadius: '50%', backgroundColor: ev.isCompleted ? '#10b981' : typeConf.color, flexShrink: 0 }} />
                               {timeLabel}
                             </span>
-                            <span style={{ fontSize: '9px', fontWeight: 600, color: ev.isCompleted ? '#10b981' : typeConf.color, opacity: 0.9 }}>
+                            <span style={{ fontSize: '8.5px', fontWeight: 600, color: ev.isCompleted ? '#10b981' : typeConf.color, opacity: 0.9, whiteSpace: 'nowrap', flexShrink: 0 }}>
                               {typeConf.label}
                             </span>
                           </div>
                           <div style={{ 
-                            fontSize: '11px', 
+                            fontSize: '10.5px', 
                             fontWeight: 600, 
                             color: ev.isCompleted ? 'var(--text-secondary)' : 'var(--text-primary)', 
                             overflow: 'hidden', 
                             textOverflow: 'ellipsis', 
-                            whiteSpace: 'nowrap',
+                            whiteSpace: 'nowrap', 
                             textDecoration: ev.isCompleted ? 'line-through' : 'none'
                           }}>
                             {ev.title}
@@ -718,27 +745,27 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
                         <div 
                           key={ev.id}
                           style={{
-                            padding: '2px 5px',
+                            padding: '1px 4px',
                             borderRadius: '4px',
                             backgroundColor: ev.isCompleted ? 'rgba(16, 185, 129, 0.08)' : typeConf.bgColor,
                             color: ev.isCompleted ? '#10b981' : typeConf.color,
                             border: `1px solid ${ev.isCompleted ? 'rgba(16, 185, 129, 0.25)' : typeConf.borderColor}`,
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '3px',
+                            gap: '2px',
                             overflow: 'hidden',
-                            lineHeight: '1.2',
+                            lineHeight: '1.15',
                             boxSizing: 'border-box',
-                            height: '21px',
+                            height: '19px',
                             opacity: ev.isCompleted ? 0.78 : 1
                           }}
                         >
-                          <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: ev.isCompleted ? '#10b981' : typeConf.color, flexShrink: 0 }} />
-                          <span style={{ fontSize: '9.5px', fontWeight: 700, color: ev.isCompleted ? '#10b981' : typeConf.color, flexShrink: 0 }}>
+                          <span style={{ width: '3.5px', height: '3.5px', borderRadius: '50%', backgroundColor: ev.isCompleted ? '#10b981' : typeConf.color, flexShrink: 0 }} />
+                          <span style={{ fontSize: '9px', fontWeight: 700, color: ev.isCompleted ? '#10b981' : typeConf.color, flexShrink: 0, whiteSpace: 'nowrap' }}>
                             {timeLabel}
                           </span>
                           <span style={{ 
-                            fontSize: '10.5px', 
+                            fontSize: '10px', 
                             fontWeight: 600, 
                             color: ev.isCompleted ? 'var(--text-secondary)' : 'var(--text-primary)', 
                             overflow: 'hidden', 
@@ -753,18 +780,19 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
                       );
                     })}
                     <div style={{ 
-                      fontSize: '10.5px', 
+                      fontSize: '9.5px', 
                       color: 'var(--primary)', 
                       fontWeight: 600, 
                       backgroundColor: 'rgba(59, 130, 246, 0.08)',
                       borderRadius: '4px',
                       textAlign: 'center', 
-                      padding: '2px 0',
-                      height: '19px',
+                      padding: '1px 0',
+                      height: '17px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      boxSizing: 'border-box'
+                      boxSizing: 'border-box',
+                      whiteSpace: 'nowrap'
                     }}>
                       +{directEvents.length - 2 + (ongoingDeadlines.length > 0 ? 1 : 0)} 项更多
                     </div>

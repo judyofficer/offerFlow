@@ -49,10 +49,10 @@ const getRelativeDaysText = (targetDateStr: string) => {
 };
 
 const getLinkActionText = (type: EventType) => {
-  if (type === 'oa') return '直达笔试/测评';
-  if (type === 'interview') return '进入面试会议';
-  if (type === 'deadline') return '前往投递/确认';
-  return '打开日程链接';
+  if (type === 'oa') return '直达笔试';
+  if (type === 'interview') return '进入面试';
+  if (type === 'deadline') return '前往官网';
+  return '打开链接';
 };
 
 export const EventList: React.FC<Props> = ({ events, selectedDate, onAddEvent, onEditEvent }) => {
@@ -381,12 +381,13 @@ export const EventList: React.FC<Props> = ({ events, selectedDate, onAddEvent, o
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '10px',
+                      gap: '8px',
                       marginTop: '4px',
                       paddingTop: '10px',
                       borderTop: '1px dashed var(--border-color)',
-                      flexWrap: 'wrap',
-                      paddingLeft: '27px'
+                      flexWrap: 'nowrap',
+                      paddingLeft: '27px',
+                      minWidth: 0
                     }}
                   >
                     <a
@@ -396,16 +397,18 @@ export const EventList: React.FC<Props> = ({ events, selectedDate, onAddEvent, o
                       style={{
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: '6px',
-                        padding: '6px 14px',
+                        gap: '4px',
+                        padding: '5px 12px',
                         borderRadius: '6px',
                         backgroundColor: 'rgba(59, 130, 246, 0.12)',
                         color: 'var(--primary, #3b82f6)',
                         border: '1px solid rgba(59, 130, 246, 0.3)',
-                        fontSize: '12.5px',
+                        fontSize: '12px',
                         fontWeight: 600,
                         textDecoration: 'none',
                         transition: 'all 0.18s ease',
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0
                       }}
                       onMouseEnter={e => {
                         e.currentTarget.style.backgroundColor = 'var(--primary, #3b82f6)';
@@ -419,7 +422,7 @@ export const EventList: React.FC<Props> = ({ events, selectedDate, onAddEvent, o
                       }}
                       title={`在新标签页打开: ${url}`}
                     >
-                      <ExternalLink size={14} />
+                      <ExternalLink size={13} />
                       <span>{getLinkActionText(event.type)} ↗</span>
                     </a>
 
@@ -429,7 +432,7 @@ export const EventList: React.FC<Props> = ({ events, selectedDate, onAddEvent, o
                       style={{
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: '5px',
+                        gap: '4px',
                         padding: '5px 10px',
                         borderRadius: '6px',
                         backgroundColor: 'transparent',
@@ -438,10 +441,12 @@ export const EventList: React.FC<Props> = ({ events, selectedDate, onAddEvent, o
                         fontSize: '12px',
                         cursor: 'pointer',
                         transition: 'all 0.15s ease',
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0
                       }}
                       title="复制链接"
                     >
-                      {copiedId === event.id ? <Check size={13} color="var(--success, #10b981)" /> : <Copy size={13} />}
+                      {copiedId === event.id ? <Check size={12} color="var(--success, #10b981)" /> : <Copy size={12} />}
                       <span>{copiedId === event.id ? '已复制' : '复制链接'}</span>
                     </button>
                   </div>
@@ -570,20 +575,22 @@ export const EventList: React.FC<Props> = ({ events, selectedDate, onAddEvent, o
                       </button>
 
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', minWidth: 0, flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
                           <span style={{
-                            fontSize: '14px',
+                            fontSize: '13.5px',
                             fontWeight: 600,
                             color: event.isCompleted ? 'var(--text-secondary)' : 'var(--text-primary)',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
                             whiteSpace: 'nowrap',
+                            flex: 1,
+                            minWidth: 0,
                             textDecoration: event.isCompleted ? 'line-through' : 'none'
                           }}>
                             {event.title}
                           </span>
                           {event.isCompleted ? (
-                            <span style={{ fontSize: '10.5px', padding: '1px 6px', borderRadius: '8px', backgroundColor: 'rgba(16, 185, 129, 0.12)', color: '#10b981', fontWeight: 600 }}>
+                            <span style={{ fontSize: '10.5px', padding: '1px 6px', borderRadius: '8px', backgroundColor: 'rgba(16, 185, 129, 0.12)', color: '#10b981', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>
                               已完成
                             </span>
                           ) : (
@@ -595,6 +602,7 @@ export const EventList: React.FC<Props> = ({ events, selectedDate, onAddEvent, o
                               color: typeConfig.color,
                               border: `1px solid ${typeConfig.borderColor}`,
                               fontWeight: 600,
+                              whiteSpace: 'nowrap',
                               flexShrink: 0
                             }}>
                               {typeConfig.label}
@@ -602,8 +610,8 @@ export const EventList: React.FC<Props> = ({ events, selectedDate, onAddEvent, o
                           )}
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--text-secondary)' }}>
-                          <span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11.5px', color: 'var(--text-secondary)', minWidth: 0 }}>
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
                             {event.date} {event.timeType === 'deadline' ? `(截止 ${event.time || '23:59'})` : (event.timeType === 'all_day' ? '(全天)' : event.time || '')}
                           </span>
                           {relText && (
@@ -613,7 +621,9 @@ export const EventList: React.FC<Props> = ({ events, selectedDate, onAddEvent, o
                               color: relText === '今天' ? 'var(--primary)' : 'var(--text-tertiary)',
                               backgroundColor: relText === '今天' ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
                               padding: '1px 5px',
-                              borderRadius: '4px'
+                              borderRadius: '4px',
+                              whiteSpace: 'nowrap',
+                              flexShrink: 0
                             }}>
                               {relText}
                             </span>
