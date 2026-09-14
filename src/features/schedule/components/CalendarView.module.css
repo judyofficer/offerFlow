@@ -1,0 +1,154 @@
+.container {
+  background-color: var(--bg-primary);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.headerTitleWrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.weekdaysHeader {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-tertiary);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  flex: 1;
+}
+
+.cell {
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+  transition: background-color 0.1s ease, border-color 0.1s ease;
+}
+
+.placeholder {
+  box-sizing: border-box;
+  pointer-events: none;
+  background-color: transparent;
+}
+
+/* Desktop vs Mobile content visibility */
+.desktopContent {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+  flex: 1;
+  justify-content: flex-start;
+}
+
+.desktopCount {
+  display: inline-block;
+}
+
+.mobileContent {
+  display: none;
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+  flex-wrap: wrap;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .container {
+    padding: 14px 12px;
+    gap: 12px;
+    height: auto;
+    border-radius: 12px;
+  }
+
+  .header {
+    gap: 8px;
+  }
+
+  .headerTitleWrapper {
+    gap: 8px;
+  }
+
+  .weekdaysHeader {
+    gap: 3px;
+    font-size: 12px;
+    padding-bottom: 6px;
+  }
+
+  .grid {
+    gap: 3px;
+    grid-template-rows: repeat(var(--week-count, 5), 48px) !important;
+  }
+
+  .cell, .placeholder {
+    height: 48px !important;
+    min-height: 48px !important;
+    max-height: 48px !important;
+    padding: 3px 2px !important;
+    border-radius: 6px !important;
+    align-items: center;
+  }
+
+  .desktopContent {
+    display: none !important;
+  }
+
+  .mobileContent {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 2.5px;
+    margin-top: 1px;
+    width: 100%;
+    min-height: 7px;
+  }
+
+  .footer {
+    gap: 10px;
+    padding-top: 8px;
+    font-size: 11px;
+  }
+}

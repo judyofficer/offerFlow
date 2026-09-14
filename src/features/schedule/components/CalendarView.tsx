@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Hourglass } from 'lucide-react';
 import type { ScheduleEvent, EventType } from '../types/schedule';
 import { EVENT_TYPE_CONFIG } from '../types/schedule';
+import styles from './CalendarView.module.css';
 
 interface Props {
   events: ScheduleEvent[];
@@ -178,21 +179,10 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
   };
 
   return (
-    <div style={{ 
-      backgroundColor: 'var(--bg-primary)', 
-      borderRadius: 'var(--radius-lg)', 
-      padding: '24px', 
-      border: '1px solid var(--border-color)', 
-      boxShadow: 'var(--shadow-sm)',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '18px',
-      height: '100%',
-      boxSizing: 'border-box'
-    }}>
+    <div className={styles.container}>
       {/* 头部控制栏：年月切换 + 今天快捷定位 */}
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <header className={styles.header}>
+        <div className={styles.headerTitleWrapper}>
           <div style={{ 
             width: '36px', 
             height: '36px', 
@@ -201,35 +191,37 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center',
-            color: 'var(--primary)'
+            color: 'var(--primary)',
+            flexShrink: 0
           }}>
             <CalendarIcon size={20} />
           </div>
           <div>
-            <h2 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '10px', margin: 0 }}>
+            <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px', margin: 0, flexWrap: 'wrap' }}>
               <span>{currentYear}年 {currentMonth + 1}月</span>
               {monthEventCount > 0 && (
                 <span style={{ 
-                  fontSize: '12px', 
+                  fontSize: '11.5px', 
                   fontWeight: 600, 
-                  padding: '3px 10px', 
+                  padding: '2px 8px', 
                   borderRadius: '12px', 
                   backgroundColor: 'rgba(59, 130, 246, 0.1)', 
-                  color: 'var(--primary)' 
+                  color: 'var(--primary)',
+                  whiteSpace: 'nowrap'
                 }}>
-                  本月 {monthEventCount} 项日程
+                  本月 {monthEventCount} 项
                 </span>
               )}
             </h2>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className={styles.headerActions}>
           <button 
             type="button"
             onClick={prevMonth}
             style={{ 
-              padding: '6px 10px', 
+              padding: '5px 9px', 
               borderRadius: '6px', 
               border: '1px solid var(--border-color)', 
               backgroundColor: 'var(--bg-secondary)', 
@@ -242,18 +234,18 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
             }}
             title="上个月"
           >
-            <ChevronLeft size={18} />
+            <ChevronLeft size={16} />
           </button>
           <button 
             type="button"
             onClick={handleGoToday}
             style={{ 
-              padding: '6px 14px', 
+              padding: '5px 12px', 
               borderRadius: '6px', 
               border: '1px solid var(--border-color)', 
               backgroundColor: 'var(--bg-secondary)', 
               cursor: 'pointer', 
-              fontSize: '13px', 
+              fontSize: '12.5px', 
               fontWeight: 600,
               color: 'var(--text-primary)',
               transition: 'background-color 0.15s ease'
@@ -265,7 +257,7 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
             type="button"
             onClick={nextMonth}
             style={{ 
-              padding: '6px 10px', 
+              padding: '5px 9px', 
               borderRadius: '6px', 
               border: '1px solid var(--border-color)', 
               backgroundColor: 'var(--bg-secondary)', 
@@ -278,23 +270,13 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
             }}
             title="下个月"
           >
-            <ChevronRight size={18} />
+            <ChevronRight size={16} />
           </button>
         </div>
       </header>
 
       {/* 星期表头 */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(7, 1fr)', 
-        gap: '6px', 
-        textAlign: 'center', 
-        fontWeight: 600, 
-        fontSize: '13px', 
-        color: 'var(--text-tertiary)',
-        paddingBottom: '8px',
-        borderBottom: '1px solid var(--border-color)'
-      }}>
+      <div className={styles.weekdaysHeader}>
         {['日', '一', '二', '三', '四', '五', '六'].map((day, idx) => (
           <div key={day} style={{ color: idx === 0 || idx === 6 ? 'var(--text-tertiary)' : 'var(--text-secondary)' }}>
             {day}
@@ -303,25 +285,23 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
       </div>
 
       {/* 日期网格 */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(7, 1fr)', 
-        gridTemplateRows: `repeat(${weekCount}, minmax(78px, 94px))`, 
-        gap: '6px', 
-        flex: 1 
-      }}>
+      <div 
+        className={styles.grid}
+        style={{ 
+          gridTemplateRows: `repeat(${weekCount}, minmax(78px, 94px))`,
+          ['--week-count' as any]: weekCount
+        }}
+      >
         {days.map((dayObj) => {
           if (dayObj.isEmptyPlaceholder) {
             return (
               <div 
                 key={dayObj.dateStr}
+                className={styles.placeholder}
                 style={{
                   minHeight: '78px',
                   maxHeight: '94px',
                   height: '100%',
-                  boxSizing: 'border-box',
-                  pointerEvents: 'none',
-                  backgroundColor: 'transparent'
                 }}
               />
             );
@@ -353,11 +333,11 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
             <div 
               key={dateStr}
               onClick={() => onSelectDate(dateStr)}
+              className={styles.cell}
               style={{
                 minHeight: '78px',
                 maxHeight: '94px',
                 height: '100%',
-                borderRadius: '8px',
                 border: isSelected 
                   ? '1.5px solid var(--primary, #3b82f6)' 
                   : isToday 
@@ -368,14 +348,7 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
                   : isToday 
                     ? 'rgba(59, 130, 246, 0.03)' 
                     : 'var(--bg-secondary)',
-                display: 'flex',
-                flexDirection: 'column',
                 padding: '4px 6px',
-                cursor: 'pointer',
-                transition: 'background-color 0.1s ease, border-color 0.1s ease',
-                boxSizing: 'border-box',
-                position: 'relative',
-                overflow: 'hidden'
               }}
               title={
                 totalItemsCount > 0 
@@ -384,7 +357,7 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
               }
             >
               {/* 日期数字行 */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px', height: '20px', flexShrink: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px', height: '20px', flexShrink: 0, width: '100%' }}>
                 <span style={{ 
                   width: '20px', 
                   height: '20px', 
@@ -403,7 +376,7 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
                 </span>
 
                 {totalItemsCount > 0 && (
-                  <span style={{ 
+                  <span className={styles.desktopCount} style={{ 
                     fontSize: '9.5px', 
                     fontWeight: 700, 
                     color: isToday ? 'var(--primary)' : 'var(--text-tertiary)',
@@ -416,8 +389,8 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
                 )}
               </div>
               
-              {/* 日程内容区：当天直接日程渲染完整卡片，截止前按类型独立显示漏斗胶囊，点击可展开具体内容 */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', overflow: 'hidden', flex: 1, justifyContent: 'flex-start' }}>
+              {/* 1. 桌面端：当天直接日程渲染完整卡片，截止前按类型独立显示漏斗胶囊 */}
+              <div className={styles.desktopContent}>
                 {directEvents.length === 0 && ongoingDeadlines.length > 0 ? (
                   /* 仅有时限进行中：默认按类型独立展示倒计时胶囊（紫色笔试、黄色面试等），点击展开直接显示日程，再次点击日程即可收起 */
                   !isOngoingExpanded ? (
@@ -799,24 +772,49 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
                   </>
                 ) : null}
               </div>
+
+              {/* 2. 移动端：展示紧凑的彩色事件圆点指示器 */}
+              <div className={styles.mobileContent}>
+                {directEvents.slice(0, 3).map((ev) => {
+                  const typeConf = EVENT_TYPE_CONFIG[ev.type] || EVENT_TYPE_CONFIG.other;
+                  const dotColor = ev.isCompleted ? '#10b981' : typeConf.color;
+                  return (
+                    <span
+                      key={ev.id}
+                      style={{
+                        width: '4px',
+                        height: '4px',
+                        borderRadius: '50%',
+                        backgroundColor: dotColor,
+                        flexShrink: 0,
+                      }}
+                      title={ev.title}
+                    />
+                  );
+                })}
+                {ongoingDeadlines.length > 0 && directEvents.length < 3 && (
+                  <Hourglass 
+                    size={8} 
+                    color={EVENT_TYPE_CONFIG[ongoingDeadlines[0].event.type]?.color || 'var(--text-tertiary)'} 
+                    style={{ flexShrink: 0 }} 
+                  />
+                )}
+                {totalItemsCount > 3 && (
+                  <span style={{ fontSize: '7.5px', lineHeight: 1, fontWeight: 700, color: 'var(--text-tertiary)' }}>
+                    +
+                  </span>
+                )}
+              </div>
             </div>
           );
         })}
       </div>
 
       {/* 底部日程类型图例指示 */}
-      <footer style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        gap: '20px', 
-        paddingTop: '12px', 
-        borderTop: '1px solid var(--border-color)',
-        flexWrap: 'wrap'
-      }}>
+      <footer className={styles.footer}>
         {Object.entries(EVENT_TYPE_CONFIG).map(([key, config]) => (
-          <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12.5px', color: 'var(--text-secondary)' }}>
-            <span style={{ width: '9px', height: '9px', borderRadius: '50%', backgroundColor: config.color }} />
+          <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11.5px', color: 'var(--text-secondary)' }}>
+            <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: config.color }} />
             <span>{config.label}</span>
           </div>
         ))}

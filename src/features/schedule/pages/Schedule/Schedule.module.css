@@ -40,27 +40,29 @@
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .container {
-    padding: 16px;
+    padding: 12px;
     height: auto;
   }
   
   .content {
     flex-direction: column;
-    gap: 16px;
+    gap: 14px;
   }
   
   .calendarPane {
     min-width: 0;
+    width: 100%;
     flex: none;
   }
 
   .listPane {
+    width: 100%;
     min-width: 0;
     max-width: 100%;
     border-left: none;
-    border-top: 1px solid var(--border-color);
+    border-top: none;
     padding-left: 0;
-    padding-top: 24px;
+    padding-top: 0;
     flex: none;
   }
 }

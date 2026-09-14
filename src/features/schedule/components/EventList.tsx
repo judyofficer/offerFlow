@@ -4,6 +4,7 @@ import type { ScheduleEvent, EventType } from '../types/schedule';
 import { EVENT_TYPE_CONFIG } from '../types/schedule';
 import { useApplicationStore } from '../../applications/store/useApplicationStore';
 import { useScheduleStore } from '../store/useScheduleStore';
+import styles from './EventList.module.css';
 
 interface Props {
   events: ScheduleEvent[];
@@ -183,18 +184,7 @@ export const EventList: React.FC<Props> = ({ events, selectedDate, onAddEvent, o
   };
 
   return (
-    <div style={{
-      backgroundColor: 'var(--bg-primary)',
-      borderRadius: 'var(--radius-lg)',
-      padding: '24px',
-      border: '1px solid var(--border-color)',
-      boxShadow: 'var(--shadow-sm)',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '24px',
-      height: '100%',
-      boxSizing: 'border-box'
-    }}>
+    <div className={styles.container}>
       {/* 顶部标题与新增按钮 */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>
