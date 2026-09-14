@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
-import type { ScheduleEvent } from '../types/schedule';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Hourglass } from 'lucide-react';
+import type { ScheduleEvent, EventType } from '../types/schedule';
 import { EVENT_TYPE_CONFIG } from '../types/schedule';
 
 interface Props {
@@ -20,6 +20,17 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
   const initialDate = useMemo(() => selectedDate ? new Date(selectedDate) : new Date(), []);
   const [currentYear, setCurrentYear] = useState(initialDate.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(initialDate.getMonth());
+  const [expandedOngoingDates, setExpandedOngoingDates] = useState<Record<string, boolean>>({});
+
+  const toggleOngoingExpand = (dateStr: string, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+    }
+    setExpandedOngoingDates(prev => ({
+      ...prev,
+      [dateStr]: !prev[dateStr]
+    }));
+  };
 
   // 1. 仅计算当月实际跨越的周数与单元格，彻底剔除非当月的冗余日历块，释放最大垂直渲染空间
   const { days, weekCount } = useMemo(() => {
@@ -71,18 +82,59 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
     return { days: result, weekCount: calculatedWeeks };
   }, [currentYear, currentMonth]);
 
-  // 2. 将 events 数组索引为 Map<dateStr, events[]>，实现 O(1) 秒级查找，彻底消灭 42 次线性 filter
-  const eventsByDate = useMemo(() => {
-    const map = new Map<string, ScheduleEvent[]>();
+  // 2. 将 events 数组按日期索引为：当天的直接日程 (directEvents) 与截止前的进行中时限 (ongoingDeadlines)
+  const calendarDataByDate = useMemo(() => {
+    const map = new Map<string, {
+      directEvents: ScheduleEvent[];
+      ongoingDeadlines: Array<{ event: ScheduleEvent; diffDays: number }>;
+    }>();
+
+    const getEntry = (dStr: string) => {
+      let entry = map.get(dStr);
+      if (!entry) {
+        entry = { directEvents: [], ongoingDeadlines: [] };
+        map.set(dStr, entry);
+      }
+      return entry;
+    };
+
     for (let i = 0; i < events.length; i++) {
       const ev = events[i];
-      const list = map.get(ev.date);
-      if (list) {
-        list.push(ev);
-      } else {
-        map.set(ev.date, [ev]);
+      // 1. 当天的直接日程（截止日当天或具体时刻日程）
+      getEntry(ev.date).directEvents.push(ev);
+
+      // 2. 截止前进行中的时限日程（仅未完成时在截止日前各天生成轻量提示）
+      const isDeadline = ev.timeType === 'deadline' || ev.type === 'deadline';
+      if (isDeadline && !ev.isCompleted) {
+        const startStr = ev.startDate || ev.date;
+        if (startStr < ev.date) {
+          const [y1, m1, d1] = startStr.split('-').map(Number);
+          const [y2, m2, d2] = ev.date.split('-').map(Number);
+          const curr = new Date(y1, m1 - 1, d1);
+          const end = new Date(y2, m2 - 1, d2);
+
+          while (curr < end) {
+            const currStr = formatDateToLocalString(curr);
+            if (currStr < ev.date) {
+              const diffDays = Math.round((end.getTime() - curr.getTime()) / (1000 * 60 * 60 * 24));
+              getEntry(currStr).ongoingDeadlines.push({ event: ev, diffDays });
+            }
+            curr.setDate(curr.getDate() + 1);
+          }
+        }
       }
     }
+
+    // 排序直接日程：未完成在前，已完成在后
+    map.forEach(entry => {
+      entry.directEvents.sort((a, b) => {
+        if (a.isCompleted !== b.isCompleted) {
+          return a.isCompleted ? 1 : -1;
+        }
+        return (a.time || '00:00').localeCompare(b.time || '00:00');
+      });
+    });
+
     return map;
   }, [events]);
 
@@ -250,7 +302,7 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
         ))}
       </div>
 
-      {/* 日期网格 (按当月实际周数动态生成，单格高度提升至 112px，彻底剔除非本月冗余块) */}
+      {/* 日期网格 */}
       <div style={{ 
         display: 'grid', 
         gridTemplateColumns: 'repeat(7, 1fr)', 
@@ -259,7 +311,6 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
         flex: 1 
       }}>
         {days.map((dayObj) => {
-          // 如果是非本月占位符，渲染透明占位格子，保持星期列对齐同时彻底隐藏干扰
           if (dayObj.isEmptyPlaceholder) {
             return (
               <div 
@@ -278,7 +329,24 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
           const dateStr = dayObj.dateStr;
           const isSelected = dateStr === selectedDate;
           const isToday = dateStr === todayStr;
-          const dayEvents = eventsByDate.get(dateStr) || [];
+          const cellData = calendarDataByDate.get(dateStr) || { directEvents: [], ongoingDeadlines: [] };
+          const { directEvents, ongoingDeadlines } = cellData;
+          const totalItemsCount = directEvents.length + ongoingDeadlines.length;
+          const isOngoingExpanded = !!expandedOngoingDates[dateStr];
+
+          // 按日程类型 (oa/interview/deadline/other) 进行分组，保证每种类型拥有独立且精准的颜色胶囊
+          const groupedOngoing: Array<[EventType, Array<{ event: ScheduleEvent; diffDays: number }>]> = (() => {
+            if (ongoingDeadlines.length === 0) return [];
+            const map = new Map<EventType, Array<{ event: ScheduleEvent; diffDays: number }>>();
+            for (let i = 0; i < ongoingDeadlines.length; i++) {
+              const item = ongoingDeadlines[i];
+              const t = item.event.type;
+              const list = map.get(t) || [];
+              list.push(item);
+              map.set(t, list);
+            }
+            return Array.from(map.entries());
+          })();
 
           return (
             <div 
@@ -307,7 +375,11 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
                 position: 'relative',
                 overflow: 'hidden'
               }}
-              title={dayEvents.length > 0 ? `${dateStr}：\n${dayEvents.map(e => `• ${e.time ? `${e.time} ` : ''}[${EVENT_TYPE_CONFIG[e.type].label}] ${e.title}`).join('\n')}` : dateStr}
+              title={
+                totalItemsCount > 0 
+                  ? `${dateStr}：\n${directEvents.map(e => `• ${e.time ? `${e.time} ` : ''}[${EVENT_TYPE_CONFIG[e.type].label}] ${e.title}`).join('\n')}${ongoingDeadlines.length > 0 ? `\n• [时限进行中] ${ongoingDeadlines.map(d => `[${EVENT_TYPE_CONFIG[d.event.type].label}] ${d.event.title} (剩${d.diffDays}天)`).join('、')}` : ''}`
+                  : dateStr
+              }
             >
               {/* 日期数字行 */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3px', height: '22px', flexShrink: 0 }}>
@@ -326,147 +398,355 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
                   {dayObj.dayNumber}
                 </span>
 
-                {dayEvents.length > 0 && (
+                {totalItemsCount > 0 && (
                   <span style={{ 
                     fontSize: '10px', 
                     fontWeight: 700, 
                     color: isToday ? 'var(--primary)' : 'var(--text-tertiary)',
                     paddingRight: '2px'
                   }}>
-                    {dayEvents.length} 项
+                    {totalItemsCount} 项
                   </span>
                 )}
               </div>
               
-              {/* 日程内容区：在 112px 高度下释放最大信息容量 */}
+              {/* 日程内容区：当天直接日程渲染完整卡片，截止前按类型独立显示漏斗胶囊，点击可展开具体内容 */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', overflow: 'hidden', flex: 1, justifyContent: 'flex-start' }}>
-                {dayEvents.length === 1 ? (
-                  /* 单个日程：双行舒适豪华卡片 */
-                  <div 
-                    style={{
-                      padding: '3px 6px',
-                      borderRadius: '5px',
-                      backgroundColor: EVENT_TYPE_CONFIG[dayEvents[0].type].bgColor,
-                      color: EVENT_TYPE_CONFIG[dayEvents[0].type].color,
-                      border: `1px solid ${EVENT_TYPE_CONFIG[dayEvents[0].type].borderColor}`,
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '2px',
-                      overflow: 'hidden',
-                      lineHeight: 1.25,
-                      boxSizing: 'border-box'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '3px' }}>
-                      <span style={{ fontSize: '10.5px', fontWeight: 700, color: EVENT_TYPE_CONFIG[dayEvents[0].type].color, display: 'flex', alignItems: 'center', gap: '3px' }}>
-                        <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: EVENT_TYPE_CONFIG[dayEvents[0].type].color }} />
-                        {dayEvents[0].time ? dayEvents[0].time.slice(0, 5) : '全天'}
-                      </span>
-                      <span style={{ fontSize: '9.5px', fontWeight: 600, color: EVENT_TYPE_CONFIG[dayEvents[0].type].color, opacity: 0.9 }}>
-                        {EVENT_TYPE_CONFIG[dayEvents[0].type].label}
-                      </span>
+                {directEvents.length === 0 && ongoingDeadlines.length > 0 ? (
+                  /* 仅有时限进行中：默认按类型独立展示倒计时胶囊（紫色笔试、黄色面试等），点击展开直接显示日程，再次点击日程即可收起 */
+                  !isOngoingExpanded ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexWrap: 'wrap', marginTop: '3px' }}>
+                      {groupedOngoing.map(([type, items]) => {
+                        const typeConf = EVENT_TYPE_CONFIG[type] || EVENT_TYPE_CONFIG.other;
+                        return (
+                          <button 
+                            key={type}
+                            type="button"
+                            onClick={(e) => toggleOngoingExpand(dateStr, e)}
+                            style={{
+                              padding: '2px 7px',
+                              borderRadius: '12px',
+                              backgroundColor: typeConf.bgColor,
+                              color: typeConf.color,
+                              border: `1px solid ${typeConf.borderColor}`,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '3px',
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              width: 'fit-content',
+                              transition: 'transform 0.1s ease, background-color 0.15s ease',
+                            }}
+                            title={`${items.length}条${typeConf.label}时限（点击展开查看）`}
+                          >
+                            <Hourglass size={11} color={typeConf.color} style={{ flexShrink: 0 }} />
+                            <span style={{ fontSize: '10.5px', lineHeight: 1 }}>{items.length}</span>
+                          </button>
+                        );
+                      })}
                     </div>
-                    <div style={{ fontSize: '11.5px', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>
-                      {dayEvents[0].title}
+                  ) : (
+                    /* 展开状态：直接按事件自身类型颜色（面试黄色、笔试紫色、截止红色）显示日程卡片，点击直接收起 */
+                    <div 
+                      style={{ 
+                        display: 'flex', 
+                        flexDirection: 'column', 
+                        gap: '3px', 
+                        width: '100%', 
+                        marginTop: '2px',
+                        overflow: 'hidden'
+                      }}
+                    >
+                      {ongoingDeadlines.slice(0, 2).map(({ event: ev, diffDays }) => {
+                        const typeConf = EVENT_TYPE_CONFIG[ev.type] || EVENT_TYPE_CONFIG.other;
+                        return (
+                          <div 
+                            key={ev.id}
+                            onClick={(e) => toggleOngoingExpand(dateStr, e)}
+                            style={{
+                              fontSize: '11px',
+                              fontWeight: 600,
+                              color: 'var(--text-primary)',
+                              backgroundColor: typeConf.bgColor,
+                              borderRadius: '5px',
+                              padding: '3px 6px',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              border: `1px solid ${typeConf.borderColor}`,
+                              borderLeft: `3px solid ${typeConf.color}`,
+                              lineHeight: 1.25,
+                              cursor: 'pointer',
+                              transition: 'all 0.1s ease',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: '4px',
+                              boxSizing: 'border-box'
+                            }}
+                            title={`[${typeConf.label}] ${ev.title} (剩${diffDays}天) · 点击收起`}
+                          >
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                              {ev.title}
+                            </span>
+                            <span style={{ color: typeConf.color, fontSize: '10px', fontWeight: 700, flexShrink: 0 }}>
+                              ({diffDays}天)
+                            </span>
+                          </div>
+                        );
+                      })}
+                      {ongoingDeadlines.length > 2 && (
+                        <div 
+                          onClick={(e) => toggleOngoingExpand(dateStr, e)}
+                          style={{ 
+                            fontSize: '9.5px', 
+                            color: 'var(--text-secondary)', 
+                            fontWeight: 600, 
+                            cursor: 'pointer', 
+                            textAlign: 'center', 
+                            padding: '1px 0' 
+                          }}
+                        >
+                          +{ongoingDeadlines.length - 2}项 · 点击收起
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ) : dayEvents.length === 2 ? (
-                  /* 2个日程：完整展示 2 条双行卡片 (各含时间、类型标签与标题，信息量翻倍且不拥挤) */
-                  dayEvents.map(ev => {
-                    const typeConf = EVENT_TYPE_CONFIG[ev.type];
-                    return (
-                      <div 
-                        key={ev.id}
-                        style={{
-                          padding: '2px 5px',
-                          borderRadius: '4px',
-                          backgroundColor: typeConf.bgColor,
-                          color: typeConf.color,
-                          border: `1px solid ${typeConf.borderColor}`,
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: '1px',
-                          overflow: 'hidden',
-                          lineHeight: '1.2',
-                          boxSizing: 'border-box',
-                          height: '35px'
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '3px' }}>
-                          <span style={{ fontSize: '9.5px', fontWeight: 700, color: typeConf.color, display: 'flex', alignItems: 'center', gap: '2px' }}>
-                            <span style={{ width: '3.5px', height: '3.5px', borderRadius: '50%', backgroundColor: typeConf.color }} />
-                            {ev.time ? ev.time.slice(0, 5) : '全天'}
-                          </span>
-                          <span style={{ fontSize: '9px', fontWeight: 600, color: typeConf.color, opacity: 0.9 }}>
-                            {typeConf.label}
-                          </span>
-                        </div>
-                        <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {ev.title}
-                        </div>
-                      </div>
-                    );
-                  })
-                ) : dayEvents.length === 3 ? (
-                  /* 3个日程：渲染 3 条紧凑胶囊，一览无余 */
-                  dayEvents.map(ev => {
-                    const typeConf = EVENT_TYPE_CONFIG[ev.type];
-                    return (
-                      <div 
-                        key={ev.id}
-                        style={{
-                          padding: '2px 5px',
-                          borderRadius: '4px',
-                          backgroundColor: typeConf.bgColor,
-                          color: typeConf.color,
-                          border: `1px solid ${typeConf.borderColor}`,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '3px',
-                          overflow: 'hidden',
-                          lineHeight: '1.2',
-                          boxSizing: 'border-box',
-                          height: '21px'
-                        }}
-                      >
-                        <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: typeConf.color, flexShrink: 0 }} />
-                        <span style={{ fontSize: '9.5px', fontWeight: 700, color: typeConf.color, flexShrink: 0 }}>
-                          {ev.time ? ev.time.slice(0, 5) : ''}
-                        </span>
-                        <span style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
-                          {ev.title}
-                        </span>
-                      </div>
-                    );
-                  })
-                ) : dayEvents.length >= 4 ? (
-                  /* 4个及以上日程：渲染前 2 条紧凑胶囊 + 更多徽章 */
+                  )
+                ) : directEvents.length === 1 ? (
+                  /* 1个直接日程 + 可选的时限分立漏斗图标/展开 */
                   <>
-                    {dayEvents.slice(0, 2).map(ev => {
+                    {(() => {
+                      const ev = directEvents[0];
                       const typeConf = EVENT_TYPE_CONFIG[ev.type];
+                      const timeLabel = ev.isCompleted 
+                        ? '✓ 已完成' 
+                        : ev.timeType === 'deadline' 
+                          ? `截止 ${ev.time ? ev.time.slice(0, 5) : '23:59'}` 
+                          : ev.timeType === 'all_day' 
+                            ? '全天' 
+                            : ev.time ? ev.time.slice(0, 5) : '全天';
+
+                      return (
+                        <div 
+                          style={{
+                            padding: '3px 6px',
+                            borderRadius: '5px',
+                            backgroundColor: ev.isCompleted ? 'rgba(16, 185, 129, 0.1)' : typeConf.bgColor,
+                            color: ev.isCompleted ? '#10b981' : typeConf.color,
+                            border: `1px solid ${ev.isCompleted ? 'rgba(16, 185, 129, 0.3)' : typeConf.borderColor}`,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '2px',
+                            overflow: 'hidden',
+                            lineHeight: 1.25,
+                            boxSizing: 'border-box',
+                            opacity: ev.isCompleted ? 0.78 : 1
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '3px' }}>
+                            <span style={{ fontSize: '10px', fontWeight: 700, color: ev.isCompleted ? '#10b981' : typeConf.color, display: 'flex', alignItems: 'center', gap: '3px' }}>
+                              <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: ev.isCompleted ? '#10b981' : typeConf.color }} />
+                              {timeLabel}
+                            </span>
+                            <span style={{ fontSize: '9.5px', fontWeight: 600, color: ev.isCompleted ? '#10b981' : typeConf.color, opacity: 0.9 }}>
+                              {typeConf.label}
+                            </span>
+                          </div>
+                          <div style={{ 
+                            fontSize: '11.5px', 
+                            fontWeight: 600, 
+                            color: ev.isCompleted ? 'var(--text-secondary)' : 'var(--text-primary)', 
+                            overflow: 'hidden', 
+                            textOverflow: 'ellipsis', 
+                            whiteSpace: 'nowrap', 
+                            width: '100%',
+                            textDecoration: ev.isCompleted ? 'line-through' : 'none'
+                          }}>
+                            {ev.title}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                    {ongoingDeadlines.length > 0 && (
+                      !isOngoingExpanded ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flexWrap: 'wrap', marginTop: '1px' }}>
+                          {groupedOngoing.map(([type, items]) => {
+                            const typeConf = EVENT_TYPE_CONFIG[type] || EVENT_TYPE_CONFIG.other;
+                            return (
+                              <button 
+                                key={type}
+                                type="button"
+                                onClick={(e) => toggleOngoingExpand(dateStr, e)}
+                                style={{
+                                  fontSize: '10px',
+                                  color: typeConf.color,
+                                  backgroundColor: typeConf.bgColor,
+                                  border: `1px solid ${typeConf.borderColor}`,
+                                  borderRadius: '10px',
+                                  padding: '1px 5px',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '2px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  width: 'fit-content'
+                                }}
+                                title={`${items.length}条${typeConf.label}时限（点击展开）`}
+                              >
+                                <Hourglass size={10} color={typeConf.color} />
+                                <span>{items.length}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div 
+                          style={{ 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            gap: '2px', 
+                            width: '100%', 
+                            marginTop: '1px',
+                            overflow: 'hidden'
+                          }}
+                        >
+                          {ongoingDeadlines.slice(0, 1).map(({ event: ev, diffDays }) => {
+                            const typeConf = EVENT_TYPE_CONFIG[ev.type] || EVENT_TYPE_CONFIG.other;
+                            return (
+                              <div 
+                                key={ev.id}
+                                onClick={(e) => toggleOngoingExpand(dateStr, e)}
+                                style={{
+                                  fontSize: '10px',
+                                  color: typeConf.color,
+                                  backgroundColor: typeConf.bgColor,
+                                  border: `1px dashed ${typeConf.borderColor}`,
+                                  borderRadius: '4px',
+                                  padding: '1px 4px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  fontWeight: 600,
+                                  width: '100%',
+                                  boxSizing: 'border-box',
+                                  cursor: 'pointer'
+                                }}
+                                title={`[${typeConf.label}] ${ev.title} (剩${diffDays}天) · 点击收起`}
+                              >
+                                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                  <Hourglass size={9} color={typeConf.color} />
+                                  {ev.title} ({diffDays}天)
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )
+                    )}
+                  </>
+                ) : directEvents.length === 2 ? (
+                  /* 2个直接日程 */
+                  <>
+                    {directEvents.map(ev => {
+                      const typeConf = EVENT_TYPE_CONFIG[ev.type];
+                      const timeLabel = ev.isCompleted 
+                        ? '✓' 
+                        : ev.timeType === 'deadline' 
+                          ? (ev.time ? `截止 ${ev.time.slice(0, 5)}` : '截止') 
+                          : ev.timeType === 'all_day' 
+                            ? '全天' 
+                            : ev.time ? ev.time.slice(0, 5) : '全天';
+
                       return (
                         <div 
                           key={ev.id}
                           style={{
                             padding: '2px 5px',
                             borderRadius: '4px',
-                            backgroundColor: typeConf.bgColor,
-                            color: typeConf.color,
-                            border: `1px solid ${typeConf.borderColor}`,
+                            backgroundColor: ev.isCompleted ? 'rgba(16, 185, 129, 0.08)' : typeConf.bgColor,
+                            color: ev.isCompleted ? '#10b981' : typeConf.color,
+                            border: `1px solid ${ev.isCompleted ? 'rgba(16, 185, 129, 0.25)' : typeConf.borderColor}`,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '1px',
+                            overflow: 'hidden',
+                            lineHeight: '1.2',
+                            boxSizing: 'border-box',
+                            height: '35px',
+                            opacity: ev.isCompleted ? 0.78 : 1
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '3px' }}>
+                            <span style={{ fontSize: '9.5px', fontWeight: 700, color: ev.isCompleted ? '#10b981' : typeConf.color, display: 'flex', alignItems: 'center', gap: '2px' }}>
+                              <span style={{ width: '3.5px', height: '3.5px', borderRadius: '50%', backgroundColor: ev.isCompleted ? '#10b981' : typeConf.color }} />
+                              {timeLabel}
+                            </span>
+                            <span style={{ fontSize: '9px', fontWeight: 600, color: ev.isCompleted ? '#10b981' : typeConf.color, opacity: 0.9 }}>
+                              {typeConf.label}
+                            </span>
+                          </div>
+                          <div style={{ 
+                            fontSize: '11px', 
+                            fontWeight: 600, 
+                            color: ev.isCompleted ? 'var(--text-secondary)' : 'var(--text-primary)', 
+                            overflow: 'hidden', 
+                            textOverflow: 'ellipsis', 
+                            whiteSpace: 'nowrap',
+                            textDecoration: ev.isCompleted ? 'line-through' : 'none'
+                          }}>
+                            {ev.title}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </>
+                ) : directEvents.length >= 3 ? (
+                  /* 3个及以上直接日程：渲染前 2 条 + 更多徽章 */
+                  <>
+                    {directEvents.slice(0, 2).map(ev => {
+                      const typeConf = EVENT_TYPE_CONFIG[ev.type];
+                      const timeLabel = ev.isCompleted 
+                        ? '✓' 
+                        : ev.timeType === 'deadline' 
+                          ? (ev.time ? `截止 ${ev.time.slice(0, 5)}` : '截止') 
+                          : ev.timeType === 'all_day' 
+                            ? '全天' 
+                            : ev.time ? ev.time.slice(0, 5) : '';
+
+                      return (
+                        <div 
+                          key={ev.id}
+                          style={{
+                            padding: '2px 5px',
+                            borderRadius: '4px',
+                            backgroundColor: ev.isCompleted ? 'rgba(16, 185, 129, 0.08)' : typeConf.bgColor,
+                            color: ev.isCompleted ? '#10b981' : typeConf.color,
+                            border: `1px solid ${ev.isCompleted ? 'rgba(16, 185, 129, 0.25)' : typeConf.borderColor}`,
                             display: 'flex',
                             alignItems: 'center',
                             gap: '3px',
                             overflow: 'hidden',
                             lineHeight: '1.2',
                             boxSizing: 'border-box',
-                            height: '21px'
+                            height: '21px',
+                            opacity: ev.isCompleted ? 0.78 : 1
                           }}
                         >
-                          <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: typeConf.color, flexShrink: 0 }} />
-                          <span style={{ fontSize: '9.5px', fontWeight: 700, color: typeConf.color, flexShrink: 0 }}>
-                            {ev.time ? ev.time.slice(0, 5) : ''}
+                          <span style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: ev.isCompleted ? '#10b981' : typeConf.color, flexShrink: 0 }} />
+                          <span style={{ fontSize: '9.5px', fontWeight: 700, color: ev.isCompleted ? '#10b981' : typeConf.color, flexShrink: 0 }}>
+                            {timeLabel}
                           </span>
-                          <span style={{ fontSize: '10.5px', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                          <span style={{ 
+                            fontSize: '10.5px', 
+                            fontWeight: 600, 
+                            color: ev.isCompleted ? 'var(--text-secondary)' : 'var(--text-primary)', 
+                            overflow: 'hidden', 
+                            textOverflow: 'ellipsis', 
+                            whiteSpace: 'nowrap', 
+                            flex: 1,
+                            textDecoration: ev.isCompleted ? 'line-through' : 'none'
+                          }}>
                             {ev.title}
                           </span>
                         </div>
@@ -486,7 +766,7 @@ export const CalendarView: React.FC<Props> = ({ events, selectedDate, onSelectDa
                       justifyContent: 'center',
                       boxSizing: 'border-box'
                     }}>
-                      +{dayEvents.length - 2} 项更多日程
+                      +{directEvents.length - 2 + (ongoingDeadlines.length > 0 ? 1 : 0)} 项更多
                     </div>
                   </>
                 ) : null}

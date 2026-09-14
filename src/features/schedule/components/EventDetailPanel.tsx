@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { X, Trash2, Calendar as CalendarIcon, Clock, MapPin, ExternalLink, ClipboardPaste, Briefcase, FileText, Check } from 'lucide-react';
+import { X, Trash2, Calendar as CalendarIcon, Clock, MapPin, ExternalLink, Briefcase, FileText, Hourglass, CheckCircle2, Circle } from 'lucide-react';
 import { useScheduleStore } from '../store/useScheduleStore';
 import { useApplicationStore } from '../../applications/store/useApplicationStore';
 import { EVENT_TYPE_CONFIG } from '../types/schedule';
-import type { ScheduleEvent, EventType } from '../types/schedule';
+import type { ScheduleEvent, EventType, TimeType } from '../types/schedule';
 
 interface Props {
   eventId: string | null; // if null, it's a new event
@@ -36,16 +36,20 @@ export const EventDetailPanel: React.FC<Props> = ({ eventId, initialDate, initia
     type: 'interview',
     date: initialDate || formatDateStr(new Date()),
     time: '19:00',
+    timeType: 'specific',
+    isCompleted: false,
     location: '',
     notes: '',
     applicationId: initialAppId || '',
   });
 
-  const [pasteSuccess, setPasteSuccess] = useState(false);
-
   useEffect(() => {
     if (existingEvent) {
-      setFormData(existingEvent);
+      setFormData({
+        ...existingEvent,
+        timeType: existingEvent.timeType || (existingEvent.type === 'deadline' ? 'deadline' : 'specific'),
+        isCompleted: existingEvent.isCompleted || false
+      });
     } else if (initialAppId) {
       // Auto-fill title based on app
       const app = applications.find(a => a.id === initialAppId);
@@ -80,7 +84,13 @@ export const EventDetailPanel: React.FC<Props> = ({ eventId, initialDate, initia
   };
 
   const handleTypeSelect = (type: EventType) => {
-    setFormData(prev => ({ ...prev, type }));
+    setFormData(prev => ({ 
+      ...prev, 
+      type,
+      // 如果切换为 deadline，自动建议 deadline 模式
+      timeType: type === 'deadline' ? 'deadline' : prev.timeType,
+      time: type === 'deadline' ? (prev.time || '23:59') : prev.time
+    }));
   };
 
   const handleQuickDate = (offsetDays: number) => {
@@ -89,17 +99,17 @@ export const EventDetailPanel: React.FC<Props> = ({ eventId, initialDate, initia
     setFormData(prev => ({ ...prev, date: formatDateStr(target) }));
   };
 
-  const handlePasteLocation = async () => {
-    try {
-      const text = await navigator.clipboard.readText();
-      if (text) {
-        setFormData(prev => ({ ...prev, location: text.trim() }));
-        setPasteSuccess(true);
-        setTimeout(() => setPasteSuccess(false), 1500);
-      }
-    } catch {
-      // fallback
-    }
+  const handleQuickDeadline = (offsetDays: number) => {
+    const today = new Date();
+    const target = new Date();
+    target.setDate(target.getDate() + offsetDays);
+    setFormData(prev => ({
+      ...prev,
+      timeType: 'deadline',
+      startDate: prev.startDate || formatDateStr(today),
+      date: formatDateStr(target),
+      time: '23:59'
+    }));
   };
 
   const handleOpenLink = () => {
@@ -114,10 +124,23 @@ export const EventDetailPanel: React.FC<Props> = ({ eventId, initialDate, initia
       alert('请填写日程标题与日期');
       return;
     }
+    const isDeadline = formData.timeType === 'deadline' || formData.type === 'deadline';
+    const finalData = {
+      title: formData.title.trim(),
+      type: formData.type || 'interview',
+      date: formData.date,
+      startDate: formData.startDate || (isDeadline ? formatDateStr(new Date()) : undefined),
+      time: formData.timeType === 'all_day' ? undefined : (formData.time || (formData.timeType === 'deadline' ? '23:59' : '19:00')),
+      timeType: formData.timeType || 'specific',
+      isCompleted: formData.isCompleted ?? false,
+      location: formData.location?.trim() || undefined,
+      notes: formData.notes?.trim() || undefined,
+      applicationId: formData.applicationId || undefined,
+    };
     if (eventId) {
-      updateEvent(eventId, formData);
+      updateEvent(eventId, finalData);
     } else {
-      addEvent(formData as Omit<ScheduleEvent, 'id' | 'createdAt' | 'updatedAt'>);
+      addEvent(finalData as Omit<ScheduleEvent, 'id' | 'createdAt' | 'updatedAt'>);
     }
     onClose();
   };
@@ -192,13 +215,34 @@ export const EventDetailPanel: React.FC<Props> = ({ eventId, initialDate, initia
               <h2 style={{ fontSize: '17px', fontWeight: 700, color: 'var(--text-primary)', margin: 0, lineHeight: 1.2 }}>
                 {eventId ? '编辑日程' : '新建日程'}
               </h2>
-              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '2px 0 0' }}>
-                高效安排笔试、面试时间与在线会议接入链接
-              </p>
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            {/* 显眼的完成状态切换按钮 */}
+            <button
+              type="button"
+              onClick={() => setFormData(prev => ({ ...prev, isCompleted: !prev.isCompleted }))}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '5px 11px',
+                borderRadius: '6px',
+                border: `1.5px solid ${formData.isCompleted ? 'var(--success, #10b981)' : 'var(--border-color)'}`,
+                backgroundColor: formData.isCompleted ? 'rgba(16, 185, 129, 0.12)' : 'var(--bg-primary)',
+                color: formData.isCompleted ? 'var(--success, #10b981)' : 'var(--text-secondary)',
+                fontSize: '12.5px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease'
+              }}
+              title="切换完成状态"
+            >
+              {formData.isCompleted ? <CheckCircle2 size={15} color="#10b981" /> : <Circle size={15} color="var(--text-tertiary)" />}
+              <span>{formData.isCompleted ? '已完成' : '未完成'}</span>
+            </button>
+
             {eventId && (
               <button 
                 type="button"
@@ -322,104 +366,209 @@ export const EventDetailPanel: React.FC<Props> = ({ eventId, initialDate, initia
             </select>
           </div>
 
-          {/* 4. 日期与时间 (双列栅格 + 快捷日期芯片) */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px' }}>
+          {/* 4. 时间与时限模式设置 (支持固定时刻 vs 时限截止前完成 vs 全天) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+              <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Clock size={14} color="var(--primary)" /> 时间模式
+              </label>
+
+              {/* 时间模式切换 Segmented */}
+              <div style={{ display: 'flex', backgroundColor: 'var(--bg-secondary)', padding: '2px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                {[
+                  { type: 'specific' as TimeType, label: '固定时刻', icon: Clock },
+                  { type: 'deadline' as TimeType, label: '时限/截止前', icon: Hourglass },
+                  { type: 'all_day' as TimeType, label: '全天有效', icon: CalendarIcon },
+                ].map(item => {
+                  const active = (formData.timeType || 'specific') === item.type;
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.type}
+                      type="button"
+                      onClick={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          timeType: item.type,
+                          time: item.type === 'deadline' && (!prev.time || prev.time === '19:00') ? '23:59' : prev.time
+                        }));
+                      }}
+                      style={{
+                        padding: '3px 8px',
+                        borderRadius: '4px',
+                        border: 'none',
+                        backgroundColor: active ? 'var(--primary)' : 'transparent',
+                        color: active ? '#ffffff' : 'var(--text-secondary)',
+                        fontSize: '11.5px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '3px',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <Icon size={12} />
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 模式 1: 固定时间点 */}
+            {(formData.timeType === 'specific' || !formData.timeType) && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <label style={{ fontSize: '12.5px', color: 'var(--text-secondary)' }}>日程日期 *</label>
+                  <input
+                    type="date"
+                    name="date"
+                    value={formData.date || ''}
+                    onChange={handleChange}
+                    style={{ height: '38px', padding: '0 12px', borderRadius: '8px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '13.5px', boxSizing: 'border-box' }}
+                  />
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <label style={{ fontSize: '12.5px', color: 'var(--text-secondary)' }}>具体时刻 (HH:mm)</label>
+                  <input
+                    type="time"
+                    name="time"
+                    value={formData.time || '19:00'}
+                    onChange={handleChange}
+                    style={{ height: '38px', padding: '0 12px', borderRadius: '8px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '13.5px', boxSizing: 'border-box' }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* 模式 2: 时限/截止前完成 (专为牛客/赛码自选题库或限期作答设计) */}
+            {formData.timeType === 'deadline' && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '12.5px', color: 'var(--text-secondary)' }}>最晚截止日期 *</label>
+                    <input
+                      type="date"
+                      name="date"
+                      value={formData.date || ''}
+                      onChange={handleChange}
+                      style={{ height: '38px', padding: '0 12px', borderRadius: '8px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '13.5px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '12.5px', color: 'var(--text-secondary)' }}>截止时刻 (默认23:59)</label>
+                    <input
+                      type="time"
+                      name="time"
+                      value={formData.time || '23:59'}
+                      onChange={handleChange}
+                      style={{ height: '38px', padding: '0 12px', borderRadius: '8px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '13.5px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                </div>
+
+                {/* 快捷时限计算芯片 */}
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap', minHeight: '26px' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>时限快捷计算:</span>
+                  {[
+                    { label: '3天内截止', offset: 3 },
+                    { label: '5天内截止', offset: 5 },
+                    { label: '7天内截止', offset: 7 },
+                    { label: '10天内截止', offset: 10 },
+                  ].map(chip => (
+                    <button
+                      key={chip.label}
+                      type="button"
+                      onClick={() => handleQuickDeadline(chip.offset)}
+                      style={{
+                        height: '24px',
+                        padding: '0 8px',
+                        borderRadius: '5px',
+                        fontSize: '11.5px',
+                        border: '1px solid var(--border-color)',
+                        backgroundColor: 'var(--bg-secondary)',
+                        color: 'var(--text-secondary)',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        boxSizing: 'border-box'
+                      }}
+                      onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+                      onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                    >
+                      {chip.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 模式 3: 全天有效 */}
+            {formData.timeType === 'all_day' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <CalendarIcon size={14} color="var(--primary)" /> 日期 *
-                </label>
-                <input 
+                <label style={{ fontSize: '12.5px', color: 'var(--text-secondary)' }}>有效日期 *</label>
+                <input
                   type="date"
                   name="date"
                   value={formData.date || ''}
                   onChange={handleChange}
-                  style={{ 
-                    height: '38px',
-                    padding: '0 12px', 
-                    borderRadius: '8px', 
-                    border: '1px solid var(--border-color)', 
-                    outline: 'none', 
-                    backgroundColor: 'var(--bg-secondary)', 
-                    color: 'var(--text-primary)',
-                    fontSize: '13.5px',
-                    boxSizing: 'border-box'
-                  }}
+                  style={{ height: '38px', padding: '0 12px', borderRadius: '8px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '13.5px', boxSizing: 'border-box' }}
                 />
               </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  <Clock size={14} color="var(--primary)" /> 时间 (HH:mm)
-                </label>
-                <input 
-                  type="time"
-                  name="time"
-                  value={formData.time || ''}
-                  onChange={handleChange}
-                  style={{ 
-                    height: '38px',
-                    padding: '0 12px', 
-                    borderRadius: '8px', 
-                    border: '1px solid var(--border-color)', 
-                    outline: 'none', 
-                    backgroundColor: 'var(--bg-secondary)', 
-                    color: 'var(--text-primary)',
-                    fontSize: '13.5px',
-                    boxSizing: 'border-box'
-                  }}
-                />
-              </div>
-            </div>
+            )}
 
             {/* 快速日期芯片 */}
-            <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap', minHeight: '26px' }}>
-              <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>快捷选择:</span>
-              {[
-                { label: '今天', offset: 0 },
-                { label: '明天', offset: 1 },
-                { label: '后天', offset: 2 },
-                { label: '+3天', offset: 3 },
-                { label: '+7天', offset: 7 },
-              ].map(chip => (
-                <button
-                  key={chip.label}
-                  type="button"
-                  onClick={() => handleQuickDate(chip.offset)}
-                  style={{
-                    height: '24px',
-                    padding: '0 8px',
-                    borderRadius: '5px',
-                    fontSize: '11.5px',
-                    border: '1px solid var(--border-color)',
-                    backgroundColor: 'var(--bg-secondary)',
-                    color: 'var(--text-secondary)',
-                    cursor: 'pointer',
-                    transition: 'border-color 0.15s ease, color 0.15s ease',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    boxSizing: 'border-box'
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--primary)'}
-                  onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-color)'}
-                >
-                  {chip.label}
-                </button>
-              ))}
-            </div>
+            {formData.timeType === 'specific' && (
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap', minHeight: '26px' }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>快捷选择:</span>
+                {[
+                  { label: '今天', offset: 0 },
+                  { label: '明天', offset: 1 },
+                  { label: '后天', offset: 2 },
+                  { label: '+3天', offset: 3 },
+                  { label: '+7天', offset: 7 },
+                ].map(chip => (
+                  <button
+                    key={chip.label}
+                    type="button"
+                    onClick={() => handleQuickDate(chip.offset)}
+                    style={{
+                      height: '24px',
+                      padding: '0 8px',
+                      borderRadius: '5px',
+                      fontSize: '11.5px',
+                      border: '1px solid var(--border-color)',
+                      backgroundColor: 'var(--bg-secondary)',
+                      color: 'var(--text-secondary)',
+                      cursor: 'pointer',
+                      transition: 'border-color 0.15s ease, color 0.15s ease',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      boxSizing: 'border-box'
+                    }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border-color)'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
+                  >
+                    {chip.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* 5. 地点 / 笔试/面试链接 */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: '24px' }}>
               <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <MapPin size={14} color="var(--primary)" /> 笔试/面试链接 或 线下地址
+                <MapPin size={14} color="var(--primary)" /> 笔试/面试链接
               </label>
 
-              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+              {isLink && (
                 <button
                   type="button"
-                  onClick={handlePasteLocation}
+                  onClick={handleOpenLink}
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -427,50 +576,25 @@ export const EventDetailPanel: React.FC<Props> = ({ eventId, initialDate, initia
                     padding: '2px 8px',
                     borderRadius: '4px',
                     fontSize: '11.5px',
-                    border: '1px solid var(--border-color)',
-                    backgroundColor: 'transparent',
-                    color: pasteSuccess ? 'var(--success)' : 'var(--primary)',
+                    border: '1px solid rgba(59, 130, 246, 0.3)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    color: 'var(--primary)',
                     cursor: 'pointer',
                     height: '22px',
                     boxSizing: 'border-box'
                   }}
-                  title="粘贴剪贴板内容"
+                  title="在新标签页测试打开链接"
                 >
-                  {pasteSuccess ? <Check size={11} color="var(--success)" /> : <ClipboardPaste size={11} />}
-                  <span>{pasteSuccess ? '已粘贴' : '粘贴'}</span>
+                  <ExternalLink size={11} /> 测试打开
                 </button>
-
-                {isLink && (
-                  <button
-                    type="button"
-                    onClick={handleOpenLink}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '3px',
-                      padding: '2px 8px',
-                      borderRadius: '4px',
-                      fontSize: '11.5px',
-                      border: '1px solid rgba(59, 130, 246, 0.3)',
-                      backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                      color: 'var(--primary)',
-                      cursor: 'pointer',
-                      height: '22px',
-                      boxSizing: 'border-box'
-                    }}
-                    title="在新标签页测试打开链接"
-                  >
-                    <ExternalLink size={11} /> 测试打开
-                  </button>
-                )}
-              </div>
+              )}
             </div>
 
             <input 
               name="location"
               value={formData.location || ''}
               onChange={handleChange}
-              placeholder="例如: https://cmbnt.ceping.com/... 或 腾讯会议号 123-456-789"
+              placeholder="例如: https://... 或 腾讯会议"
               style={{ 
                 height: '38px',
                 padding: '0 12px', 
@@ -488,13 +612,13 @@ export const EventDetailPanel: React.FC<Props> = ({ eventId, initialDate, initia
           {/* 6. 备忘录 */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <FileText size={14} color="var(--text-tertiary)" /> 备忘录 / 准备要点 (可选)
+              <FileText size={14} color="var(--text-tertiary)" /> 备忘录 (可选)
             </label>
             <textarea 
               name="notes"
               value={formData.notes || ''}
               onChange={handleChange}
-              placeholder="记录面试准备要点、岗位关键技术、自我介绍草稿、会议密码等..."
+              placeholder="记录准备要点、重点问题、注意事项等..."
               style={{ 
                 padding: '10px 12px', 
                 borderRadius: '8px', 

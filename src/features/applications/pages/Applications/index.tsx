@@ -1,10 +1,10 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Plus, X, Calendar, Search, LayoutGrid, TableProperties, Link as LinkIcon } from 'lucide-react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { Plus, X, Calendar, Search, LayoutGrid, TableProperties, Link as LinkIcon, Clock, Hourglass } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
 import { useApplicationStore } from '../../store/useApplicationStore';
 import { useScheduleStore } from '../../../schedule/store/useScheduleStore';
-import type { EventType } from '../../../schedule/types/schedule';
+import type { EventType, TimeType } from '../../../schedule/types/schedule';
 import { STATUS_CONFIG } from '../../types/application';
 import type { ApplicationStatus, ApplicationPriority } from '../../types/application';
 import { ApplicationCard } from '../../components/ApplicationCard';
@@ -59,16 +59,22 @@ export const Applications: React.FC = () => {
     title: string;
     type: EventType;
     date: string;
+    startDate?: string;
     time: string;
+    timeType: TimeType;
     location: string;
     notes: string;
+    isCompleted: boolean;
   }>({
     title: '',
     type: 'interview',
     date: new Date().toISOString().split('T')[0],
+    startDate: undefined,
     time: '14:00',
+    timeType: 'specific',
     location: '',
-    notes: ''
+    notes: '',
+    isCompleted: false
   });
 
   const handleAddNew = () => {
@@ -95,13 +101,24 @@ export const Applications: React.FC = () => {
     if (['oa', 'interview', 'hr', 'offer'].includes(status)) {
       setTimeout(() => {
         const app = applications.find(a => a.id === appId);
+        const isOaOrOffer = status === 'oa' || status === 'offer';
+        
+        // 如果是笔试或Offer反馈，默认提供 3 天时限截止
+        const defaultDate = new Date();
+        if (isOaOrOffer) {
+          defaultDate.setDate(defaultDate.getDate() + 3);
+        }
+
         setScheduleFormData({
           title: `${app?.companyName || ''} - ${STATUS_CONFIG[status].label}`,
           type: status === 'oa' ? 'oa' : (status === 'offer' ? 'deadline' : 'interview'),
-          date: new Date().toISOString().split('T')[0],
-          time: '14:00',
+          date: defaultDate.toISOString().split('T')[0],
+          startDate: isOaOrOffer ? new Date().toISOString().split('T')[0] : undefined,
+          time: isOaOrOffer ? '23:59' : '14:00',
+          timeType: isOaOrOffer ? 'deadline' : 'specific',
           location: '',
-          notes: ''
+          notes: '',
+          isCompleted: false
         });
         setScheduleModalState({ isOpen: true, appId, status });
       }, 50);
@@ -330,13 +347,21 @@ export const Applications: React.FC = () => {
             updateApplication(appId, { priority: newPriority });
           }}
           onAddSchedule={(app) => {
+            const isOaOrOffer = app.status === 'oa' || app.status === 'offer';
+            const defaultDate = new Date();
+            if (isOaOrOffer) {
+              defaultDate.setDate(defaultDate.getDate() + 3);
+            }
             setScheduleFormData({
               title: `${app.companyName} - ${STATUS_CONFIG[app.status]?.label || '面试'}`,
               type: app.status === 'oa' ? 'oa' : (app.status === 'offer' ? 'deadline' : 'interview'),
-              date: new Date().toISOString().split('T')[0],
-              time: '14:00',
+              date: defaultDate.toISOString().split('T')[0],
+              startDate: isOaOrOffer ? new Date().toISOString().split('T')[0] : undefined,
+              time: isOaOrOffer ? '23:59' : '14:00',
+              timeType: isOaOrOffer ? 'deadline' : 'specific',
               location: '',
-              notes: ''
+              notes: '',
+              isCompleted: false
             });
             setScheduleModalState({ isOpen: true, appId: app.id, status: app.status });
           }}
@@ -415,16 +440,115 @@ export const Applications: React.FC = () => {
                 <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>日程标题 *</label>
                 <input required className={styles.input} value={scheduleFormData.title} onChange={e => setScheduleFormData({...scheduleFormData, title: e.target.value})} style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }} />
               </div>
-              <div style={{ display: 'flex', gap: '12px', marginBottom: '14px' }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>日期 *</label>
-                  <input type="date" required className={styles.input} value={scheduleFormData.date} onChange={e => setScheduleFormData({...scheduleFormData, date: e.target.value})} onClick={(e) => { try { (e.target as HTMLInputElement).showPicker(); } catch {} }} style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', colorScheme: 'dark', cursor: 'pointer' }} />
+
+              {/* 时间模式切换 */}
+              <div style={{ marginBottom: '14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <Clock size={14} color="var(--primary)" /> 时间模式
+                  </label>
+                  <div style={{ display: 'flex', backgroundColor: 'var(--bg-secondary)', padding: '2px', borderRadius: '6px', border: '1px solid var(--border-color)' }}>
+                    {[
+                      { type: 'specific' as TimeType, label: '固定时刻', icon: Clock },
+                      { type: 'deadline' as TimeType, label: '时限截止前', icon: Hourglass },
+                      { type: 'all_day' as TimeType, label: '全天', icon: Calendar },
+                    ].map(item => {
+                      const active = (scheduleFormData.timeType || 'specific') === item.type;
+                      const Icon = item.icon;
+                      return (
+                        <button
+                          key={item.type}
+                          type="button"
+                          onClick={() => {
+                            setScheduleFormData(prev => ({
+                              ...prev,
+                              timeType: item.type,
+                              time: item.type === 'deadline' && (!prev.time || prev.time === '14:00') ? '23:59' : prev.time
+                            }));
+                          }}
+                          style={{
+                            padding: '3px 8px',
+                            borderRadius: '4px',
+                            border: 'none',
+                            backgroundColor: active ? 'var(--primary)' : 'transparent',
+                            color: active ? '#ffffff' : 'var(--text-secondary)',
+                            fontSize: '11.5px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '3px',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          <Icon size={12} />
+                          {item.label}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>时间</label>
-                  <input type="time" required className={styles.input} value={scheduleFormData.time} onChange={e => setScheduleFormData({...scheduleFormData, time: e.target.value})} onClick={(e) => { try { (e.target as HTMLInputElement).showPicker(); } catch {} }} style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', colorScheme: 'dark', cursor: 'pointer' }} />
+
+                {/* 快捷时限计算（当时限模式时显示） */}
+                {scheduleFormData.timeType === 'deadline' && (
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '10px' }}>
+                    <span style={{ fontSize: '11.5px', color: 'var(--text-tertiary)' }}>快捷时限:</span>
+                    {[
+                      { label: '3天内截止', offset: 3 },
+                      { label: '5天内截止', offset: 5 },
+                      { label: '7天内截止', offset: 7 },
+                    ].map(chip => (
+                      <button
+                        key={chip.label}
+                        type="button"
+                        onClick={() => {
+                          const today = new Date();
+                          const d = new Date();
+                          d.setDate(d.getDate() + chip.offset);
+                          setScheduleFormData(prev => ({
+                            ...prev,
+                            date: d.toISOString().split('T')[0],
+                            startDate: prev.startDate || today.toISOString().split('T')[0],
+                            time: '23:59',
+                            timeType: 'deadline'
+                          }));
+                        }}
+                        style={{
+                          fontSize: '11.5px',
+                          padding: '2px 8px',
+                          borderRadius: '4px',
+                          border: '1px solid rgba(59, 130, 246, 0.3)',
+                          backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                          color: 'var(--primary)',
+                          cursor: 'pointer',
+                          fontWeight: 500
+                        }}
+                      >
+                        {chip.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* 日期与时间输入 */}
+                <div style={{ display: 'flex', gap: '12px' }}>
+                  <div style={{ flex: scheduleFormData.timeType === 'all_day' ? 1 : 1.2 }}>
+                    <label style={{ display: 'block', marginBottom: '6px', fontSize: '12.5px', color: 'var(--text-secondary)' }}>
+                      {scheduleFormData.timeType === 'deadline' ? '最晚截止日期 *' : '日期 *'}
+                    </label>
+                    <input type="date" required className={styles.input} value={scheduleFormData.date} onChange={e => setScheduleFormData({...scheduleFormData, date: e.target.value})} onClick={(e) => { try { (e.target as HTMLInputElement).showPicker(); } catch {} }} style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', colorScheme: 'dark', cursor: 'pointer' }} />
+                  </div>
+                  {scheduleFormData.timeType !== 'all_day' && (
+                    <div style={{ flex: 1 }}>
+                      <label style={{ display: 'block', marginBottom: '6px', fontSize: '12.5px', color: 'var(--text-secondary)' }}>
+                        {scheduleFormData.timeType === 'deadline' ? '截止时刻' : '具体时间'}
+                      </label>
+                      <input type="time" required className={styles.input} value={scheduleFormData.time} onChange={e => setScheduleFormData({...scheduleFormData, time: e.target.value})} onClick={(e) => { try { (e.target as HTMLInputElement).showPicker(); } catch {} }} style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', colorScheme: 'dark', cursor: 'pointer' }} />
+                    </div>
+                  )}
                 </div>
               </div>
+
               <div style={{ marginBottom: '20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>

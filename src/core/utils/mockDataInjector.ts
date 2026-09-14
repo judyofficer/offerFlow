@@ -306,25 +306,33 @@ export const injectMockData = () => {
   });
 
   // 4. Inject Schedule Events
+  const todayStr = new Date().toISOString().split('T')[0];
   useScheduleStore.setState({
     events: [
+      {
+        id: generateId(),
+        title: '快手 - 线上笔试 (3天内自选作答)',
+        type: 'oa',
+        date: new Date(now + 3 * oneDay).toISOString().split('T')[0],
+        startDate: todayStr,
+        time: '23:59',
+        timeType: 'deadline',
+        location: 'https://nowcoder.com/exam/test/123456',
+        notes: '平台是牛客网，3天内任选连续2小时作答，提前调试摄像头。',
+        isCompleted: false,
+        createdAt: now,
+        updatedAt: now
+      },
       {
         id: generateId(),
         title: '小红书 - 二面 (视频)',
         type: 'interview',
         date: new Date(now + 1 * oneDay).toISOString().split('T')[0],
         time: '14:30',
+        timeType: 'specific',
+        location: 'https://meeting.tencent.com/dm/123-456-789',
         notes: '准备 React 源码相关的知识点。',
-        createdAt: now,
-        updatedAt: now
-      },
-      {
-        id: generateId(),
-        title: '快手 - 线上笔试',
-        type: 'oa',
-        date: new Date(now + 2 * oneDay).toISOString().split('T')[0],
-        time: '19:00',
-        notes: '平台是牛客网，记得提前调试好摄像头。',
+        isCompleted: false,
         createdAt: now,
         updatedAt: now
       },
@@ -332,9 +340,12 @@ export const injectMockData = () => {
         id: generateId(),
         title: '美团 Offer 截止反馈',
         type: 'deadline',
-        date: new Date(now + 3 * oneDay).toISOString().split('T')[0],
-        time: '12:00',
+        date: new Date(now + 4 * oneDay).toISOString().split('T')[0],
+        startDate: todayStr,
+        time: '18:00',
+        timeType: 'deadline',
         notes: '在此之前必须给 HR 答复。',
+        isCompleted: false,
         createdAt: now,
         updatedAt: now
       },
@@ -342,9 +353,12 @@ export const injectMockData = () => {
         id: generateId(),
         title: '拼多多 - 二面 (视频)',
         type: 'interview',
-        date: new Date(now + 4 * oneDay).toISOString().split('T')[0],
+        date: new Date(now + 5 * oneDay).toISOString().split('T')[0],
         time: '15:00',
-        notes: '牛客网面试，重点看网络协议。',
+        timeType: 'specific',
+        location: 'https://meeting.tencent.com/dm/987-654-321',
+        notes: '重点看网络协议与工程化。',
+        isCompleted: false,
         createdAt: now,
         updatedAt: now
       },
@@ -354,7 +368,9 @@ export const injectMockData = () => {
         type: 'oa',
         date: new Date(now - 1 * oneDay).toISOString().split('T')[0],
         time: '19:00',
-        notes: '已完成。',
+        timeType: 'specific',
+        notes: '已顺利作答。',
+        isCompleted: true,
         createdAt: now - 2 * oneDay,
         updatedAt: now - 1 * oneDay
       }

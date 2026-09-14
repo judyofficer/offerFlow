@@ -7,6 +7,7 @@ interface ScheduleState {
   events: ScheduleEvent[];
   addEvent: (event: Omit<ScheduleEvent, 'id' | 'createdAt' | 'updatedAt'>) => void;
   updateEvent: (id: string, data: Partial<ScheduleEvent>) => void;
+  toggleCompleteEvent: (id: string) => void;
   deleteEvent: (id: string) => void;
 }
 
@@ -18,8 +19,13 @@ export const useScheduleStore = create<ScheduleState>()(
       events: [],
 
       addEvent: (eventData) => set((state) => {
+        const isDeadline = eventData.timeType === 'deadline' || eventData.type === 'deadline';
+        const todayStr = new Date().toISOString().split('T')[0];
         const newEvent: ScheduleEvent = {
           ...eventData,
+          isCompleted: eventData.isCompleted ?? false,
+          timeType: eventData.timeType ?? 'specific',
+          startDate: eventData.startDate || (isDeadline ? todayStr : undefined),
           id: generateId(),
           createdAt: Date.now(),
           updatedAt: Date.now(),
@@ -30,6 +36,12 @@ export const useScheduleStore = create<ScheduleState>()(
       updateEvent: (id, data) => set((state) => ({
         events: state.events.map(event =>
           event.id === id ? { ...event, ...data, updatedAt: Date.now() } : event
+        )
+      })),
+
+      toggleCompleteEvent: (id) => set((state) => ({
+        events: state.events.map(event =>
+          event.id === id ? { ...event, isCompleted: !event.isCompleted, updatedAt: Date.now() } : event
         )
       })),
 
