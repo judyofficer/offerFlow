@@ -298,7 +298,7 @@ export const injectMockData = () => {
         salary: '20k-32k',
         resumeId: resume1Id,
         url: '',
-        notes: '机试全英文，题量偏大。',
+        notes: '笔试全英文，题量偏大。',
         updatedAt: now - 5 * oneDay,
         appliedAt: now - 6 * oneDay
       }

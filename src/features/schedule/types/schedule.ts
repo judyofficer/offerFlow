@@ -13,9 +13,9 @@ export interface ScheduleEvent {
   updatedAt: number;
 }
 
-export const EVENT_TYPE_CONFIG: Record<EventType, { label: string; color: string }> = {
-  oa: { label: '笔试/机试', color: '#8b5cf6' },
-  interview: { label: '面试', color: '#f59e0b' },
-  deadline: { label: 'Deadline', color: '#ef4444' },
-  other: { label: '其他', color: '#6b7280' },
+export const EVENT_TYPE_CONFIG: Record<EventType, { label: string; color: string; bgColor: string; borderColor: string }> = {
+  oa: { label: '笔试', color: '#8b5cf6', bgColor: 'rgba(139, 92, 246, 0.12)', borderColor: 'rgba(139, 92, 246, 0.28)' },
+  interview: { label: '面试', color: '#f59e0b', bgColor: 'rgba(245, 158, 11, 0.12)', borderColor: 'rgba(245, 158, 11, 0.28)' },
+  deadline: { label: 'Deadline', color: '#ef4444', bgColor: 'rgba(239, 68, 68, 0.12)', borderColor: 'rgba(239, 68, 68, 0.28)' },
+  other: { label: '其他', color: '#6b7280', bgColor: 'rgba(107, 114, 128, 0.12)', borderColor: 'rgba(107, 114, 128, 0.28)' },
 };

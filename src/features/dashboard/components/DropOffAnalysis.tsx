@@ -28,7 +28,7 @@ export const DropOffAnalysis: React.FC = () => {
         color: 'var(--primary)'
       },
       { 
-        label: '初筛/机试 (简历通过)', 
+        label: '初筛/笔试 (简历通过)', 
         count: passedResume, 
         base: total,
         rateLabel: total > 0 ? `${Math.round((passedResume / total) * 100)}% 简历通过率` : '0%',

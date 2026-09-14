@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Plus, X, Calendar, Search, LayoutGrid, TableProperties } from 'lucide-react';
+import { Plus, X, Calendar, Search, LayoutGrid, TableProperties, Link as LinkIcon } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
 import { useApplicationStore } from '../../store/useApplicationStore';
@@ -60,12 +60,14 @@ export const Applications: React.FC = () => {
     type: EventType;
     date: string;
     time: string;
+    location: string;
     notes: string;
   }>({
     title: '',
     type: 'interview',
     date: new Date().toISOString().split('T')[0],
     time: '14:00',
+    location: '',
     notes: ''
   });
 
@@ -98,6 +100,7 @@ export const Applications: React.FC = () => {
           type: status === 'oa' ? 'oa' : (status === 'offer' ? 'deadline' : 'interview'),
           date: new Date().toISOString().split('T')[0],
           time: '14:00',
+          location: '',
           notes: ''
         });
         setScheduleModalState({ isOpen: true, appId, status });
@@ -124,6 +127,7 @@ export const Applications: React.FC = () => {
     if (!scheduleModalState) return;
     addEvent({
       ...scheduleFormData,
+      location: scheduleFormData.location.trim() || undefined,
       applicationId: scheduleModalState.appId,
     });
     setScheduleModalState(null);
@@ -331,6 +335,7 @@ export const Applications: React.FC = () => {
               type: app.status === 'oa' ? 'oa' : (app.status === 'offer' ? 'deadline' : 'interview'),
               date: new Date().toISOString().split('T')[0],
               time: '14:00',
+              location: '',
               notes: ''
             });
             setScheduleModalState({ isOpen: true, appId: app.id, status: app.status });
@@ -398,29 +403,71 @@ export const Applications: React.FC = () => {
       {scheduleModalState && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
           <div style={{ backgroundColor: 'var(--bg-primary)', borderRadius: 'var(--radius-lg)', width: '450px', padding: '24px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h3 className="text-h3" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Calendar size={20} color="var(--primary)" /> 添加日程提醒</h3>
               <button onClick={() => setScheduleModalState(null)} className="btn btn-ghost btn-icon"><X size={20} /></button>
             </div>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginBottom: '20px', lineHeight: 1.5 }}>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '13.5px', marginBottom: '18px', lineHeight: 1.5 }}>
               岗位状态已推进至 <strong>{STATUS_CONFIG[scheduleModalState.status].label}</strong>，建议您为其添加一条日程安排以免遗忘。
             </p>
             <form onSubmit={submitScheduleEvent}>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>日程标题</label>
-                <input required className={styles.input} value={scheduleFormData.title} onChange={e => setScheduleFormData({...scheduleFormData, title: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }} />
+              <div style={{ marginBottom: '14px' }}>
+                <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>日程标题 *</label>
+                <input required className={styles.input} value={scheduleFormData.title} onChange={e => setScheduleFormData({...scheduleFormData, title: e.target.value})} style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }} />
               </div>
-              <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+              <div style={{ display: 'flex', gap: '12px', marginBottom: '14px' }}>
                 <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>日期</label>
-                  <input type="date" required className={styles.input} value={scheduleFormData.date} onChange={e => setScheduleFormData({...scheduleFormData, date: e.target.value})} onClick={(e) => { try { (e.target as HTMLInputElement).showPicker(); } catch {} }} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', colorScheme: 'dark', cursor: 'pointer' }} />
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>日期 *</label>
+                  <input type="date" required className={styles.input} value={scheduleFormData.date} onChange={e => setScheduleFormData({...scheduleFormData, date: e.target.value})} onClick={(e) => { try { (e.target as HTMLInputElement).showPicker(); } catch {} }} style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', colorScheme: 'dark', cursor: 'pointer' }} />
                 </div>
                 <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>时间</label>
-                  <input type="time" required className={styles.input} value={scheduleFormData.time} onChange={e => setScheduleFormData({...scheduleFormData, time: e.target.value})} onClick={(e) => { try { (e.target as HTMLInputElement).showPicker(); } catch {} }} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', colorScheme: 'dark', cursor: 'pointer' }} />
+                  <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>时间</label>
+                  <input type="time" required className={styles.input} value={scheduleFormData.time} onChange={e => setScheduleFormData({...scheduleFormData, time: e.target.value})} onClick={(e) => { try { (e.target as HTMLInputElement).showPicker(); } catch {} }} style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', colorScheme: 'dark', cursor: 'pointer' }} />
                 </div>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
+              <div style={{ marginBottom: '20px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>
+                    <LinkIcon size={14} color="var(--primary)" />
+                    {scheduleModalState.status === 'oa' 
+                      ? '笔试链接 / 平台地址 (可选)' 
+                      : ['interview', 'hr'].includes(scheduleModalState.status) 
+                        ? '面试会议链接 / 线下考场 (可选)' 
+                        : '相关链接 / 截止反馈地址 (可选)'}
+                  </label>
+                  {['interview', 'hr'].includes(scheduleModalState.status) && (
+                    <button
+                      type="button"
+                      onClick={() => setScheduleFormData({ ...scheduleFormData, location: 'https://meeting.tencent.com/dm/' })}
+                      style={{
+                        fontSize: '11px',
+                        color: 'var(--primary)',
+                        backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                        border: '1px solid rgba(59, 130, 246, 0.2)',
+                        borderRadius: '4px',
+                        padding: '2px 8px',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      + 腾讯会议
+                    </button>
+                  )}
+                </div>
+                <input 
+                  className={styles.input} 
+                  placeholder={
+                    scheduleModalState.status === 'oa' 
+                      ? "https://... (例如牛客/赛码/牛客网等笔试链接)" 
+                      : ['interview', 'hr'].includes(scheduleModalState.status) 
+                        ? "https://meeting.tencent.com/... 或 面试地点" 
+                        : "https://... (相关链接或反馈地址)"
+                  } 
+                  value={scheduleFormData.location} 
+                  onChange={e => setScheduleFormData({...scheduleFormData, location: e.target.value})} 
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }} 
+                />
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '20px' }}>
                 <button type="button" onClick={() => setScheduleModalState(null)} className="btn btn-outline">暂不添加</button>
                 <button type="submit" className="btn btn-primary">保存日程</button>
               </div>

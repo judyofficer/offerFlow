@@ -23,7 +23,7 @@ export interface Application {
 export const STATUS_CONFIG: Record<ApplicationStatus, { label: string; color: string; bgColor?: string }> = {
   wishlist: { label: '意向岗', color: 'var(--text-secondary)', bgColor: 'rgba(156, 163, 175, 0.12)' },
   applied: { label: '已投递', color: 'var(--primary)', bgColor: 'rgba(59, 130, 246, 0.12)' },
-  oa: { label: '笔试/机试', color: '#8b5cf6', bgColor: 'rgba(139, 92, 246, 0.12)' },
+  oa: { label: '笔试', color: '#8b5cf6', bgColor: 'rgba(139, 92, 246, 0.12)' },
   interview: { label: '面试中', color: '#f59e0b', bgColor: 'rgba(245, 158, 11, 0.12)' },
   hr: { label: 'HR 面', color: '#ec4899', bgColor: 'rgba(236, 72, 153, 0.12)' },
   offer: { label: '已发 Offer', color: '#10b981', bgColor: 'rgba(16, 185, 129, 0.12)' },

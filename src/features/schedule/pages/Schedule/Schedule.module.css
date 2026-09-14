@@ -1,34 +1,37 @@
 .container {
-  padding: 32px 48px;
+  padding: 24px 32px;
   height: 100%;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
+  max-width: 1600px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .header {
-  margin-bottom: 32px;
+  margin-bottom: 20px;
 }
 
 .content {
   display: flex;
-  gap: 32px;
+  gap: 24px;
   flex: 1;
-  min-height: 0; /* for flex overflow */
+  min-height: 0;
+  align-items: flex-start;
 }
 
 .calendarPane {
-  flex: 7;
+  flex: 1.85;
   display: flex;
   flex-direction: column;
-  min-width: 600px;
+  min-width: 580px;
 }
 
 .listPane {
-  flex: 3;
+  flex: 1;
   min-width: 320px;
-  max-width: 400px;
-  border-left: 1px solid var(--border-color);
-  padding-left: 32px;
+  max-width: 420px;
   display: flex;
   flex-direction: column;
 }
@@ -60,3 +63,4 @@
     flex: none;
   }
 }
+
