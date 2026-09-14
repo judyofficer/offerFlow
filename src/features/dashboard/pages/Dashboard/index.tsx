@@ -9,12 +9,12 @@ import styles from './Dashboard.module.css';
 
 const Dashboard: React.FC = () => {
   const { applications } = useApplicationStore();
-  
+
   const stats = useMemo(() => {
     const totalApplied = applications.filter(a => a.status !== 'wishlist').length;
     const interviewing = applications.filter(a => ['oa', 'interview', 'hr'].includes(a.status)).length;
     const offers = applications.filter(a => a.status === 'offer').length;
-    
+
     // Response rate: anything that is not just 'applied' or 'wishlist'
     const responses = applications.filter(a => ['oa', 'interview', 'hr', 'offer', 'rejected'].includes(a.status)).length;
     const responseRate = totalApplied > 0 ? Math.round((responses / totalApplied) * 100) : 0;
@@ -26,9 +26,8 @@ const Dashboard: React.FC = () => {
     <div className={styles.dashboardContainer}>
       <header>
         <h1 className="text-h1" style={{ marginBottom: '4px' }}>指挥中心</h1>
-        <p style={{ color: 'var(--text-secondary)' }}>求职数据与关键日程总览。</p>
       </header>
-      
+
       {/* Top Stat Cards */}
       <div className={styles.statsGrid}>
         {[
@@ -48,10 +47,10 @@ const Dashboard: React.FC = () => {
           </div>
         ))}
       </div>
-      
+
       {/* Middle Row: 3 Columns for actionable data */}
       <div className={styles.chartsGrid}>
-        
+
         {/* Left: Drop-off Analysis */}
         <div className={styles.chartCard}>
           <h3 className="text-h3" style={{ marginBottom: '24px' }}>环节存活率诊断</h3>
@@ -72,7 +71,7 @@ const Dashboard: React.FC = () => {
         <div className={styles.scheduleCard}>
           <UpcomingSchedule />
         </div>
-        
+
       </div>
     </div>
   );

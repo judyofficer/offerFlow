@@ -85,7 +85,7 @@ export const Applications: React.FC = () => {
   const submitAddNew = (e: React.FormEvent) => {
     e.preventDefault();
     if (!addFormData.companyName.trim() || !addFormData.jobTitle.trim()) return;
-    
+
     addApplication({
       companyName: addFormData.companyName.trim(),
       jobTitle: addFormData.jobTitle.trim(),
@@ -102,7 +102,7 @@ export const Applications: React.FC = () => {
       setTimeout(() => {
         const app = applications.find(a => a.id === appId);
         const isOaOrOffer = status === 'oa' || status === 'offer';
-        
+
         // 如果是笔试或Offer反馈，默认提供 3 天时限截止
         const defaultDate = new Date();
         if (isOaOrOffer) {
@@ -177,18 +177,41 @@ export const Applications: React.FC = () => {
   const kanbanRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (viewMode !== 'kanban') return;
     const el = kanbanRef.current;
     if (!el) return;
 
     const handleWheel = (e: WheelEvent) => {
-      if (e.deltaY === 0) return;
-      e.preventDefault();
-      el.scrollLeft += e.deltaY;
+      // 1. 如果是触控板原生横向滑动手势 (deltaX 大于 deltaY)，不拦截，保持原生丝滑
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+        return;
+      }
+
+      // 2. 如果鼠标正悬停在某一列卡片列表 (.cardList) 上，且该列表具有垂直滚动空间，优先允许纵向滚动
+      const target = e.target as HTMLElement | null;
+      const cardListEl = target?.closest(`.${styles.cardList}`) as HTMLElement | null;
+      if (cardListEl) {
+        const canScrollVertically = cardListEl.scrollHeight > cardListEl.clientHeight;
+        if (canScrollVertically) {
+          const isAtTop = cardListEl.scrollTop <= 0 && e.deltaY < 0;
+          const isAtBottom = cardListEl.scrollTop + cardListEl.clientHeight >= cardListEl.scrollHeight - 2 && e.deltaY > 0;
+          if (!isAtTop && !isAtBottom) {
+            // 允许卡片列表内部正常纵向滚动
+            return;
+          }
+        }
+      }
+
+      // 3. 悬停在看板空白区域或已滚动到尽头的列表时，将滚轮纵向位移转换为看板横向平滑滑动
+      if (e.deltaY !== 0) {
+        e.preventDefault();
+        el.scrollLeft += e.deltaY;
+      }
     };
 
     el.addEventListener('wheel', handleWheel, { passive: false });
     return () => el.removeEventListener('wheel', handleWheel);
-  }, []);
+  }, [viewMode]);
 
   return (
     <div className={styles.container}>
@@ -196,9 +219,6 @@ export const Applications: React.FC = () => {
       <header className={styles.header}>
         <div>
           <h1 className="text-h1">投递记录看板</h1>
-          <p style={{ color: 'var(--text-secondary)', marginTop: '4px' }}>
-            追踪所有投递岗位进展，支持拖拽看板与高密度表格多维查阅。
-          </p>
         </div>
         <button className="btn btn-accent" onClick={handleAddNew}>
           <Plus size={16} /> 添加岗位
@@ -376,9 +396,9 @@ export const Applications: React.FC = () => {
 
       {/* Slide-over Detail Panel */}
       {selectedAppId && (
-        <ApplicationDetailPanel 
-          appId={selectedAppId} 
-          onClose={() => setSelectedAppId(null)} 
+        <ApplicationDetailPanel
+          appId={selectedAppId}
+          onClose={() => setSelectedAppId(null)}
         />
       )}
 
@@ -393,21 +413,21 @@ export const Applications: React.FC = () => {
             <form onSubmit={submitAddNew}>
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>公司名称</label>
-                <input required autoFocus className={styles.input} placeholder="例如：字节跳动 / 招银网络" value={addFormData.companyName} onChange={e => setAddFormData({...addFormData, companyName: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }} />
+                <input required autoFocus className={styles.input} placeholder="例如：字节跳动 / 招银网络" value={addFormData.companyName} onChange={e => setAddFormData({ ...addFormData, companyName: e.target.value })} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }} />
               </div>
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>投递岗位</label>
-                <input required className={styles.input} placeholder="例如：前端开发工程师" value={addFormData.jobTitle} onChange={e => setAddFormData({...addFormData, jobTitle: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }} />
+                <input required className={styles.input} placeholder="例如：前端开发工程师" value={addFormData.jobTitle} onChange={e => setAddFormData({ ...addFormData, jobTitle: e.target.value })} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }} />
               </div>
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>进度查询链接 (可选)</label>
-                <input className={styles.input} placeholder="https://... (投递完成后生成的进度查询链接)" value={addFormData.url} onChange={e => setAddFormData({...addFormData, url: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }} />
+                <input className={styles.input} placeholder="https://... (投递完成后生成的进度查询链接)" value={addFormData.url} onChange={e => setAddFormData({ ...addFormData, url: e.target.value })} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }} />
               </div>
               <div style={{ marginBottom: '24px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>意向梯队 / 难度</label>
                 <select
                   value={addFormData.priority}
-                  onChange={e => setAddFormData({...addFormData, priority: e.target.value as ApplicationPriority})}
+                  onChange={e => setAddFormData({ ...addFormData, priority: e.target.value as ApplicationPriority })}
                   style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }}
                 >
                   <option value="dream">冲刺 (重点意向 / 高难度)</option>
@@ -438,7 +458,7 @@ export const Applications: React.FC = () => {
             <form onSubmit={submitScheduleEvent}>
               <div style={{ marginBottom: '14px' }}>
                 <label style={{ display: 'block', marginBottom: '6px', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>日程标题 *</label>
-                <input required className={styles.input} value={scheduleFormData.title} onChange={e => setScheduleFormData({...scheduleFormData, title: e.target.value})} style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }} />
+                <input required className={styles.input} value={scheduleFormData.title} onChange={e => setScheduleFormData({ ...scheduleFormData, title: e.target.value })} style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }} />
               </div>
 
               {/* 时间模式切换 */}
@@ -536,14 +556,14 @@ export const Applications: React.FC = () => {
                     <label style={{ display: 'block', marginBottom: '6px', fontSize: '12.5px', color: 'var(--text-secondary)' }}>
                       {scheduleFormData.timeType === 'deadline' ? '最晚截止日期 *' : '日期 *'}
                     </label>
-                    <input type="date" required className={styles.input} value={scheduleFormData.date} onChange={e => setScheduleFormData({...scheduleFormData, date: e.target.value})} onClick={(e) => { try { (e.target as HTMLInputElement).showPicker(); } catch {} }} style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', colorScheme: 'dark', cursor: 'pointer' }} />
+                    <input type="date" required className={styles.input} value={scheduleFormData.date} onChange={e => setScheduleFormData({ ...scheduleFormData, date: e.target.value })} onClick={(e) => { try { (e.target as HTMLInputElement).showPicker(); } catch { } }} style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', colorScheme: 'dark', cursor: 'pointer' }} />
                   </div>
                   {scheduleFormData.timeType !== 'all_day' && (
                     <div style={{ flex: 1 }}>
                       <label style={{ display: 'block', marginBottom: '6px', fontSize: '12.5px', color: 'var(--text-secondary)' }}>
                         {scheduleFormData.timeType === 'deadline' ? '截止时刻' : '具体时间'}
                       </label>
-                      <input type="time" required className={styles.input} value={scheduleFormData.time} onChange={e => setScheduleFormData({...scheduleFormData, time: e.target.value})} onClick={(e) => { try { (e.target as HTMLInputElement).showPicker(); } catch {} }} style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', colorScheme: 'dark', cursor: 'pointer' }} />
+                      <input type="time" required className={styles.input} value={scheduleFormData.time} onChange={e => setScheduleFormData({ ...scheduleFormData, time: e.target.value })} onClick={(e) => { try { (e.target as HTMLInputElement).showPicker(); } catch { } }} style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', colorScheme: 'dark', cursor: 'pointer' }} />
                     </div>
                   )}
                 </div>
@@ -553,10 +573,10 @@ export const Applications: React.FC = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>
                     <LinkIcon size={14} color="var(--primary)" />
-                    {scheduleModalState.status === 'oa' 
-                      ? '笔试链接 / 平台地址 (可选)' 
-                      : ['interview', 'hr'].includes(scheduleModalState.status) 
-                        ? '面试会议链接 / 线下考场 (可选)' 
+                    {scheduleModalState.status === 'oa'
+                      ? '笔试链接 / 平台地址 (可选)'
+                      : ['interview', 'hr'].includes(scheduleModalState.status)
+                        ? '面试会议链接 / 线下考场 (可选)'
                         : '相关链接 / 截止反馈地址 (可选)'}
                   </label>
                   {['interview', 'hr'].includes(scheduleModalState.status) && (
@@ -577,18 +597,18 @@ export const Applications: React.FC = () => {
                     </button>
                   )}
                 </div>
-                <input 
-                  className={styles.input} 
+                <input
+                  className={styles.input}
                   placeholder={
-                    scheduleModalState.status === 'oa' 
-                      ? "https://... (例如牛客/赛码/牛客网等笔试链接)" 
-                      : ['interview', 'hr'].includes(scheduleModalState.status) 
-                        ? "https://meeting.tencent.com/... 或 面试地点" 
+                    scheduleModalState.status === 'oa'
+                      ? "https://... (例如牛客/赛码/牛客网等笔试链接)"
+                      : ['interview', 'hr'].includes(scheduleModalState.status)
+                        ? "https://meeting.tencent.com/... 或 面试地点"
                         : "https://... (相关链接或反馈地址)"
-                  } 
-                  value={scheduleFormData.location} 
-                  onChange={e => setScheduleFormData({...scheduleFormData, location: e.target.value})} 
-                  style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }} 
+                  }
+                  value={scheduleFormData.location}
+                  onChange={e => setScheduleFormData({ ...scheduleFormData, location: e.target.value })}
+                  style={{ width: '100%', boxSizing: 'border-box', padding: '10px 12px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }}
                 />
               </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '20px' }}>

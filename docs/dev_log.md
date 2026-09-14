@@ -3546,6 +3546,60 @@ border-left-color 被强行覆写为 var(--border-color) (黑灰色)！色彩彻
 2. **为什么移动端日历只展示圆点指示器，卡片放在下方？**
    - **符合移动端人体工学与触控交互最佳实践**：在 40px 的微型触摸格子里塞入按钮和长文本会导致误触和严重的视觉割裂；将“全月概览”和“当日详情操作”上下垂直分离，既保留了日历的大局观，又保证了操作区域有足够舒适的触控热区（如 44px 按钮），体验最符合移动端用户心智。
 
+---
+
+## 2026-09-14 (投递追踪看板横向滚动与卡顿闪烁彻底修复)
+
+### 1. 【本次修改范围】
+- **修改模块**：投递记录看板模块 (`src/features/applications`)
+- **改动文件**：
+  1. `src/features/applications/pages/Applications/Applications.module.css`：
+     - 从 `.kanbanBoard` 中彻底移除 `scroll-snap-type: x mandatory`；
+     - 从 `.column` 中彻底移除 `scroll-snap-align: center`；
+     - 为 `.kanbanBoard` 增加 `overflow-y: hidden`、`-webkit-overflow-scrolling: touch` 以及现代化精致横向滚动条样式（`::-webkit-scrollbar`、`track`、`thumb`）；
+  2. `src/features/applications/pages/Applications/index.tsx`：
+     - 重构 `handleWheel` 智能滚轮事件监听函数：
+       1. 优先放行触控板双指原生横向滑动（`Math.abs(e.deltaX) > Math.abs(e.deltaY)` 不拦截，保持 120Hz 原生物理惯性）；
+       2. 智能探测鼠标指针下方的卡片容器（`.cardList`），当列表有纵向溢出空间时，优先允许单列卡片内部正常纵向滚动；
+       3. 仅在鼠标位于看板空白背景或纵向滚动到顶部/底部尽头时，才将普通鼠标滚轮的 `deltaY` 平滑映射为 `kanbanBoard.scrollLeft`；
+     - 为 `useEffect` 补充 `[viewMode]` 依赖项，确保视图在表格（Table）与看板（Kanban）之间切换时能够正确绑定与解绑 DOM 监听器。
+
+### 2. 【架构与设计变更】
+- **看板滚动架构升级（彻底消除 CSS 强制吸附与 JS 滚轮位移的死循环冲突）**：
+  - **变更原因**：旧版在 CSS 中设置了 `scroll-snap-type: x mandatory` 与 `scroll-snap-align: center`，当用户在桌面上多列同屏可视时，CSS 吸附引擎会强行将某列固定居中；而 JS 滚轮事件监听器又在不断执行 `scrollLeft += deltaY`。两者在每一帧互相冲突、反复拉扯，导致看板卡死且在左右相邻列之间剧烈高频闪烁抖动（Jittering）。
+  - **新旧架构对比**：
+```text
+【旧版冲突死循环（卡顿顿帧 + 左右闪烁）】
+ 用户滚轮滚动 -> el.scrollLeft += deltaY
+       │
+       ▼
+ 浏览器触发 CSS Scroll Snap (强制 mandatory)
+       │
+       ▼
+ 引擎检测到未对齐 center -> 强行拉回上一列中心 (scrollLeft 反向跳转)
+       │
+       ▼
+ 形成 60Hz 反复横跳与死锁，滑不动且严重顿帧闪烁！
+
+【新版平滑自由流架构（无锁自由滚动 + 智能分流）】
+ 用户滚动 ──┬── 触控板横滑 (deltaX) ─────────> 原生 120Hz 物理平滑横滑
+            ├── 悬停在卡片列表 (有纵向内容) ──> 单列卡片正常上下翻滚
+            └── 悬停在看板空白处 / 列表尽头 ──> 平滑转换为看板整体横向推移
+ (CSS 无强制吸附阻力，滚轮与拖拽自由顺滑)
+```
+
+### 3. 【开发遇到的问题 & 踩坑记录】
+1. **`scroll-snap-type: x mandatory` 在多列看板场景的严重水土不服**：
+   - **问题**：`scroll-snap-type` 本身适合单屏单张卡片轮播（1 屏 = 1 张 100vw 卡片），在桌面端一屏展示 3~5 列的宽屏看板中使用会导致只要滚动位移发生微小变化，浏览器就会强行寻找距离中心最近的列并瞬间吸附，剥夺用户的连续滚动自由。
+   - **解决方案**：完全剥离 scroll-snap 机制，采用原生 `overflow-x: auto` 配合定制的 8px 极简滚动条，获得桌面端与移动端一致的高性能自由滚动体验。
+2. **滚轮全量劫持导致列内卡片无法纵向滚动**：
+   - **问题**：原 `handleWheel` 中只要 `e.deltaY !== 0` 就无脑 `e.preventDefault()` 并累加给横向，导致当某列卡片较多（如 10+ 个投递记录）时，用户把鼠标放上去滚轮无法翻看下面的卡片。
+   - **解决方案**：利用 `e.target.closest('.cardList')` 动态计算目标容器的 `scrollHeight`、`clientHeight` 与 `scrollTop`，实现智能上下文感知（Context-aware Wheel Routing）。
+
+### 4. 【关键决策理由】
+1. **为什么在看板上采用“智能滚轮分流”而非“强行禁用 JS 滚轮转换”？**
+   - **兼顾普通鼠标与触控板双重用户体验**：Mac 触控板和高级鼠标原生支持横向滑动；但大量普通 PC 鼠标仅有单向纵向滚轮。智能分流机制既保护了触控板和列内上下滚动的纯正体验，又让普通鼠标用户在看板空白处能自然地横向平移看板，达到业界顶级工作台（如 Linear、Jira）的交互水准。
+
 
 
 
