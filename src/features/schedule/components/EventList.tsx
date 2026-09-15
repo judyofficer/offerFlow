@@ -1,16 +1,22 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, MapPin, Clock, FileText, ExternalLink, Copy, Check, Briefcase, Calendar, ChevronRight, CheckCircle2, Circle, Hourglass } from 'lucide-react';
+import { Plus, MapPin, Clock, ExternalLink, Briefcase, Calendar, ChevronRight, CheckCircle2, Circle, Hourglass, Building2, X, FileText, Check, Copy, Trash2 } from 'lucide-react';
 import type { ScheduleEvent, EventType } from '../types/schedule';
 import { EVENT_TYPE_CONFIG } from '../types/schedule';
+import type { TimeFilterMode } from './CalendarView';
 import { useApplicationStore } from '../../applications/store/useApplicationStore';
 import { useScheduleStore } from '../store/useScheduleStore';
 import styles from './EventList.module.css';
 
 interface Props {
   events: ScheduleEvent[];
+  allEvents?: ScheduleEvent[];
   selectedDate: string;
   onAddEvent: () => void;
   onEditEvent: (id: string) => void;
+  selectedCompany?: string;
+  onSelectCompany?: (company: string) => void;
+  availableCompanies?: Array<{ name: string; count: number }>;
+  timeFilter?: TimeFilterMode;
 }
 
 const extractUrl = (text?: string): string | null => {
@@ -56,21 +62,69 @@ const getLinkActionText = (type: EventType) => {
   return '打开链接';
 };
 
-export const EventList: React.FC<Props> = ({ events, selectedDate, onAddEvent, onEditEvent }) => {
+export const EventList: React.FC<Props> = ({ 
+  events, 
+  allEvents,
+  selectedDate, 
+  onAddEvent, 
+  onEditEvent,
+  selectedCompany = 'all',
+  onSelectCompany,
+  availableCompanies = [],
+  timeFilter = 'all'
+}) => {
   const { applications } = useApplicationStore();
-  const { toggleCompleteEvent } = useScheduleStore();
+  const { toggleCompleteEvent, deleteEvent, deleteCompletedEvents } = useScheduleStore();
   const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // 0. 时限任务 vs 固定时间任务 筛选过滤
+  const filteredByTimeEvents = useMemo(() => {
+    if (timeFilter === 'all') return events;
+    if (timeFilter === 'deadline') {
+      return events.filter(e => e.timeType === 'deadline' || e.type === 'deadline');
+    }
+    return events.filter(e => e.timeType !== 'deadline' && e.type !== 'deadline');
+  }, [events, timeFilter]);
+
+  // 统计当前视图下的已完成日程数
+  const completedEvents = useMemo(() => {
+    return filteredByTimeEvents.filter(e => e.isCompleted);
+  }, [filteredByTimeEvents]);
+
+  const handleClearCompletedAll = () => {
+    if (completedEvents.length === 0) return;
+    const desc = selectedCompany !== 'all' 
+      ? `「${selectedCompany}」相关的 ${completedEvents.length} 项已完成日程`
+      : `${completedEvents.length} 项已完成日程`;
+    if (window.confirm(`确定要删除 ${desc} 吗？\n删除后将彻底从日历和列表中移除，不再占用日历空间。`)) {
+      deleteCompletedEvents(completedEvents.map(e => e.id));
+    }
+  };
+
+  const handleDeleteSingle = (e: React.MouseEvent, event: ScheduleEvent) => {
+    e.stopPropagation();
+    const prompt = event.isCompleted
+      ? `确定要删除已完成日程「${event.title}」吗？\n删除后将不再占用日历空间。`
+      : `确定要删除日程「${event.title}」吗？\n此操作不可撤销。`;
+    if (window.confirm(prompt)) {
+      deleteEvent(event.id);
+    }
+  };
+
+  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
 
   const dayEvents = useMemo(() => {
     // 1. 当天截止或当天的直接日程
-    const direct = events.filter(e => e.date === selectedDate);
+    const direct = filteredByTimeEvents.filter(e => e.date === selectedDate);
 
     // 2. 截止前且未完成的时限日程（截止前都放在当天的日程安排里面，完成后才移出当天日程安排）
-    const ongoing = events.filter(e => {
+    // 规则：以当日为准，当日之前 (selectedDate < todayStr) 不挂载未完成的时限倒计时
+    const ongoing = filteredByTimeEvents.filter(e => {
       const isDeadline = e.timeType === 'deadline' || e.type === 'deadline';
       if (!isDeadline) return false;
       if (e.isCompleted) return false; // 完成后立即移出非截止日的当天日程安排
       if (e.date <= selectedDate) return false; // 当天即截止日属于 direct，不重复添加
+      if (selectedDate < todayStr) return false; // 当日之前的历史日期不挂载时限倒计时
       const start = e.startDate || e.date;
       return start <= selectedDate;
     });
@@ -83,12 +137,10 @@ export const EventList: React.FC<Props> = ({ events, selectedDate, onAddEvent, o
       ...ongoing,
       ...directCompleted
     ];
-  }, [events, selectedDate]);
-
-  const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
+  }, [filteredByTimeEvents, selectedDate, todayStr]);
 
   const upcomingEvents = useMemo(() => {
-    return events
+    return filteredByTimeEvents
       .filter(e => e.date >= todayStr)
       .sort((a, b) => {
         if (a.isCompleted !== b.isCompleted) {
@@ -97,7 +149,7 @@ export const EventList: React.FC<Props> = ({ events, selectedDate, onAddEvent, o
         return a.date.localeCompare(b.date) || (a.time || '00:00').localeCompare(b.time || '00:00');
       })
       .slice(0, 8);
-  }, [events, todayStr]);
+  }, [filteredByTimeEvents, todayStr]);
 
   const handleCopyLink = (eventId: string, url: string) => {
     navigator.clipboard.writeText(url);
@@ -198,7 +250,7 @@ export const EventList: React.FC<Props> = ({ events, selectedDate, onAddEvent, o
               color: dayEvents.length > 0 ? 'var(--primary)' : 'var(--text-tertiary)',
               fontWeight: 600
             }}>
-              {dayEvents.length} 项日程
+              {dayEvents.length} 项{timeFilter === 'specific' ? '固定日程' : (timeFilter === 'deadline' ? '时限任务' : '日程')}
             </span>
           </div>
           <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}>
@@ -226,6 +278,130 @@ export const EventList: React.FC<Props> = ({ events, selectedDate, onAddEvent, o
           <Plus size={16} /> 新增日程
         </button>
       </div>
+
+      {/* 投递公司筛选工具栏 */}
+      {availableCompanies.length > 0 && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '8px',
+          backgroundColor: 'var(--bg-secondary)',
+          padding: '6px 10px',
+          borderRadius: '8px',
+          border: selectedCompany !== 'all' ? '1px solid rgba(59, 130, 246, 0.4)' : '1px solid var(--border-color)',
+          fontSize: '12px',
+          transition: 'all 0.15s ease'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0, flex: 1 }}>
+            <Building2 size={14} color={selectedCompany !== 'all' ? 'var(--primary)' : 'var(--text-tertiary)'} style={{ flexShrink: 0 }} />
+            <span style={{ color: 'var(--text-secondary)', fontWeight: 500, whiteSpace: 'nowrap', fontSize: '12px' }}>
+              筛选公司：
+            </span>
+            <select
+              value={selectedCompany}
+              onChange={(e) => onSelectCompany?.(e.target.value)}
+              style={{
+                padding: '4px 8px',
+                borderRadius: '5px',
+                border: '1px solid var(--border-color)',
+                backgroundColor: 'var(--bg-primary)',
+                color: selectedCompany !== 'all' ? 'var(--primary)' : 'var(--text-primary)',
+                fontWeight: selectedCompany !== 'all' ? 600 : 500,
+                fontSize: '12px',
+                cursor: 'pointer',
+                outline: 'none',
+                flex: 1,
+                minWidth: 0,
+                textOverflow: 'ellipsis'
+              }}
+            >
+              <option value="all">全部公司 ({allEvents ? allEvents.length : events.length} 项日程)</option>
+              {availableCompanies.map(c => (
+                <option key={c.name} value={c.name}>
+                  {c.name} ({c.count} 项)
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {selectedCompany !== 'all' && (
+            <button
+              type="button"
+              onClick={() => onSelectCompany?.('all')}
+              style={{
+                border: 'none',
+                background: 'rgba(59, 130, 246, 0.12)',
+                color: 'var(--primary)',
+                fontSize: '11px',
+                fontWeight: 600,
+                padding: '3px 8px',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                whiteSpace: 'nowrap',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '3px'
+              }}
+              title="清除筛选"
+            >
+              清除 <X size={11} />
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* 已完成日程快速清理栏 */}
+      {completedEvents.length > 0 && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          backgroundColor: 'rgba(16, 185, 129, 0.05)',
+          border: '1px dashed rgba(16, 185, 129, 0.3)',
+          borderRadius: '8px',
+          padding: '6px 12px',
+          fontSize: '12px',
+          color: 'var(--text-secondary)',
+          gap: '8px'
+        }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '5px', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <CheckCircle2 size={13} color="#10b981" style={{ flexShrink: 0 }} />
+            <span>包含 <strong>{completedEvents.length}</strong> 项已完成日程</span>
+          </span>
+          <button
+            type="button"
+            onClick={handleClearCompletedAll}
+            style={{
+              background: 'rgba(239, 68, 68, 0.08)',
+              border: '1px solid rgba(239, 68, 68, 0.25)',
+              color: '#ef4444',
+              borderRadius: '5px',
+              padding: '3px 9px',
+              fontSize: '11.5px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+              transition: 'all 0.15s ease'
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.backgroundColor = '#ef4444';
+              e.currentTarget.style.color = '#ffffff';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.08)';
+              e.currentTarget.style.color = '#ef4444';
+            }}
+            title="一键删除所有已完成日程，彻底释放日历与列表空间"
+          >
+            <Trash2 size={12} /> 一键清理已完成
+          </button>
+        </div>
+      )}
 
       {/* 选中日期的日程列表 */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -269,7 +445,7 @@ export const EventList: React.FC<Props> = ({ events, selectedDate, onAddEvent, o
                   e.currentTarget.style.boxShadow = 'none';
                 }}
               >
-                {/* 标题与类型徽章 + 完成勾选 */}
+                {/* 标题与类型徽章 + 完成勾选 + 删除按钮 */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', minWidth: 0, flex: 1 }}>
                     <button
@@ -310,30 +486,62 @@ export const EventList: React.FC<Props> = ({ events, selectedDate, onAddEvent, o
                   </div>
 
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-                    {event.isCompleted && (
+                    {event.isCompleted ? (
+                      <>
+                        <span style={{
+                          fontSize: '11px',
+                          padding: '2px 7px',
+                          borderRadius: '10px',
+                          backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                          color: '#10b981',
+                          fontWeight: 600
+                        }}>
+                          已完成
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => handleDeleteSingle(e, event)}
+                          style={{
+                            border: '1px solid rgba(239, 68, 68, 0.25)',
+                            background: 'rgba(239, 68, 68, 0.08)',
+                            color: '#ef4444',
+                            fontSize: '11.5px',
+                            fontWeight: 600,
+                            padding: '2px 8px',
+                            borderRadius: '5px',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '3px',
+                            transition: 'all 0.15s ease'
+                          }}
+                          onMouseEnter={e => {
+                            e.currentTarget.style.backgroundColor = '#ef4444';
+                            e.currentTarget.style.color = '#ffffff';
+                          }}
+                          onMouseLeave={e => {
+                            e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.08)';
+                            e.currentTarget.style.color = '#ef4444';
+                          }}
+                          title="删除此已完成日程，不再占用日历空间"
+                        >
+                          <Trash2 size={12} /> 删除
+                        </button>
+                      </>
+                    ) : (
                       <span style={{
-                        fontSize: '11px',
-                        padding: '2px 7px',
-                        borderRadius: '10px',
-                        backgroundColor: 'rgba(16, 185, 129, 0.12)',
-                        color: '#10b981',
+                        fontSize: '11.5px',
+                        padding: '3px 10px',
+                        borderRadius: '12px',
+                        backgroundColor: typeConfig.bgColor,
+                        color: typeConfig.color,
+                        border: `1px solid ${typeConfig.borderColor}`,
+                        whiteSpace: 'nowrap',
                         fontWeight: 600
                       }}>
-                        已完成
+                        {typeConfig.label}
                       </span>
                     )}
-                    <span style={{
-                      fontSize: '11.5px',
-                      padding: '3px 10px',
-                      borderRadius: '12px',
-                      backgroundColor: typeConfig.bgColor,
-                      color: typeConfig.color,
-                      border: `1px solid ${typeConfig.borderColor}`,
-                      whiteSpace: 'nowrap',
-                      fontWeight: 600
-                    }}>
-                      {typeConfig.label}
-                    </span>
                   </div>
                 </div>
 
@@ -458,29 +666,54 @@ export const EventList: React.FC<Props> = ({ events, selectedDate, onAddEvent, o
             alignItems: 'center',
             gap: '8px'
           }}>
-            <span>选中日期暂无日程安排</span>
-            <button
-              type="button"
-              onClick={onAddEvent}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--primary)',
-                fontSize: '13px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}
-            >
-              <Plus size={14} /> 立即添加该日日程
-            </button>
+            <span>
+              {selectedCompany !== 'all' 
+                ? `所选日期暂无「${selectedCompany}」的${timeFilter === 'specific' ? '固定时间日程' : (timeFilter === 'deadline' ? '时限任务' : '日程安排')}` 
+                : `选中日期暂无${timeFilter === 'specific' ? '固定时间日程' : (timeFilter === 'deadline' ? '时限任务' : '日程安排')}`}
+            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
+              {selectedCompany !== 'all' && onSelectCompany && (
+                <button
+                  type="button"
+                  onClick={() => onSelectCompany('all')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--primary)',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}
+                >
+                  查看全部公司日程
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={onAddEvent}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: selectedCompany !== 'all' ? 'var(--text-secondary)' : 'var(--primary)',
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                <Plus size={14} /> 立即添加该日日程
+              </button>
+            </div>
           </div>
         )}
 
         {/* 即将到来 (Upcoming Events) - 清晰醒目的卡片列表 */}
-        {upcomingEvents.length > 0 && (
+        {(upcomingEvents.length > 0 || selectedCompany !== 'all' || timeFilter !== 'all') && (
           <div style={{ marginTop: '16px' }}>
             <h3 style={{
               fontSize: '14px',
@@ -493,175 +726,221 @@ export const EventList: React.FC<Props> = ({ events, selectedDate, onAddEvent, o
               alignItems: 'center',
               justifyContent: 'space-between'
             }}>
-              <span>近期日程</span>
+              <span>近期日程{timeFilter === 'specific' ? ' · 固定时间' : (timeFilter === 'deadline' ? ' · 时限任务' : '')}{selectedCompany !== 'all' ? ` · ${selectedCompany}` : ''}</span>
               <span style={{ fontSize: '12px', color: 'var(--text-tertiary)', fontWeight: 500 }}>共 {upcomingEvents.length} 项</span>
             </h3>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {upcomingEvents.map(event => {
-                const typeConfig = EVENT_TYPE_CONFIG[event.type];
-                const url = extractUrl(event.location);
-                const relText = getRelativeDaysText(event.date);
+            {upcomingEvents.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {upcomingEvents.map(event => {
+                  const typeConfig = EVENT_TYPE_CONFIG[event.type];
+                  const url = extractUrl(event.location);
+                  const relText = getRelativeDaysText(event.date);
 
-                return (
-                  <div
-                    key={event.id}
-                    onClick={() => onEditEvent(event.id)}
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      padding: '12px 14px',
-                      borderRadius: '8px',
-                      backgroundColor: event.isCompleted ? 'rgba(255, 255, 255, 0.02)' : 'var(--bg-secondary)',
-                      cursor: 'pointer',
-                      border: '1px solid var(--border-color)',
-                      borderLeft: `4px solid ${event.isCompleted ? 'var(--success, #10b981)' : typeConfig.color}`,
-                      transition: 'all 0.15s ease',
-                      gap: '12px',
-                      opacity: event.isCompleted ? 0.75 : 1
-                    }}
-                    onMouseEnter={e => {
-                      e.currentTarget.style.borderTopColor = 'rgba(59, 130, 246, 0.5)';
-                      e.currentTarget.style.borderRightColor = 'rgba(59, 130, 246, 0.5)';
-                      e.currentTarget.style.borderBottomColor = 'rgba(59, 130, 246, 0.5)';
-                      e.currentTarget.style.borderLeftColor = event.isCompleted ? 'var(--success, #10b981)' : typeConfig.color;
-                      e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.borderTopColor = 'var(--border-color)';
-                      e.currentTarget.style.borderRightColor = 'var(--border-color)';
-                      e.currentTarget.style.borderBottomColor = 'var(--border-color)';
-                      e.currentTarget.style.borderLeftColor = event.isCompleted ? 'var(--success, #10b981)' : typeConfig.color;
-                      e.currentTarget.style.boxShadow = 'none';
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleCompleteEvent(event.id);
-                        }}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          padding: 0,
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: event.isCompleted ? 'var(--success, #10b981)' : 'var(--text-tertiary)',
-                          borderRadius: '4px',
-                          flexShrink: 0
-                        }}
-                        title={event.isCompleted ? '点击标为未完成' : '点击标为已完成'}
-                      >
-                        {event.isCompleted ? (
-                          <CheckCircle2 size={16} color="#10b981" />
-                        ) : (
-                          <Circle size={16} />
-                        )}
-                      </button>
-
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', minWidth: 0, flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
-                          <span style={{
-                            fontSize: '13.5px',
-                            fontWeight: 600,
-                            color: event.isCompleted ? 'var(--text-secondary)' : 'var(--text-primary)',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            flex: 1,
-                            minWidth: 0,
-                            textDecoration: event.isCompleted ? 'line-through' : 'none'
-                          }}>
-                            {event.title}
-                          </span>
-                          {event.isCompleted ? (
-                            <span style={{ fontSize: '10.5px', padding: '1px 6px', borderRadius: '8px', backgroundColor: 'rgba(16, 185, 129, 0.12)', color: '#10b981', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>
-                              已完成
-                            </span>
-                          ) : (
-                            <span style={{
-                              fontSize: '11px',
-                              padding: '1px 7px',
-                              borderRadius: '10px',
-                              backgroundColor: typeConfig.bgColor,
-                              color: typeConfig.color,
-                              border: `1px solid ${typeConfig.borderColor}`,
-                              fontWeight: 600,
-                              whiteSpace: 'nowrap',
-                              flexShrink: 0
-                            }}>
-                              {typeConfig.label}
-                            </span>
-                          )}
-                        </div>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11.5px', color: 'var(--text-secondary)', minWidth: 0 }}>
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
-                            {event.date} {event.timeType === 'deadline' ? `(截止 ${event.time || '23:59'})` : (event.timeType === 'all_day' ? '(全天)' : event.time || '')}
-                          </span>
-                          {relText && (
-                            <span style={{
-                              fontSize: '11px',
-                              fontWeight: 600,
-                              color: relText === '今天' ? 'var(--primary)' : 'var(--text-tertiary)',
-                              backgroundColor: relText === '今天' ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
-                              padding: '1px 5px',
-                              borderRadius: '4px',
-                              whiteSpace: 'nowrap',
-                              flexShrink: 0
-                            }}>
-                              {relText}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
-                      {url && (
-                        <a
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                  return (
+                    <div
+                      key={event.id}
+                      onClick={() => onEditEvent(event.id)}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '12px 14px',
+                        borderRadius: '8px',
+                        backgroundColor: event.isCompleted ? 'rgba(255, 255, 255, 0.02)' : 'var(--bg-secondary)',
+                        cursor: 'pointer',
+                        border: '1px solid var(--border-color)',
+                        borderLeft: `4px solid ${event.isCompleted ? 'var(--success, #10b981)' : typeConfig.color}`,
+                        transition: 'all 0.15s ease',
+                        gap: '12px',
+                        opacity: event.isCompleted ? 0.75 : 1
+                      }}
+                      onMouseEnter={e => {
+                        e.currentTarget.style.borderTopColor = 'rgba(59, 130, 246, 0.5)';
+                        e.currentTarget.style.borderRightColor = 'rgba(59, 130, 246, 0.5)';
+                        e.currentTarget.style.borderBottomColor = 'rgba(59, 130, 246, 0.5)';
+                        e.currentTarget.style.borderLeftColor = event.isCompleted ? 'var(--success, #10b981)' : typeConfig.color;
+                        e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                      }}
+                      onMouseLeave={e => {
+                        e.currentTarget.style.borderTopColor = 'var(--border-color)';
+                        e.currentTarget.style.borderRightColor = 'var(--border-color)';
+                        e.currentTarget.style.borderBottomColor = 'var(--border-color)';
+                        e.currentTarget.style.borderLeftColor = event.isCompleted ? 'var(--success, #10b981)' : typeConfig.color;
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleCompleteEvent(event.id);
+                          }}
                           style={{
+                            background: 'none',
+                            border: 'none',
+                            padding: 0,
+                            cursor: 'pointer',
                             display: 'inline-flex',
                             alignItems: 'center',
-                            gap: '4px',
-                            padding: '4px 10px',
-                            borderRadius: '5px',
-                            backgroundColor: 'rgba(59, 130, 246, 0.12)',
-                            color: 'var(--primary)',
-                            fontSize: '11.5px',
-                            textDecoration: 'none',
-                            fontWeight: 600,
-                            border: '1px solid rgba(59, 130, 246, 0.25)',
-                            transition: 'all 0.15s ease'
+                            justifyContent: 'center',
+                            color: event.isCompleted ? 'var(--success, #10b981)' : 'var(--text-tertiary)',
+                            borderRadius: '4px',
+                            flexShrink: 0
                           }}
-                          onMouseEnter={e => {
-                            e.currentTarget.style.backgroundColor = 'var(--primary)';
-                            e.currentTarget.style.color = '#ffffff';
-                          }}
-                          onMouseLeave={e => {
-                            e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.12)';
-                            e.currentTarget.style.color = 'var(--primary)';
-                          }}
-                          title={`在新标签页打开: ${url}`}
+                          title={event.isCompleted ? '点击标为未完成' : '点击标为已完成'}
                         >
-                          <ExternalLink size={12} />
-                          <span>直达</span>
-                        </a>
-                      )}
-                      <ChevronRight size={16} color="var(--text-tertiary)" />
+                          {event.isCompleted ? (
+                            <CheckCircle2 size={16} color="#10b981" />
+                          ) : (
+                            <Circle size={16} />
+                          )}
+                        </button>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', minWidth: 0, flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+                            <span style={{
+                              fontSize: '13.5px',
+                              fontWeight: 600,
+                              color: event.isCompleted ? 'var(--text-secondary)' : 'var(--text-primary)',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                              flex: 1,
+                              minWidth: 0,
+                              textDecoration: event.isCompleted ? 'line-through' : 'none'
+                            }}>
+                              {event.title}
+                            </span>
+                            {event.isCompleted ? (
+                              <span style={{ fontSize: '10.5px', padding: '1px 6px', borderRadius: '8px', backgroundColor: 'rgba(16, 185, 129, 0.12)', color: '#10b981', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>
+                                已完成
+                              </span>
+                            ) : (
+                              <span style={{
+                                fontSize: '11px',
+                                padding: '1px 7px',
+                                borderRadius: '10px',
+                                backgroundColor: typeConfig.bgColor,
+                                color: typeConfig.color,
+                                border: `1px solid ${typeConfig.borderColor}`,
+                                fontWeight: 600,
+                                whiteSpace: 'nowrap',
+                                flexShrink: 0
+                              }}>
+                                {typeConfig.label}
+                              </span>
+                            )}
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11.5px', color: 'var(--text-secondary)', minWidth: 0 }}>
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
+                              {event.date} {event.timeType === 'deadline' ? `(截止 ${event.time || '23:59'})` : (event.timeType === 'all_day' ? '(全天)' : event.time || '')}
+                            </span>
+                            {relText && (
+                              <span style={{
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                color: relText === '今天' ? 'var(--primary)' : 'var(--text-tertiary)',
+                                backgroundColor: relText === '今天' ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+                                padding: '1px 5px',
+                                borderRadius: '4px',
+                                whiteSpace: 'nowrap',
+                                flexShrink: 0
+                              }}>
+                                {relText}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+                        {url && (
+                          <a
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              padding: '4px 10px',
+                              borderRadius: '5px',
+                              backgroundColor: 'rgba(59, 130, 246, 0.12)',
+                              color: 'var(--primary)',
+                              fontSize: '11.5px',
+                              textDecoration: 'none',
+                              fontWeight: 600,
+                              border: '1px solid rgba(59, 130, 246, 0.25)',
+                              transition: 'all 0.15s ease'
+                            }}
+                            onMouseEnter={e => {
+                              e.currentTarget.style.backgroundColor = 'var(--primary)';
+                              e.currentTarget.style.color = '#ffffff';
+                            }}
+                            onMouseLeave={e => {
+                              e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.12)';
+                              e.currentTarget.style.color = 'var(--primary)';
+                            }}
+                            title={`在新标签页打开: ${url}`}
+                          >
+                            <ExternalLink size={12} />
+                            <span>直达</span>
+                          </a>
+                        )}
+                        {event.isCompleted && (
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeleteSingle(e, event)}
+                            style={{
+                              border: '1px solid rgba(239, 68, 68, 0.25)',
+                              background: 'rgba(239, 68, 68, 0.08)',
+                              color: '#ef4444',
+                              fontSize: '11px',
+                              fontWeight: 600,
+                              padding: '2px 7px',
+                              borderRadius: '5px',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '3px',
+                              transition: 'all 0.15s ease',
+                              flexShrink: 0
+                            }}
+                            onMouseEnter={e => {
+                              e.currentTarget.style.backgroundColor = '#ef4444';
+                              e.currentTarget.style.color = '#ffffff';
+                            }}
+                            onMouseLeave={e => {
+                              e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.08)';
+                              e.currentTarget.style.color = '#ef4444';
+                            }}
+                            title="删除此已完成日程，不再占用日历空间"
+                          >
+                            <Trash2 size={11} /> 删除
+                          </button>
+                        )}
+                        <ChevronRight size={16} color="var(--text-tertiary)" />
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div style={{
+                padding: '16px',
+                textAlign: 'center',
+                color: 'var(--text-tertiary)',
+                fontSize: '12.5px',
+                backgroundColor: 'var(--bg-secondary)',
+                borderRadius: '8px',
+                border: '1px dashed var(--border-color)'
+              }}>
+                暂无「{selectedCompany}」的近期日程
+              </div>
+            )}
           </div>
         )}
       </div>

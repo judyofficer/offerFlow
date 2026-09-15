@@ -9,6 +9,7 @@ interface ScheduleState {
   updateEvent: (id: string, data: Partial<ScheduleEvent>) => void;
   toggleCompleteEvent: (id: string) => void;
   deleteEvent: (id: string) => void;
+  deleteCompletedEvents: (ids?: string[]) => void;
 }
 
 const generateId = () => Math.random().toString(36).substring(2, 9);
@@ -47,6 +48,15 @@ export const useScheduleStore = create<ScheduleState>()(
 
       deleteEvent: (id) => set((state) => ({
         events: state.events.filter(event => event.id !== id)
+      })),
+
+      deleteCompletedEvents: (ids) => set((state) => ({
+        events: state.events.filter(event => {
+          if (ids && ids.length > 0) {
+            return !ids.includes(event.id);
+          }
+          return !event.isCompleted;
+        })
       })),
     }),
     {

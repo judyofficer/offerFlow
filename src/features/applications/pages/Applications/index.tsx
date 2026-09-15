@@ -97,6 +97,23 @@ export const Applications: React.FC = () => {
     setAddModalOpen(false);
   };
 
+  const getScheduleEventDefaultTitle = (companyName: string, status: ApplicationStatus) => {
+    const comp = companyName.trim();
+    const prefix = comp ? `${comp} - ` : '';
+    switch (status) {
+      case 'oa':
+        return `${prefix}笔试`;
+      case 'interview':
+        return `${prefix}面试`;
+      case 'hr':
+        return `${prefix}HR面`;
+      case 'offer':
+        return `${prefix}Offer 截止`;
+      default:
+        return `${prefix}${STATUS_CONFIG[status]?.label || '日程'}`;
+    }
+  };
+
   const triggerSchedulePrompt = (appId: string, status: ApplicationStatus) => {
     if (['oa', 'interview', 'hr', 'offer'].includes(status)) {
       setTimeout(() => {
@@ -110,7 +127,7 @@ export const Applications: React.FC = () => {
         }
 
         setScheduleFormData({
-          title: `${app?.companyName || ''} - ${STATUS_CONFIG[status].label}`,
+          title: getScheduleEventDefaultTitle(app?.companyName || '', status),
           type: status === 'oa' ? 'oa' : (status === 'offer' ? 'deadline' : 'interview'),
           date: defaultDate.toISOString().split('T')[0],
           startDate: isOaOrOffer ? new Date().toISOString().split('T')[0] : undefined,

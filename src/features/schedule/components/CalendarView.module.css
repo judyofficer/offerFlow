@@ -1,14 +1,15 @@
 .container {
   background-color: var(--bg-primary);
   border-radius: var(--radius-lg);
-  padding: 24px;
+  padding: 16px 18px;
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 10px;
   height: 100%;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .header {
@@ -16,19 +17,20 @@
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
 .headerTitleWrapper {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .headerActions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .weekdaysHeader {
@@ -39,8 +41,9 @@
   font-weight: 600;
   font-size: 13px;
   color: var(--text-tertiary);
-  padding-bottom: 8px;
+  padding-bottom: 6px;
   border-bottom: 1px solid var(--border-color);
+  flex-shrink: 0;
 }
 
 .grid {
@@ -48,6 +51,7 @@
   grid-template-columns: repeat(7, 1fr);
   gap: 6px;
   flex: 1;
+  min-height: 0;
 }
 
 .cell {
@@ -58,6 +62,8 @@
   box-sizing: border-box;
   position: relative;
   overflow: hidden;
+  height: 100%;
+  min-height: 0;
   transition: background-color 0.1s ease, border-color 0.1s ease;
 }
 
@@ -65,13 +71,15 @@
   box-sizing: border-box;
   pointer-events: none;
   background-color: transparent;
+  height: 100%;
+  min-height: 0;
 }
 
 /* Desktop vs Mobile content visibility */
 .desktopContent {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   overflow: hidden;
   flex: 1;
   justify-content: flex-start;
@@ -89,10 +97,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 20px;
-  padding-top: 12px;
+  gap: 16px;
+  padding-top: 8px;
   border-top: 1px solid var(--border-color);
   flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
 /* Mobile Responsive */
