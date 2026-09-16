@@ -13,6 +13,8 @@ export interface ScheduleEvent {
   location?: string;      // 腾讯会议链接或笔试系统链接
   notes?: string;         // 面试准备备忘录
   isCompleted?: boolean;  // 是否已完成 (支持笔面试完成打勾)
+  isArchived?: boolean;   // 是否已归档 (归档后从主日历和待办中隐藏，随时可在归档箱中回顾复盘)
+  archivedAt?: number;    // 归档时间戳
   createdAt: number;
   updatedAt: number;
 }

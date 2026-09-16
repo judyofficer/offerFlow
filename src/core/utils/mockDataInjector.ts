@@ -371,8 +371,24 @@ export const injectMockData = () => {
         timeType: 'specific',
         notes: '已顺利作答。',
         isCompleted: true,
+        isArchived: false,
         createdAt: now - 2 * oneDay,
         updatedAt: now - 1 * oneDay
+      },
+      {
+        id: generateId(),
+        title: '腾讯 WXG - 前端开发一面 (已完成)',
+        type: 'interview',
+        date: new Date(now - 3 * oneDay).toISOString().split('T')[0],
+        time: '14:00',
+        timeType: 'specific',
+        location: 'https://meeting.tencent.com/dm/334-556-778',
+        notes: '【复盘总结】面试官考察了 React 并发模式与虚拟列表渲染原理，已顺利通过并进入二面。',
+        isCompleted: true,
+        isArchived: true,
+        archivedAt: now - 2 * oneDay,
+        createdAt: now - 5 * oneDay,
+        updatedAt: now - 2 * oneDay
       }
     ]
   });

@@ -17,6 +17,8 @@ interface Props {
   onSelectCompany?: (company: string) => void;
   availableCompanies?: Array<{ name: string; count: number }>;
   timeFilter?: TimeFilterMode;
+  recycleBinCount?: number;
+  onOpenRecycleBin?: () => void;
 }
 
 const extractUrl = (text?: string): string | null => {
@@ -71,10 +73,12 @@ export const EventList: React.FC<Props> = ({
   selectedCompany = 'all',
   onSelectCompany,
   availableCompanies = [],
-  timeFilter = 'all'
+  timeFilter = 'all',
+  recycleBinCount = 0,
+  onOpenRecycleBin
 }) => {
   const { applications } = useApplicationStore();
-  const { toggleCompleteEvent, deleteEvent, deleteCompletedEvents } = useScheduleStore();
+  const { toggleCompleteEvent, archiveEvent, archiveCompletedEvents } = useScheduleStore();
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // 0. 时限任务 vs 固定时间任务 筛选过滤
@@ -91,24 +95,19 @@ export const EventList: React.FC<Props> = ({
     return filteredByTimeEvents.filter(e => e.isCompleted);
   }, [filteredByTimeEvents]);
 
-  const handleClearCompletedAll = () => {
+  const handleDeleteCompletedAll = () => {
     if (completedEvents.length === 0) return;
     const desc = selectedCompany !== 'all' 
       ? `「${selectedCompany}」相关的 ${completedEvents.length} 项已完成日程`
       : `${completedEvents.length} 项已完成日程`;
-    if (window.confirm(`确定要删除 ${desc} 吗？\n删除后将彻底从日历和列表中移除，不再占用日历空间。`)) {
-      deleteCompletedEvents(completedEvents.map(e => e.id));
+    if (window.confirm(`确定要删除 ${desc} 吗？\n删除后将移入「回收站」，不再占用日历空间，随时可在回收站中恢复。`)) {
+      archiveCompletedEvents(completedEvents.map(e => e.id));
     }
   };
 
   const handleDeleteSingle = (e: React.MouseEvent, event: ScheduleEvent) => {
     e.stopPropagation();
-    const prompt = event.isCompleted
-      ? `确定要删除已完成日程「${event.title}」吗？\n删除后将不再占用日历空间。`
-      : `确定要删除日程「${event.title}」吗？\n此操作不可撤销。`;
-    if (window.confirm(prompt)) {
-      deleteEvent(event.id);
-    }
+    archiveEvent(event.id);
   };
 
   const todayStr = useMemo(() => new Date().toISOString().split('T')[0], []);
@@ -237,7 +236,7 @@ export const EventList: React.FC<Props> = ({
 
   return (
     <div className={styles.container}>
-      {/* 顶部标题与新增按钮 */}
+      {/* 顶部标题与操作按钮 */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -260,23 +259,49 @@ export const EventList: React.FC<Props> = ({
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={onAddEvent}
-          className="btn btn-primary"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '6px',
-            fontSize: '13.5px',
-            padding: '7px 16px',
-            borderRadius: '6px',
-            fontWeight: 600,
-            cursor: 'pointer'
-          }}
-        >
-          <Plus size={16} /> 新增日程
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          {/* 回收站入口 */}
+          <button
+            type="button"
+            onClick={onOpenRecycleBin}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '5px',
+              fontSize: '13px',
+              padding: '7px 12px',
+              borderRadius: '6px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              border: '1px solid var(--border-color)',
+              backgroundColor: 'var(--bg-secondary)',
+              color: recycleBinCount > 0 ? 'var(--primary)' : 'var(--text-secondary)',
+              transition: 'all 0.15s ease'
+            }}
+            title="查看已删除的笔试、面试与历史日程，支持一键恢复"
+          >
+            <Trash2 size={15} color={recycleBinCount > 0 ? 'var(--primary)' : 'var(--text-tertiary)'} />
+            <span>回收站{recycleBinCount > 0 ? ` (${recycleBinCount})` : ''}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={onAddEvent}
+            className="btn btn-primary"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              fontSize: '13.5px',
+              padding: '7px 16px',
+              borderRadius: '6px',
+              fontWeight: 600,
+              cursor: 'pointer'
+            }}
+          >
+            <Plus size={16} /> 新增日程
+          </button>
+        </div>
       </div>
 
       {/* 投递公司筛选工具栏 */}
@@ -351,14 +376,14 @@ export const EventList: React.FC<Props> = ({
         </div>
       )}
 
-      {/* 已完成日程快速清理栏 */}
+      {/* 已完成日程快速删除栏 */}
       {completedEvents.length > 0 && (
         <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          backgroundColor: 'rgba(16, 185, 129, 0.05)',
-          border: '1px dashed rgba(16, 185, 129, 0.3)',
+          backgroundColor: 'rgba(239, 68, 68, 0.05)',
+          border: '1px dashed rgba(239, 68, 68, 0.3)',
           borderRadius: '8px',
           padding: '6px 12px',
           fontSize: '12px',
@@ -367,17 +392,17 @@ export const EventList: React.FC<Props> = ({
         }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: '5px', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             <CheckCircle2 size={13} color="#10b981" style={{ flexShrink: 0 }} />
-            <span>包含 <strong>{completedEvents.length}</strong> 项已完成日程</span>
+            <span>当前包含 <strong>{completedEvents.length}</strong> 项已完成日程</span>
           </span>
           <button
             type="button"
-            onClick={handleClearCompletedAll}
+            onClick={handleDeleteCompletedAll}
             style={{
               background: 'rgba(239, 68, 68, 0.08)',
               border: '1px solid rgba(239, 68, 68, 0.25)',
               color: '#ef4444',
               borderRadius: '5px',
-              padding: '3px 9px',
+              padding: '3px 10px',
               fontSize: '11.5px',
               fontWeight: 600,
               cursor: 'pointer',
@@ -396,9 +421,9 @@ export const EventList: React.FC<Props> = ({
               e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.08)';
               e.currentTarget.style.color = '#ef4444';
             }}
-            title="一键删除所有已完成日程，彻底释放日历与列表空间"
+            title="一键删除所有已完成日程，从日历移入回收站，随时可恢复"
           >
-            <Trash2 size={12} /> 一键清理已完成
+            <Trash2 size={12} /> 一键删除已完成
           </button>
         </div>
       )}
@@ -503,7 +528,7 @@ export const EventList: React.FC<Props> = ({
                           onClick={(e) => handleDeleteSingle(e, event)}
                           style={{
                             border: '1px solid rgba(239, 68, 68, 0.25)',
-                            background: 'rgba(239, 68, 68, 0.08)',
+                            background: 'rgba(239, 68, 68, 0.06)',
                             color: '#ef4444',
                             fontSize: '11.5px',
                             fontWeight: 600,
@@ -520,10 +545,10 @@ export const EventList: React.FC<Props> = ({
                             e.currentTarget.style.color = '#ffffff';
                           }}
                           onMouseLeave={e => {
-                            e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.08)';
+                            e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.06)';
                             e.currentTarget.style.color = '#ef4444';
                           }}
-                          title="删除此已完成日程，不再占用日历空间"
+                          title="删除此已完成日程，移入回收站（不再占用日历空间，随时可在回收站恢复）"
                         >
                           <Trash2 size={12} /> 删除
                         </button>
@@ -896,7 +921,7 @@ export const EventList: React.FC<Props> = ({
                             onClick={(e) => handleDeleteSingle(e, event)}
                             style={{
                               border: '1px solid rgba(239, 68, 68, 0.25)',
-                              background: 'rgba(239, 68, 68, 0.08)',
+                              background: 'rgba(239, 68, 68, 0.06)',
                               color: '#ef4444',
                               fontSize: '11px',
                               fontWeight: 600,
@@ -914,10 +939,10 @@ export const EventList: React.FC<Props> = ({
                               e.currentTarget.style.color = '#ffffff';
                             }}
                             onMouseLeave={e => {
-                              e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.08)';
+                              e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.06)';
                               e.currentTarget.style.color = '#ef4444';
                             }}
-                            title="删除此已完成日程，不再占用日历空间"
+                            title="删除此已完成日程，移入回收站"
                           >
                             <Trash2 size={11} /> 删除
                           </button>

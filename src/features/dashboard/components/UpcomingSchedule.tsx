@@ -10,9 +10,9 @@ export const UpcomingSchedule: React.FC = () => {
 
   const todayStr = new Date().toISOString().split('T')[0];
   
-  // Get events for today and future, sorted by date and time
+  // Get events for today and future, sorted by date and time (excluding archived)
   const upcomingEvents = events
-    .filter(e => e.date >= todayStr)
+    .filter(e => !e.isArchived && e.date >= todayStr)
     .sort((a, b) => a.date.localeCompare(b.date) || (a.time || '00:00').localeCompare(b.time || '00:00'))
     .slice(0, 5); // Show next 5 events
 

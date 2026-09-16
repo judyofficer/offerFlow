@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { CalendarView, type TimeFilterMode } from '../../components/CalendarView';
 import { EventList } from '../../components/EventList';
 import { EventDetailPanel } from '../../components/EventDetailPanel';
+import { RecycleBinModal } from '../../components/RecycleBinModal';
 import { useScheduleStore } from '../../store/useScheduleStore';
 import { useApplicationStore } from '../../../applications/store/useApplicationStore';
 import { isEventMatchingCompany, getEventCompanyName } from '../../utils/companyMatcher';
@@ -21,11 +22,21 @@ const Schedule: React.FC = () => {
   // Modal state
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [isRecycleBinOpen, setIsRecycleBinOpen] = useState(false);
 
-  // 1. 获取所有有日程或有投递记录的公司列表
+  // 1. 拆分活动日程 (未删除/未归档) 与 回收站日程
+  const activeEvents = useMemo(() => {
+    return events.filter(e => !e.isArchived);
+  }, [events]);
+
+  const deletedEvents = useMemo(() => {
+    return events.filter(e => e.isArchived);
+  }, [events]);
+
+  // 2. 获取所有有日程或有投递记录的公司列表 (基于活动日程)
   const availableCompanies = useMemo(() => {
     const map = new Map<string, number>();
-    for (const event of events) {
+    for (const event of activeEvents) {
       const comp = getEventCompanyName(event, applications);
       map.set(comp, (map.get(comp) || 0) + 1);
     }
@@ -38,13 +49,13 @@ const Schedule: React.FC = () => {
     return Array.from(map.entries())
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'zh-CN'));
-  }, [events, applications]);
+  }, [activeEvents, applications]);
 
-  // 2. 根据选中的公司过滤日程
+  // 3. 根据选中的公司过滤活动日程
   const filteredEvents = useMemo(() => {
-    if (selectedCompany === 'all') return events;
-    return events.filter(e => isEventMatchingCompany(e, selectedCompany, applications));
-  }, [events, selectedCompany, applications]);
+    if (selectedCompany === 'all') return activeEvents;
+    return activeEvents.filter(e => isEventMatchingCompany(e, selectedCompany, applications));
+  }, [activeEvents, selectedCompany, applications]);
 
   useEffect(() => {
     if (initialAppId) {
@@ -91,7 +102,7 @@ const Schedule: React.FC = () => {
         <div className={styles.listPane}>
           <EventList 
             events={filteredEvents}
-            allEvents={events}
+            allEvents={activeEvents}
             selectedDate={selectedDate}
             onAddEvent={handleAddEvent}
             onEditEvent={handleEditEvent}
@@ -99,6 +110,8 @@ const Schedule: React.FC = () => {
             onSelectCompany={setSelectedCompany}
             availableCompanies={availableCompanies}
             timeFilter={timeFilter}
+            recycleBinCount={deletedEvents.length}
+            onOpenRecycleBin={() => setIsRecycleBinOpen(true)}
           />
         </div>
       </div>
@@ -111,8 +124,14 @@ const Schedule: React.FC = () => {
           onClose={handleClosePanel}
         />
       )}
+
+      <RecycleBinModal 
+        isOpen={isRecycleBinOpen}
+        onClose={() => setIsRecycleBinOpen(false)}
+      />
     </div>
   );
 };
 
 export default Schedule;
+
