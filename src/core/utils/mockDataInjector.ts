@@ -2,12 +2,21 @@ import { useResumeStore } from '../../features/resumes/store/useResumeStore';
 import { useApplicationStore } from '../../features/applications/store/useApplicationStore';
 import { useJobStore } from '../../features/jobBoard/store/useJobStore';
 import { useScheduleStore } from '../../features/schedule/store/useScheduleStore';
+import { useAuthStore } from '../store/useAuthStore';
+import { getTodayDateStr, getRelativeDateStr, getRelativeTimestamp } from './dateUtils';
+
+export { getTodayDateStr, getRelativeDateStr, getRelativeTimestamp };
 
 const generateId = () => Math.random().toString(36).substring(2, 9);
-const now = Date.now();
-const oneDay = 24 * 60 * 60 * 1000;
 
-export const injectMockData = () => {
+/**
+ * Injects rich, realistic mock data for Demo mode, dynamically aligned with Today's date
+ */
+export const injectMockData = (baseDate: Date = new Date()) => {
+  const todayStr = getRelativeDateStr(0, baseDate);
+  const now = baseDate.getTime();
+  const oneDay = 24 * 60 * 60 * 1000;
+
   // 1. Inject Resumes
   const resume1Id = generateId();
   const resume2Id = generateId();
@@ -115,7 +124,7 @@ export const injectMockData = () => {
         url: 'https://careers.tencent.com/',
         source: '校招官网',
         notes: '微信核心业务线前端研发，负责高并发高可用的 Web 应用开发。',
-        createdAt: now - 5 * oneDay
+        createdAt: getRelativeTimestamp(-5, 0, baseDate)
       },
       {
         id: job2Id,
@@ -126,7 +135,7 @@ export const injectMockData = () => {
         url: 'https://talent.alibaba.com/',
         source: '脉脉内推',
         notes: '负责淘宝天猫核心交易链路前端研发，挑战极端的性能优化。',
-        createdAt: now - 3 * oneDay
+        createdAt: getRelativeTimestamp(-3, 0, baseDate)
       },
       {
         id: generateId(),
@@ -137,7 +146,7 @@ export const injectMockData = () => {
         url: 'https://jobs.bytedance.com/',
         source: '牛客网',
         notes: '参与飞书文档/多维表格前端研发，对架构能力要求较高，需要深厚的 Canvas/WebGL 功底。',
-        createdAt: now - 1 * oneDay
+        createdAt: getRelativeTimestamp(-1, 0, baseDate)
       },
       {
         id: generateId(),
@@ -148,7 +157,7 @@ export const injectMockData = () => {
         url: 'https://zhaopin.meituan.com/',
         source: 'BOSS直聘',
         notes: '负责美团到店餐饮、综合等核心业务的前端开发。团队技术氛围好，基建完善。',
-        createdAt: now - 8 * oneDay
+        createdAt: getRelativeTimestamp(-8, 0, baseDate)
       },
       {
         id: generateId(),
@@ -159,7 +168,7 @@ export const injectMockData = () => {
         url: 'https://zhaopin.kuaishou.cn/',
         source: '猎头推荐',
         notes: '负责快手海外短视频产品矩阵的 Web/H5 研发，会有跨时区沟通需求。',
-        createdAt: now - 2 * oneDay
+        createdAt: getRelativeTimestamp(-2, 0, baseDate)
       }
     ]
   });
@@ -178,9 +187,9 @@ export const injectMockData = () => {
         salary: '25k-35k * 15.5',
         resumeId: resume1Id,
         url: 'https://zhaopin.meituan.com/',
-        notes: 'HR面很顺利，主要聊了职业规划和离职原因，给了 3 天时间等意向书。',
-        updatedAt: now - 1 * oneDay,
-        appliedAt: now - 20 * oneDay
+        notes: 'HR面很顺利，主要聊了职业规划和团队业务，给了承诺意向。',
+        updatedAt: getRelativeTimestamp(-1, 0, baseDate),
+        appliedAt: getRelativeTimestamp(-18, 0, baseDate)
       },
       {
         id: generateId(),
@@ -193,9 +202,9 @@ export const injectMockData = () => {
         salary: '28k-45k * 15',
         resumeId: resume1Id,
         url: 'https://jobs.bytedance.com/',
-        notes: '总包 40W+，签字费 3W。核心部门，非常满意！',
-        updatedAt: now - 2 * oneDay,
-        appliedAt: now - 25 * oneDay
+        notes: '总包 40W+，签字费 3W。核心业务部门，非常满意！',
+        updatedAt: getRelativeTimestamp(-2, 0, baseDate),
+        appliedAt: getRelativeTimestamp(-25, 0, baseDate)
       },
       {
         id: generateId(),
@@ -208,9 +217,9 @@ export const injectMockData = () => {
         salary: '22k-32k * 14',
         resumeId: resume1Id,
         url: '',
-        notes: '二面准备中，需要重点复习 React Fiber 源码和 Webpack 性能优化。',
-        updatedAt: now - 3 * oneDay,
-        appliedAt: now - 10 * oneDay
+        notes: '今天安排二面，重点复习 React Fiber 源码与 Webpack 性能优化指标。',
+        updatedAt: getRelativeTimestamp(0, -2, baseDate),
+        appliedAt: getRelativeTimestamp(-10, 0, baseDate)
       },
       {
         id: generateId(),
@@ -223,9 +232,9 @@ export const injectMockData = () => {
         salary: '24k-38k',
         resumeId: resume2Id,
         url: '',
-        notes: '笔试题包含 3 道算法，2 道 Hard，比较难。',
-        updatedAt: now - 1 * oneDay,
-        appliedAt: now - 2 * oneDay
+        notes: '收到牛客网在线笔试邀请，3天内自选作答。包含 3 道算法题。',
+        updatedAt: getRelativeTimestamp(0, -1, baseDate),
+        appliedAt: getRelativeTimestamp(-2, 0, baseDate)
       },
       {
         id: generateId(),
@@ -238,9 +247,9 @@ export const injectMockData = () => {
         salary: '20k-30k',
         resumeId: resume1Id,
         url: '',
-        notes: '简历挂了，可能是不匹配。',
-        updatedAt: now - 10 * oneDay,
-        appliedAt: now - 15 * oneDay
+        notes: '简历初筛未通过，保持平常心。',
+        updatedAt: getRelativeTimestamp(-10, 0, baseDate),
+        appliedAt: getRelativeTimestamp(-15, 0, baseDate)
       },
       {
         id: generateId(),
@@ -253,9 +262,9 @@ export const injectMockData = () => {
         salary: '22k-35k',
         resumeId: resume1Id,
         url: '',
-        notes: '官网内推，据说部门很核心。',
-        updatedAt: now - 2 * oneDay,
-        appliedAt: now - 4 * oneDay
+        notes: '官网内推已提交，等待初筛反馈。',
+        updatedAt: getRelativeTimestamp(-2, 0, baseDate),
+        appliedAt: getRelativeTimestamp(-4, 0, baseDate)
       },
       {
         id: generateId(),
@@ -268,9 +277,9 @@ export const injectMockData = () => {
         salary: '30k-50k * 16',
         resumeId: resume2Id,
         url: '',
-        notes: '已约下周二面，需要准备下计算机网络。',
-        updatedAt: now - 1 * oneDay,
-        appliedAt: now - 12 * oneDay
+        notes: '已约加面，需要重点准备计算机网络协议与工程化基建。',
+        updatedAt: getRelativeTimestamp(-1, 0, baseDate),
+        appliedAt: getRelativeTimestamp(-12, 0, baseDate)
       },
       {
         id: generateId(),
@@ -283,9 +292,9 @@ export const injectMockData = () => {
         salary: '30W-45W',
         resumeId: resume2Id,
         url: '',
-        notes: '等秋招开启再投递，要再刷点 LeetCode。',
-        updatedAt: now,
-        appliedAt: now
+        notes: '等秋招开启再投递，近期多刷 LeetCode 英文版。',
+        updatedAt: getRelativeTimestamp(0, 0, baseDate),
+        appliedAt: getRelativeTimestamp(0, 0, baseDate)
       },
       {
         id: generateId(),
@@ -298,66 +307,78 @@ export const injectMockData = () => {
         salary: '20k-32k',
         resumeId: resume1Id,
         url: '',
-        notes: '笔试全英文，题量偏大。',
-        updatedAt: now - 5 * oneDay,
-        appliedAt: now - 6 * oneDay
+        notes: '笔试已作答完毕，等待 HR 推进下一轮。',
+        updatedAt: getRelativeTimestamp(-8, 0, baseDate), // Stalled 8 days to realistically demo StalledApplications widget
+        appliedAt: getRelativeTimestamp(-9, 0, baseDate)
       }
     ]
   });
 
-  // 4. Inject Schedule Events
-  const todayStr = new Date().toISOString().split('T')[0];
+  // 4. Inject Schedule Events (Dynamically centered around Today)
   useScheduleStore.setState({
     events: [
       {
         id: generateId(),
-        title: '快手 - 线上笔试 (3天内自选作答)',
-        type: 'oa',
-        date: new Date(now + 3 * oneDay).toISOString().split('T')[0],
-        startDate: todayStr,
-        time: '23:59',
-        timeType: 'deadline',
-        location: 'https://nowcoder.com/exam/test/123456',
-        notes: '平台是牛客网，3天内任选连续2小时作答，提前调试摄像头。',
-        isCompleted: false,
-        createdAt: now,
-        updatedAt: now
-      },
-      {
-        id: generateId(),
-        title: '小红书 - 二面 (视频)',
+        title: '小红书 - 二面 (技术深挖与项目实战)',
         type: 'interview',
-        date: new Date(now + 1 * oneDay).toISOString().split('T')[0],
+        date: getRelativeDateStr(0, baseDate), // Today!
         time: '14:30',
         timeType: 'specific',
         location: 'https://meeting.tencent.com/dm/123-456-789',
-        notes: '准备 React 源码相关的知识点。',
+        notes: '重点准备 React 19 新特性、Fiber 并发模式与大文件分片断点续传项目。',
         isCompleted: false,
         createdAt: now,
         updatedAt: now
       },
       {
         id: generateId(),
-        title: '美团 Offer 截止反馈',
+        title: '快手 - 线上笔试 (3天内自选时段作答)',
+        type: 'oa',
+        date: getRelativeDateStr(3, baseDate), // In 3 days
+        startDate: todayStr,
+        time: '23:59',
+        timeType: 'deadline',
+        location: 'https://nowcoder.com/exam/test/889922',
+        notes: '平台为牛客网，3天内任选连续2小时作答，提前调试好摄像头和双机位。',
+        isCompleted: false,
+        createdAt: now,
+        updatedAt: now
+      },
+      {
+        id: generateId(),
+        title: '字节跳动 - 抖音电商前端一面 (视频)',
+        type: 'interview',
+        date: getRelativeDateStr(1, baseDate), // Tomorrow!
+        time: '16:00',
+        timeType: 'specific',
+        location: 'https://meeting.tencent.com/dm/888-666-999',
+        notes: '准备算法 LeetCode 字符串/动态规划，以及性能优化实战指标。',
+        isCompleted: false,
+        createdAt: now,
+        updatedAt: now
+      },
+      {
+        id: generateId(),
+        title: '美团 - Offer 意向反馈截止',
         type: 'deadline',
-        date: new Date(now + 4 * oneDay).toISOString().split('T')[0],
+        date: getRelativeDateStr(3, baseDate), // In 3 days
         startDate: todayStr,
         time: '18:00',
         timeType: 'deadline',
-        notes: '在此之前必须给 HR 答复。',
+        notes: '在此时间前需要给 HR 答复意向书确认。',
         isCompleted: false,
         createdAt: now,
         updatedAt: now
       },
       {
         id: generateId(),
-        title: '拼多多 - 二面 (视频)',
+        title: '拼多多 - 业务技术加面 (视频)',
         type: 'interview',
-        date: new Date(now + 5 * oneDay).toISOString().split('T')[0],
+        date: getRelativeDateStr(5, baseDate), // In 5 days
         time: '15:00',
         timeType: 'specific',
         location: 'https://meeting.tencent.com/dm/987-654-321',
-        notes: '重点看网络协议与工程化。',
+        notes: '重点看网络协议 (HTTP/2, HTTP/3, QUIC) 与工程化基建。',
         isCompleted: false,
         createdAt: now,
         updatedAt: now
@@ -366,10 +387,10 @@ export const injectMockData = () => {
         id: generateId(),
         title: '虾皮 (Shopee) 在线笔试',
         type: 'oa',
-        date: new Date(now - 1 * oneDay).toISOString().split('T')[0],
+        date: getRelativeDateStr(-1, baseDate), // Yesterday
         time: '19:00',
         timeType: 'specific',
-        notes: '已顺利作答。',
+        notes: '全英文选择题与两道算法题，已顺利完成作答。',
         isCompleted: true,
         isArchived: false,
         createdAt: now - 2 * oneDay,
@@ -379,17 +400,34 @@ export const injectMockData = () => {
         id: generateId(),
         title: '腾讯 WXG - 前端开发一面 (已完成)',
         type: 'interview',
-        date: new Date(now - 3 * oneDay).toISOString().split('T')[0],
+        date: getRelativeDateStr(-3, baseDate), // 3 days ago
         time: '14:00',
         timeType: 'specific',
         location: 'https://meeting.tencent.com/dm/334-556-778',
-        notes: '【复盘总结】面试官考察了 React 并发模式与虚拟列表渲染原理，已顺利通过并进入二面。',
+        notes: '【复盘总结】面试官考察了 React 渲染机制与 Web Worker。已存入日程回收站，可随时回顾或恢复。',
         isCompleted: true,
         isArchived: true,
-        archivedAt: now - 2 * oneDay,
+        archivedAt: getRelativeTimestamp(-2, 0, baseDate),
         createdAt: now - 5 * oneDay,
         updatedAt: now - 2 * oneDay
       }
     ]
   });
+};
+
+/**
+ * Automatically checks and re-aligns demo data dates if they have drifted into the past
+ */
+export const alignDemoDataDatesIfStale = () => {
+  const { isGuest } = useAuthStore.getState();
+  if (!isGuest) return;
+
+  const todayStr = getTodayDateStr();
+  const events = useScheduleStore.getState().events;
+  const activeUpcoming = events.filter(e => !e.isArchived && e.date >= todayStr);
+
+  // If there are no upcoming active events (e.g. all drifted into the past), re-align demo dates!
+  if (activeUpcoming.length === 0) {
+    injectMockData();
+  }
 };

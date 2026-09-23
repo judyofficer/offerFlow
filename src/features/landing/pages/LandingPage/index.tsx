@@ -89,6 +89,25 @@ const LandingPage: React.FC = () => {
         <nav className={styles.navLinks}>
           <a href="#features" className={styles.navLink}>产品功能</a>
           <a href="https://github.com/offerFlow/offerFlow" target="_blank" rel="noreferrer" className={styles.navLink}>GitHub</a>
+          <button
+            type="button"
+            onClick={handleStart}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--primary, #8b5cf6)',
+              fontWeight: 600,
+              fontSize: '0.95rem',
+              cursor: 'pointer',
+              padding: 0,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              transition: 'opacity 0.2s ease'
+            }}
+          >
+            {user ? '进入工作台' : '登录 / 注册'}
+          </button>
         </nav>
       </header>
 
@@ -114,7 +133,7 @@ const LandingPage: React.FC = () => {
             一键体验 Demo
           </button>
           <button className={styles.secondaryButton} onClick={handleStart}>
-            {user ? '进入工作台' : '从零开始使用'} <ArrowRight size={20} />
+            {user ? '进入工作台' : '登录并开始使用'} <ArrowRight size={20} />
           </button>
         </div>
       </main>

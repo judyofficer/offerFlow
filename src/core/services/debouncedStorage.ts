@@ -12,6 +12,9 @@ export const createDebouncedStorage = (
   const flush = () => {
     if (pendingKey && pendingValue !== null) {
       storage.setItem(pendingKey, pendingValue);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(`_offerflow_ts_${pendingKey}`, Date.now().toString());
+      }
       // 🔥 Async background push to Supabase cloud!
       syncEngine.pushToCloud(pendingKey, pendingValue);
       
@@ -55,6 +58,9 @@ export const createDebouncedStorage = (
       pendingKey = null;
       pendingValue = null;
       storage.removeItem(name);
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(`_offerflow_ts_${name}`);
+      }
     },
   };
 };

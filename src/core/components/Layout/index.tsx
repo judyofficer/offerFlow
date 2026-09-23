@@ -10,6 +10,7 @@ import {
   PanelLeftClose,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
+import { alignDemoDataDatesIfStale } from '../../utils/mockDataInjector';
 import styles from './Layout.module.css';
 
 const navItems = [
@@ -44,6 +45,12 @@ const Layout: React.FC = () => {
       return next;
     });
   };
+
+  useEffect(() => {
+    if (isGuest) {
+      alignDemoDataDatesIfStale();
+    }
+  }, [isGuest]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

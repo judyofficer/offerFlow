@@ -368,7 +368,7 @@ export const ApplicationDetailPanel: React.FC<Props> = ({ appId, onClose }) => {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>备注与面经链接</label>
+            <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>备注</label>
             <textarea
               name="notes"
               value={application.notes || ''}
