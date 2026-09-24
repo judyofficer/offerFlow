@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Plus, X, Calendar, Search, LayoutGrid, TableProperties, Link as LinkIcon, Clock, Hourglass } from 'lucide-react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { Plus, X, Calendar, Search, LayoutGrid, TableProperties, Link as LinkIcon, Clock, Hourglass, ChevronLeft, ChevronRight } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import type { DropResult } from '@hello-pangea/dnd';
 import { useApplicationStore } from '../../store/useApplicationStore';
@@ -192,42 +192,100 @@ export const Applications: React.FC = () => {
   }, [applications, searchQuery, priorityFilter, statusFilter]);
 
   const kanbanRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkScrollBounds = useCallback(() => {
+    const el = kanbanRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 10);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 10);
+  }, []);
+
+  const scrollKanban = (direction: 'left' | 'right') => {
+    const el = kanbanRef.current;
+    if (!el) return;
+    const scrollAmount = 340;
+    el.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth'
+    });
+    setTimeout(checkScrollBounds, 350);
+  };
 
   useEffect(() => {
     if (viewMode !== 'kanban') return;
     const el = kanbanRef.current;
     if (!el) return;
 
+    // 1. 边界检测（使用 requestAnimationFrame 异步节流，彻底消除滚轮过程中的 React 渲染阻塞）
+    let ticking = false;
+    const updateScrollBounds = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          if (el) {
+            setCanScrollLeft(el.scrollLeft > 10);
+            setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 10);
+          }
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    updateScrollBounds();
+    el.addEventListener('scroll', updateScrollBounds, { passive: true });
+    window.addEventListener('resize', updateScrollBounds);
+
+    // 2. 0 延迟、0 掉帧的高性能滚轮分流处理器
     const handleWheel = (e: WheelEvent) => {
-      // 1. 如果是触控板原生横向滑动手势 (deltaX 大于 deltaY)，不拦截，保持原生丝滑
+      // 触控板原生左右滑动 (|deltaX| > |deltaY|)：完全放行浏览器原生平滑横滑，0 拦截
       if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
         return;
       }
 
-      // 2. 如果鼠标正悬停在某一列卡片列表 (.cardList) 上，且该列表具有垂直滚动空间，优先允许纵向滚动
-      const target = e.target as HTMLElement | null;
-      const cardListEl = target?.closest(`.${styles.cardList}`) as HTMLElement | null;
-      if (cardListEl) {
-        const canScrollVertically = cardListEl.scrollHeight > cardListEl.clientHeight;
-        if (canScrollVertically) {
-          const isAtTop = cardListEl.scrollTop <= 0 && e.deltaY < 0;
-          const isAtBottom = cardListEl.scrollTop + cardListEl.clientHeight >= cardListEl.scrollHeight - 2 && e.deltaY > 0;
-          if (!isAtTop && !isAtBottom) {
-            // 允许卡片列表内部正常纵向滚动
-            return;
-          }
-        }
+      // Shift + 滚轮：全域加速横移
+      if (e.shiftKey && e.deltaY !== 0) {
+        e.preventDefault();
+        el.scrollLeft += e.deltaY * 1.2;
+        return;
       }
 
-      // 3. 悬停在看板空白区域或已滚动到尽头的列表时，将滚轮纵向位移转换为看板横向平滑滑动
+      const target = e.target as HTMLElement | null;
+      const cardList = target?.closest(`.${styles.cardList}`) as HTMLElement | null;
+
+      // 处于具有垂直滚动条的卡片列表区域：原生纵向滚动，绝不转化为横滑（保证上下看岗位不横跳）
+      if (cardList && cardList.scrollHeight > cardList.clientHeight + 2) {
+        return;
+      }
+
+      // 处于表头、无滚动条的短列、或看板空白背景区域：滚轮直接平滑平移看板（零延迟、无需找间隙）
       if (e.deltaY !== 0) {
         e.preventDefault();
         el.scrollLeft += e.deltaY;
       }
     };
 
+    // 3. 键盘左右方向键平滑横移看板 (在未聚焦输入框时生效)
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeTag = (document.activeElement?.tagName || '').toLowerCase();
+      if (activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select') return;
+      if (e.key === 'ArrowLeft') {
+        el.scrollBy({ left: -340, behavior: 'smooth' });
+      } else if (e.key === 'ArrowRight') {
+        el.scrollBy({ left: 340, behavior: 'smooth' });
+      }
+    };
+
     el.addEventListener('wheel', handleWheel, { passive: false });
-    return () => el.removeEventListener('wheel', handleWheel);
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      el.removeEventListener('scroll', updateScrollBounds);
+      el.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('resize', updateScrollBounds);
+    };
   }, [viewMode]);
 
   return (
@@ -319,59 +377,85 @@ export const Applications: React.FC = () => {
 
       {/* 核心视图区域：根据 viewMode 切换看板或高密度表格 */}
       {viewMode === 'kanban' ? (
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <div className={styles.kanbanBoard} ref={kanbanRef}>
-            {COLUMNS.map(status => {
-              const columnApps = filteredApplications.filter(app => app.status === status);
-              const config = STATUS_CONFIG[status];
+        <div className={styles.kanbanWrapper}>
+          {/* 左侧悬浮导航平移按钮 */}
+          {canScrollLeft && (
+            <button
+              type="button"
+              className={`${styles.navScrollBtn} ${styles.navScrollLeft}`}
+              onClick={() => scrollKanban('left')}
+              title="向左平移看板 (亦可按 ← 键、Shift+滚轮 或在表头滚动)"
+            >
+              <ChevronLeft size={20} />
+            </button>
+          )}
 
-              return (
-                <div key={status} className={styles.column}>
-                  <div className={styles.columnHeader}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: config.color }} />
-                      <span>{config.label}</span>
-                    </div>
-                    <span className={styles.columnBadge}>{columnApps.length}</span>
-                  </div>
+          {/* 右侧悬浮导航平移按钮 */}
+          {canScrollRight && (
+            <button
+              type="button"
+              className={`${styles.navScrollBtn} ${styles.navScrollRight}`}
+              onClick={() => scrollKanban('right')}
+              title="向右平移看板 (亦可按 → 键、Shift+滚轮 或在表头滚动)"
+            >
+              <ChevronRight size={20} />
+            </button>
+          )}
 
-                  <Droppable droppableId={status}>
-                    {(provided, snapshot) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.droppableProps}
-                        className={styles.cardList}
-                        style={{
-                          backgroundColor: snapshot.isDraggingOver ? 'var(--bg-secondary)' : 'transparent',
-                          transition: 'background-color 0.2s ease',
-                        }}
-                      >
-                        {columnApps.map((app, index) => (
-                          <Draggable key={app.id} draggableId={app.id} index={index}>
-                            {(provided, snapshot) => (
-                              <div
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                              >
-                                <ApplicationCard
-                                  application={app}
-                                  onClick={() => setSelectedAppId(app.id)}
-                                  isDragging={snapshot.isDragging}
-                                />
-                              </div>
-                            )}
-                          </Draggable>
-                        ))}
-                        {provided.placeholder}
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <div className={styles.kanbanBoard} ref={kanbanRef} onScroll={checkScrollBounds}>
+              {COLUMNS.map(status => {
+                const columnApps = filteredApplications.filter(app => app.status === status);
+                const config = STATUS_CONFIG[status];
+
+                return (
+                  <div key={status} className={styles.column}>
+                    <div className={styles.columnHeader} title="💡 在表头滚动滚轮可直接横向平移看板">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: config.color }} />
+                        <span>{config.label}</span>
                       </div>
-                    )}
-                  </Droppable>
-                </div>
-              );
-            })}
-          </div>
-        </DragDropContext>
+                      <span className={styles.columnBadge}>{columnApps.length}</span>
+                    </div>
+
+                    <Droppable droppableId={status}>
+                      {(provided, snapshot) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.droppableProps}
+                          className={styles.cardList}
+                          style={{
+                            backgroundColor: snapshot.isDraggingOver ? 'var(--bg-secondary)' : 'transparent',
+                            transition: 'background-color 0.2s ease',
+                          }}
+                        >
+                          {columnApps.map((app, index) => (
+                            <Draggable key={app.id} draggableId={app.id} index={index}>
+                              {(provided, snapshot) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  {...provided.dragHandleProps}
+                                >
+                                  <ApplicationCard
+                                    application={app}
+                                    onClick={() => setSelectedAppId(app.id)}
+                                    isDragging={snapshot.isDragging}
+                                  />
+                                </div>
+                              )}
+                            </Draggable>
+                          ))}
+                          {provided.placeholder}
+                        </div>
+                      )}
+                    </Droppable>
+                  </div>
+                );
+              })}
+            </div>
+          </DragDropContext>
+        </div>
       ) : (
         <ApplicationTableView
           applications={filteredApplications}

@@ -3,6 +3,9 @@
   height: 100%;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .header {
@@ -10,6 +13,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  flex-shrink: 0;
 }
 
 .toolbar {
@@ -19,6 +23,7 @@
   gap: 16px;
   margin-bottom: 20px;
   flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
 .segmentedControl {
@@ -120,6 +125,51 @@
   align-items: center;
 }
 
+.kanbanWrapper {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.navScrollBtn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 20;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+  transition: all 0.2s ease;
+  opacity: 0.9;
+}
+
+.navScrollBtn:hover {
+  opacity: 1;
+  transform: translateY(-50%) scale(1.1);
+  border-color: var(--primary);
+  color: var(--primary);
+  box-shadow: var(--shadow-lg);
+}
+
+.navScrollLeft {
+  left: 6px;
+}
+
+.navScrollRight {
+  right: 6px;
+}
+
 .kanbanBoard {
   display: flex;
   gap: 16px;
@@ -156,8 +206,11 @@
   border-radius: var(--radius-md);
   display: flex;
   flex-direction: column;
+  height: 100%;
   max-height: 100%;
   border: 1px solid var(--border-color);
+  min-height: 0;
+  box-sizing: border-box;
 }
 
 @media (max-width: 768px) {
@@ -190,6 +243,7 @@
   background-color: var(--bg-secondary);
   border-top-left-radius: var(--radius-md);
   border-top-right-radius: var(--radius-md);
+  flex-shrink: 0;
 }
 
 .columnBadge {
@@ -208,5 +262,7 @@
   gap: 10px;
   overflow-y: auto;
   flex: 1;
+  min-height: 0;
+  overscroll-behavior-y: contain;
 }
 
