@@ -6,8 +6,9 @@ import { supabase } from '../services/supabaseClient';
 interface AuthState {
   user: User | null;
   isGuest: boolean;
+  isDemo: boolean;
   setUser: (user: User | null) => void;
-  setGuestMode: (isGuest: boolean) => void;
+  setGuestMode: (isGuest: boolean, isDemo?: boolean) => void;
   logout: () => Promise<void>;
 }
 
@@ -16,11 +17,24 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       isGuest: false,
+      isDemo: false,
       setUser: (user) => set({ user }),
-      setGuestMode: (isGuest) => set({ isGuest }),
+      setGuestMode: (isGuest, isDemo = false) => {
+        if (typeof window !== 'undefined') {
+          if (isGuest && isDemo) {
+            localStorage.setItem('_offerflow_is_demo', 'true');
+          } else if (isGuest && !isDemo) {
+            localStorage.setItem('_offerflow_is_demo', 'false');
+          }
+        }
+        set({ isGuest, isDemo: isGuest ? isDemo : false });
+      },
       logout: async () => {
         await supabase.auth.signOut();
-        set({ user: null, isGuest: false });
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('_offerflow_is_demo');
+        }
+        set({ user: null, isGuest: false, isDemo: false });
       },
     }),
     {

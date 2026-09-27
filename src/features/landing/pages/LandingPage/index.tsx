@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FileText, Sparkles, ArrowRight, LayoutDashboard, Calendar, Loader2 } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
-import { injectMockData } from '../../../../core/utils/mockDataInjector';
+import { injectMockData, clearDemoData } from '../../../../core/utils/mockDataInjector';
 import styles from './LandingPage.module.css';
 
 import { useAuthStore } from '../../../../core/store/useAuthStore';
@@ -12,7 +12,7 @@ const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const setGuestMode = useAuthStore((state) => state.setGuestMode);
   const user = useAuthStore((state) => state.user);
-  
+
   const [isTransitioning, setIsTransitioning] = useState(false);
 
   useEffect(() => {
@@ -23,12 +23,24 @@ const LandingPage: React.FC = () => {
     }
   }, [user, navigate]);
 
+  const handleGuestStart = () => {
+    setIsTransitioning(true);
+    setTimeout(() => {
+      // If previous session was demo, clear mock data so user gets a clean, fresh workspace
+      if (typeof window !== 'undefined' && localStorage.getItem('_offerflow_is_demo') === 'true') {
+        clearDemoData();
+      }
+      setGuestMode(true, false);
+      navigate('/dashboard');
+    }, 400);
+  };
+
   const handleDemo = () => {
     setIsTransitioning(true);
     // Add a slight delay for better UX transition
     setTimeout(() => {
       injectMockData();
-      setGuestMode(true);
+      setGuestMode(true, true);
       navigate('/dashboard');
     }, 600);
   };
@@ -36,7 +48,7 @@ const LandingPage: React.FC = () => {
   const handleStart = async () => {
     setIsTransitioning(true);
     if (user) {
-      setGuestMode(false);
+      setGuestMode(false, false);
       try {
         await syncEngine.pullFromCloud(true);
       } catch (e) {
@@ -44,7 +56,7 @@ const LandingPage: React.FC = () => {
       }
       window.location.href = '/dashboard';
     } else {
-      setGuestMode(false);
+      setGuestMode(false, false);
       // Wait for a smooth transition before going to auth
       setTimeout(() => {
         navigate('/auth');
@@ -128,12 +140,15 @@ const LandingPage: React.FC = () => {
         </p>
 
         <div className={styles.heroActions}>
-          <button className={styles.primaryButton} onClick={handleDemo}>
-            <Sparkles size={20} />
-            一键体验 Demo
+          <button className={styles.ghostButton} onClick={handleGuestStart}>
+            免登录直接使用
           </button>
-          <button className={styles.secondaryButton} onClick={handleStart}>
-            {user ? '进入工作台' : '登录并开始使用'} <ArrowRight size={20} />
+          <button className={styles.secondaryButton} onClick={handleDemo}>
+            <Sparkles size={18} />
+            体验 Demo (示例数据)
+          </button>
+          <button className={styles.primaryButton} onClick={handleStart}>
+            {user ? '进入工作台' : '账号登录 / 注册'} <ArrowRight size={20} />
           </button>
         </div>
       </main>

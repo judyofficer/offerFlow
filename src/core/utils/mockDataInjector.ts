@@ -416,11 +416,13 @@ export const injectMockData = (baseDate: Date = new Date()) => {
 };
 
 /**
- * Automatically checks and re-aligns demo data dates if they have drifted into the past
+ * Automatically checks and re-aligns demo data dates if they have drifted into the past.
+ * CRITICAL: Only runs when the user is explicitly in Demo mode (isDemo === true),
+ * and NEVER runs for real offline guest users (to prevent wiping user's real schedule).
  */
 export const alignDemoDataDatesIfStale = () => {
-  const { isGuest } = useAuthStore.getState();
-  if (!isGuest) return;
+  const { isGuest, isDemo } = useAuthStore.getState();
+  if (!isGuest || !isDemo) return;
 
   const todayStr = getTodayDateStr();
   const events = useScheduleStore.getState().events;
@@ -429,5 +431,29 @@ export const alignDemoDataDatesIfStale = () => {
   // If there are no upcoming active events (e.g. all drifted into the past), re-align demo dates!
   if (activeUpcoming.length === 0) {
     injectMockData();
+  }
+};
+
+/**
+ * Clears injected mock demo data from both Zustand stores and localStorage
+ */
+export const clearDemoData = () => {
+  useResumeStore.setState({ resumes: [], activeResumeId: null, past: [], future: [] });
+  useApplicationStore.setState({ applications: [] });
+  useJobStore.setState({ bookmarks: [] });
+  useScheduleStore.setState({ events: [] });
+
+  const modules = [
+    'offerflow-resume-storage',
+    'offerflow-application-storage',
+    'offerflow-job-board',
+    'offerflow-schedule-storage',
+  ];
+
+  if (typeof window !== 'undefined') {
+    modules.forEach(m => {
+      localStorage.removeItem(m);
+      localStorage.removeItem(`_offerflow_ts_${m}`);
+    });
   }
 };

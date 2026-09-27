@@ -10,7 +10,7 @@ import {
   PanelLeftClose,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
-import { alignDemoDataDatesIfStale } from '../../utils/mockDataInjector';
+import { alignDemoDataDatesIfStale, clearDemoData } from '../../utils/mockDataInjector';
 import styles from './Layout.module.css';
 
 const navItems = [
@@ -24,6 +24,7 @@ const navItems = [
 
 const Layout: React.FC = () => {
   const isGuest = useAuthStore((state) => state.isGuest);
+  const isDemo = useAuthStore((state) => state.isDemo);
   const navigate = useNavigate();
 
   const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
@@ -120,18 +121,39 @@ const Layout: React.FC = () => {
 
       <main className={styles.mainContent}>
         {isGuest && (
-          <div style={{ backgroundColor: 'var(--accent-color)', color: 'white', padding: '12px 24px', fontSize: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>您当前处于 <strong>Demo 体验模式</strong>。数据仅保存在本地，不会自动同步。清除浏览器缓存会导致数据丢失。</span>
-            <button 
-              onClick={() => {
-                const setGuestMode = useAuthStore.getState().setGuestMode;
-                setGuestMode(false);
-                navigate('/auth');
-              }}
-              style={{ padding: '6px 12px', borderRadius: '4px', backgroundColor: 'rgba(255,255,255,0.2)', color: 'white', border: '1px solid rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '13px', fontWeight: 600, whiteSpace: 'nowrap', marginLeft: '16px' }}
-            >
-              登录并开启云同步
-            </button>
+          <div style={{ backgroundColor: isDemo ? 'var(--accent-color)' : 'var(--primary)', color: 'white', padding: '10px 24px', fontSize: '13.5px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: 'all 0.3s ease' }}>
+            {isDemo ? (
+              <>
+                <span>您当前处于 <strong>Demo 体验模式</strong>（包含示例数据）。数据仅保存在本地。</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <button 
+                    onClick={() => {
+                      clearDemoData();
+                      useAuthStore.getState().setGuestMode(true, false);
+                    }}
+                    style={{ padding: '5px 12px', borderRadius: '4px', backgroundColor: 'transparent', color: 'white', border: '1px solid rgba(255,255,255,0.6)', cursor: 'pointer', fontSize: '12.5px', fontWeight: 500, whiteSpace: 'nowrap' }}
+                  >
+                    清空示例，开启空白工作台
+                  </button>
+                  <button 
+                    onClick={() => navigate('/auth')}
+                    style={{ padding: '5px 14px', borderRadius: '4px', backgroundColor: 'white', color: 'var(--accent-color)', border: 'none', cursor: 'pointer', fontSize: '12.5px', fontWeight: 600, whiteSpace: 'nowrap' }}
+                  >
+                    登录开启云同步
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <span>您当前处于 <strong>免登录离线模式</strong>。您的求职记录已安全保存在本地浏览器中。</span>
+                <button 
+                  onClick={() => navigate('/auth')}
+                  style={{ padding: '5px 14px', borderRadius: '4px', backgroundColor: 'white', color: 'var(--primary)', border: 'none', cursor: 'pointer', fontSize: '12.5px', fontWeight: 600, whiteSpace: 'nowrap', marginLeft: '16px' }}
+                >
+                  登录备份至云端
+                </button>
+              </>
+            )}
           </div>
         )}
         <div style={{ flex: 1, overflow: 'auto' }}>

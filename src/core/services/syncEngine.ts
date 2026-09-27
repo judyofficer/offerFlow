@@ -251,7 +251,7 @@ export const syncEngine = {
    * Pull all modules from Supabase with smart LWW (Last-Write-Wins) timestamp arbitration and merge protection.
    * If local has newer edits (e.g. edited offline), local will NOT be overwritten and will instead be pushed to cloud.
    */
-  pullFromCloud: async (clearIfEmpty: boolean = false): Promise<boolean> => {
+  pullFromCloud: async (_clearIfEmpty: boolean = false): Promise<boolean> => {
     const { user, isGuest } = useAuthStore.getState();
     if (!user || isGuest) return false;
 
@@ -273,6 +273,9 @@ export const syncEngine = {
 
       let dataChanged = false;
 
+      // Check if current local state was flagged as pure demo mock data
+      const wasDemo = typeof window !== 'undefined' ? localStorage.getItem('_offerflow_is_demo') === 'true' : false;
+
       for (const module of SYNC_MODULES) {
         const cloudRecord = cloudMap.get(module);
         const localRaw = typeof window !== 'undefined' ? localStorage.getItem(module) : null;
@@ -281,7 +284,15 @@ export const syncEngine = {
 
         if (cloudRecord) {
           if (localRaw) {
-            // Both cloud and local exist
+            // If local data was just demo mock data, do NOT pollute cloud account with Li Hua's demo
+            if (wasDemo) {
+              localStorage.setItem(module, JSON.stringify(cloudRecord.data));
+              localStorage.setItem(`_offerflow_ts_${module}`, cloudTs.toString());
+              dataChanged = true;
+              continue;
+            }
+
+            // Both cloud and real local data exist: smart merge!
             const localParsed = JSON.parse(localRaw);
             const timeDiff = localTs - cloudTs;
 
@@ -315,19 +326,26 @@ export const syncEngine = {
             dataChanged = true;
           }
         } else {
-          // Cloud has no data for this module
+          // Cloud has no data for this module (e.g. brand new user registration)
           if (localRaw) {
-            if (clearIfEmpty) {
-              // Wipe lingering demo data for brand new account
+            if (wasDemo) {
+              // Only wipe lingering mock demo data for pure demo users
               localStorage.removeItem(module);
               localStorage.removeItem(`_offerflow_ts_${module}`);
               dataChanged = true;
             } else {
-              // Push existing local data to cloud
+              // 🔥 CRITICAL FIX: Real guest offline data must NEVER be lost!
+              // Seamlessly push existing local guest data to the new cloud account!
+              console.log(`[SyncEngine] Migrating offline guest data to cloud for ${module}`);
               syncEngine.pushToCloud(module, localRaw);
             }
           }
         }
+      }
+
+      // Sync complete, clean up demo flag
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('_offerflow_is_demo');
       }
 
       return dataChanged;

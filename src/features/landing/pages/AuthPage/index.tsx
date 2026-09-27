@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Loader, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '../../../../core/services/supabaseClient';
 import { syncEngine } from '../../../../core/services/syncEngine';
@@ -13,7 +12,6 @@ const AuthPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const isGuest = useAuthStore((state) => state.isGuest);
   const setGuestMode = useAuthStore((state) => state.setGuestMode);
@@ -21,14 +19,14 @@ const AuthPage: React.FC = () => {
   const [isSyncing, setIsSyncing] = React.useState(false);
 
   React.useEffect(() => {
-    // 如果已登录且非 Guest Demo 模式，需要先拉云端数据覆盖本地数据，再跳转
+    // 如果已登录且非 Guest 模式，先拉取/同步云端数据，再跳转 Dashboard
     // 使用 window.location.href 硬刷新，确保所有 Zustand store 从 localStorage 重新水合
     if (user && !isGuest && !isSyncing) {
       setIsSyncing(true);
-      syncEngine.pullFromCloud(true).then(() => {
+      syncEngine.pullFromCloud().then(() => {
         window.location.href = '/dashboard';
       }).catch(() => {
-        // 拉取失败也跳过去，至少让用户进入 Dashboard
+        // 同步失败也跳过去，保证用户进入 Dashboard
         window.location.href = '/dashboard';
       });
     }
@@ -52,18 +50,15 @@ const AuthPage: React.FC = () => {
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        // 清除 Guest 模式，再拉取云端数据
-        setGuestMode(false);
-        const changed1 = await syncEngine.pullFromCloud(true);
-        if (changed1) window.location.href = '/';
-        else navigate('/dashboard');
+        setGuestMode(false, false);
+        await syncEngine.pullFromCloud();
+        window.location.href = '/dashboard';
       } else {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        setGuestMode(false);
-        const changed2 = await syncEngine.pullFromCloud(true);
-        if (changed2) window.location.href = '/';
-        else navigate('/dashboard');
+        setGuestMode(false, false);
+        await syncEngine.pullFromCloud();
+        window.location.href = '/dashboard';
       }
     } catch (err: any) {
       let errorMsg = err.message || '认证失败，请稍后再试';

@@ -4792,6 +4792,89 @@ window.addEventListener('online')                触发 pullFromCloud()
 1. **为什么坚决移除 `wheel` 内的 React 状态设置？**
    - 滚轮是最高频的用户输入之一。任何在 `wheel` 同步回调中执行的 `setState` 都会强制触发 React 虚拟 DOM 对比与子组件渲染。将状态侦测剥离至 `requestAnimationFrame` 遵循了现代高性能 Web 开发的最佳实践。
 
+---
+
+## 2026-09-27 (游客离线免登录体验架构与数据上云合并防丢失改造)
+
+按照【强制文档沉淀规则】，对本轮迭代进行总结：
+
+### 1. 【本次修改范围】
+- **鉴权与模式状态解耦 (`src/core/store/useAuthStore.ts`)**:
+  - 在 `AuthState` 中扩展 `isDemo: boolean` 字段，解耦真实的“离线免登录游客模式 (`isGuest=true, isDemo=false`)”与“Mock演示体验模式 (`isGuest=true, isDemo=true`)”。
+  - 增强 `setGuestMode(isGuest, isDemo)` 与 `logout()`，在持久化存储状态的同时将 `_offerflow_is_demo` 标识同步维护至 `localStorage`，使跨页面跳转、硬刷新与云端拉取时始终能精准识别本地数据真实属性。
+- **离线同步引擎数据防丢失重构 (`src/core/services/syncEngine.ts`)**:
+  - 重构 `pullFromCloud` 同步决策树：废除旧逻辑中对空云端账号一刀切执行 `localStorage.removeItem` 的暴力清空行为。
+  - 新增“本地真实数据上云迁移链路”：当游客用户注册/首次登录（云端各模块为空）时，检查 `!wasDemo`，自动执行 `syncEngine.pushToCloud(module, localRaw)`，将本地全部求职记录无缝持久化至 Supabase。
+  - 健全“演示假数据隔离策略”：若本地仅为纯 Mock Demo 数据（`wasDemo === true`），新账号登录时清理演示垃圾数据，避免将“李华”等假数据污染至正式云端账号。
+- **Mock 演示数据安全注入与清理器 (`src/core/utils/mockDataInjector.ts`)**:
+  - 重构 `alignDemoDataDatesIfStale` 守卫条件：增加 `if (!isGuest || !isDemo) return;` 双重判定，彻底根除真实游客在未设未来日程时被定时器误注入假数据覆盖的严重风险。
+  - 新增 `clearDemoData()` 工具方法：一键清空 Zustand Store 内存态与对应 localStorage 模块，支持从 Demo 模式干净切换至空白工作台。
+- **落地页与引导流重构 (`src/features/landing/pages/LandingPage/index.tsx`, `LandingPage.module.css`)**:
+  - 首页 Hero 区域统一布局并明确视觉优先级（保持左中右位置不变）：
+    1. **【免登录直接使用】**（次要辅助按钮 `ghostButton`）：无需邮箱或密码，直接开箱即用，数据本地持久化；
+    2. **【体验 Demo (示例数据)】**（次要辅助按钮 `secondaryButton`）：快速体验“李华”完整简历、投递漏斗与日程；
+    3. **【进入工作台 / 账号登录】**（黑色高亮主 CTA `primaryButton` + `<ArrowRight />`）：作为核心视觉聚焦主按钮，引导用户直达工作台或登录云端。
+- **全局工作台 Banner 状态感知与引导升级 (`src/core/components/Layout/index.tsx`)**:
+  - Banner 动态识别 `isDemo` 与纯 `isGuest`：
+    - Demo 模式下提示“Demo 体验模式”，提供“清空示例，开启空白工作台”与“登录开启云同步”双按钮；
+    - 纯游客模式下提示“免登录离线模式”，打消用户隐私与丢失疑虑，提示“登录备份至云端”。
+- **登录页与设置页联动 (`src/features/landing/pages/AuthPage/index.tsx`, `src/features/settings/pages/Settings/index.tsx`)**:
+  - 移除登录页强制 `pullFromCloud(true)` 强删参数，改用智能感知的无参调用；
+  - 修复设置页跳转登录时过早丢弃游客上下文的问题，完善相关文案提示。
+
+---
+
+### 2. 【架构与设计变更】
+- **用户状态机三态化解耦 (Three-State User Lifecycle Model)**:
+  - **旧架构缺陷**：原系统仅有 `user`（已登录）与 `isGuest`（游客/Demo 混杂），点击体验 Demo 即注入李华数据，导致真正想要不登录离线使用产品的用户无所适从；且登录后默认将所有本地数据视为可弃置的 Demo 脏数据抹掉。
+  - **新架构演进**：
+    ```
+    ┌────────────────────────────────────────────────────────┐
+    │                    用户进入 offerFlow                  │
+    └──────────────────────────┬─────────────────────────────┘
+                               │
+            ┌──────────────────┼──────────────────┐
+            ▼                  ▼                  ▼
+     【免登录纯净使用】   【一键体验 Demo】     【登录已有账号】
+     isGuest: true       isGuest: true        user: User
+     isDemo:  false      isDemo:  true        isGuest: false
+     真实私密数据落盘    预置李华示例数据     双向同步云端
+            │                  │                  ▲
+            └─────────┬────────┘                  │
+                      │ 触发“注册 / 登录”         │
+                      ▼                           │
+              【智能合并与资产迁移】───────────────┘
+              • 纯 Demo：清理假数据，开启干净账号
+              • 真实游客：自动 pushToCloud / 并集去重
+    ```
+- **数据冲突仲裁与迁移保护（Safe Data Onboarding & Conflict Arbitration）**:
+  - **云端为空（首次注册）**：本地真实数据 $\xrightarrow{pushToCloud}$ 云端无缝上云，零丢失。
+  - **云端已有数据（跨端合并）**：调用 `mergeModuleData` 算法：
+    - 简历、投递记录、日程事件按 `id` + `updatedAt` 时间戳进行并集保留与最新版覆盖；
+    - 收藏夹按 `id` + `createdAt` 进行并集保留；
+    - 仲裁后的最新全量数据写回本地并静默反哺云端。
+
+---
+
+### 3. 【开发遇到的问题 & 踩坑记录】
+1. **`clearIfEmpty = true` 导致的“新用户首次注册数据瞬间消失”历史设计硬伤**:
+   - **现象**：游客在本地认真制作好简历并记录多次投递后，点击注册账号绑定云端，一进入 Dashboard 发现数据全空。
+   - **根本原因**：旧版 `pullFromCloud` 粗暴假设“云端为空必然意味着本地只有李华 Demo 残留”，直接执行 `localStorage.removeItem(module)`。
+   - **解决方案**：引入 `_offerflow_is_demo` 本地持久化指纹，只有确认为未修改的演示假数据才在空账号初始化时清理；真实离线数据触发自动反向 push 迁移至 Supabase。
+
+2. **`alignDemoDataDatesIfStale` 误杀真实游客数据**:
+   - **现象**：离线游客使用了几天后，如果没有创建未来的面试日程，系统刷新或切后台回来后，原有数据突然变成了“李华”的假数据。
+   - **根本原因**：`Layout.tsx` 挂载了 `alignDemoDataDatesIfStale`，该函数原判定仅检查 `isGuest` 与“未来活跃日程是否为 0”，若为 0 则直接强行调用 `injectMockData()` 覆盖全部 Store。
+   - **解决方案**：给 `alignDemoDataDatesIfStale` 增加 `isDemo` 强约束，非演示模式下立即短路退出，绝不侵犯用户真实存储。
+
+---
+
+### 4. 【关键决策理由】
+1. **为什么在本地同时维护 `useAuthStore` 内存状态与 `_offerflow_is_demo` localStorage 键？**
+   - 在用户点击“登录/注册”时，界面会跳转到 `/auth` 页面，随后在表单提交成功后可能会执行页面刷新或重定向。如果仅将 `isDemo` 放在 React 状态中，极易在页面跳入跳出或重载时丢失上下文；写入特定的 localStorage 辅助标识可保证在跨路由、页面刷新及网络异步请求全链路中，同步引擎能 100% 可靠地追溯该批本地数据最初的创建来源。
+2. **为什么不给新注册用户弹窗询问“是否覆盖本地”，而是采用“静默自动推送到云端”？**
+   - 弹窗询问对于绝大多数非技术用户而言存在理解负担（“本地”与“云端”对普通求职者很容易造成困惑，一旦误点“清空”会造成心理恐慌）。对于新注册的空账号而言，用户注册的根本目的就是“把刚才辛辛苦苦填的内容备份下来”，自动无缝上传到云端符合最高产品直觉。
+
 
 
 
