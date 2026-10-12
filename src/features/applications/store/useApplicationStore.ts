@@ -5,7 +5,7 @@ import type { Application, ApplicationStatus } from '../types/application';
 
 interface ApplicationState {
   applications: Application[];
-  addApplication: (app: Omit<Application, 'id' | 'createdAt' | 'updatedAt' | 'appliedAt'> & { id?: string }) => string;
+  addApplication: (app: Omit<Application, 'id' | 'createdAt' | 'updatedAt' | 'appliedAt'> & { id?: string; appliedAt?: number }) => string;
   updateApplicationStatus: (id: string, status: ApplicationStatus) => void;
   updateApplication: (id: string, data: Partial<Application>) => void;
   deleteApplication: (id: string) => void;
@@ -25,10 +25,10 @@ export const useApplicationStore = create<ApplicationState>()(
             ...appData,
             priority: appData.priority || 'target',
             id: newId,
-            appliedAt: Date.now(),
+            appliedAt: appData.appliedAt || Date.now(),
             updatedAt: Date.now(),
           };
-          return { applications: [...state.applications, newApp] };
+          return { applications: [newApp, ...state.applications] };
         });
         return newId;
       },

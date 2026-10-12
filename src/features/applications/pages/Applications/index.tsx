@@ -41,11 +41,13 @@ export const Applications: React.FC = () => {
     jobTitle: string;
     url: string;
     priority: ApplicationPriority;
+    appliedDate: string;
   }>({
     companyName: '',
     jobTitle: '',
     url: '',
-    priority: 'target'
+    priority: 'target',
+    appliedDate: new Date().toISOString().split('T')[0]
   });
 
   // Schedule Prompt Modal State
@@ -78,7 +80,8 @@ export const Applications: React.FC = () => {
   });
 
   const handleAddNew = () => {
-    setAddFormData({ companyName: '', jobTitle: '', url: '', priority: 'target' });
+    const today = new Date().toISOString().split('T')[0];
+    setAddFormData({ companyName: '', jobTitle: '', url: '', priority: 'target', appliedDate: today });
     setAddModalOpen(true);
   };
 
@@ -86,11 +89,17 @@ export const Applications: React.FC = () => {
     e.preventDefault();
     if (!addFormData.companyName.trim() || !addFormData.jobTitle.trim()) return;
 
+    let appliedAt = Date.now();
+    if (addFormData.appliedDate) {
+      appliedAt = new Date(`${addFormData.appliedDate}T12:00:00`).getTime();
+    }
+
     addApplication({
       companyName: addFormData.companyName.trim(),
       jobTitle: addFormData.jobTitle.trim(),
       url: addFormData.url.trim(),
       priority: addFormData.priority,
+      appliedAt,
       jobDescription: '',
       status: 'applied'
     });
@@ -167,28 +176,38 @@ export const Applications: React.FC = () => {
     setScheduleModalState(null);
   };
 
-  // 过滤后的岗位数据
+  // 过滤后的岗位数据 (按投递时间倒序排列，最新投递的排在最前)
   const filteredApplications = useMemo(() => {
-    return applications.filter(app => {
-      // 1. 搜索过滤
-      if (searchQuery.trim()) {
-        const q = searchQuery.trim().toLowerCase();
-        const matchCompany = (app.companyName || '').toLowerCase().includes(q);
-        const matchTitle = (app.jobTitle || '').toLowerCase().includes(q);
-        const matchLocation = (app.location || '').toLowerCase().includes(q);
-        if (!matchCompany && !matchTitle && !matchLocation) return false;
-      }
-      // 2. 意向度过滤
-      if (priorityFilter !== 'all') {
-        const priority = app.priority || 'target';
-        if (priority !== priorityFilter) return false;
-      }
-      // 3. 状态过滤 (在表格视图或全局过滤)
-      if (statusFilter !== 'all') {
-        if (app.status !== statusFilter) return false;
-      }
-      return true;
-    });
+    return applications
+      .filter(app => {
+        // 1. 搜索过滤
+        if (searchQuery.trim()) {
+          const q = searchQuery.trim().toLowerCase();
+          const matchCompany = (app.companyName || '').toLowerCase().includes(q);
+          const matchTitle = (app.jobTitle || '').toLowerCase().includes(q);
+          const matchLocation = (app.location || '').toLowerCase().includes(q);
+          if (!matchCompany && !matchTitle && !matchLocation) return false;
+        }
+        // 2. 意向度过滤
+        if (priorityFilter !== 'all') {
+          const priority = app.priority || 'target';
+          if (priority !== priorityFilter) return false;
+        }
+        // 3. 状态过滤 (在表格视图或全局过滤)
+        if (statusFilter !== 'all') {
+          if (app.status !== statusFilter) return false;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        // 最新投递的排在上面
+        const timeA = a.appliedAt || a.updatedAt || 0;
+        const timeB = b.appliedAt || b.updatedAt || 0;
+        if (timeB !== timeA) {
+          return timeB - timeA;
+        }
+        return (b.updatedAt || 0) - (a.updatedAt || 0);
+      });
   }, [applications, searchQuery, priorityFilter, statusFilter]);
 
   const kanbanRef = useRef<HTMLDivElement>(null);
@@ -405,7 +424,16 @@ export const Applications: React.FC = () => {
           <DragDropContext onDragEnd={handleDragEnd}>
             <div className={styles.kanbanBoard} ref={kanbanRef} onScroll={checkScrollBounds}>
               {COLUMNS.map(status => {
-                const columnApps = filteredApplications.filter(app => app.status === status);
+                const columnApps = filteredApplications
+                  .filter(app => app.status === status)
+                  .sort((a, b) => {
+                    const timeA = a.appliedAt || a.updatedAt || 0;
+                    const timeB = b.appliedAt || b.updatedAt || 0;
+                    if (timeB !== timeA) {
+                      return timeB - timeA;
+                    }
+                    return (b.updatedAt || 0) - (a.updatedAt || 0);
+                  });
                 const config = STATUS_CONFIG[status];
 
                 return (
@@ -523,6 +551,16 @@ export const Applications: React.FC = () => {
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>进度查询链接 (可选)</label>
                 <input className={styles.input} placeholder="https://... (投递完成后生成的进度查询链接)" value={addFormData.url} onChange={e => setAddFormData({ ...addFormData, url: e.target.value })} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }} />
+              </div>
+              <div style={{ marginBottom: '16px' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>投递日期</label>
+                <input
+                  type="date"
+                  className={styles.input}
+                  value={addFormData.appliedDate}
+                  onChange={e => setAddFormData({ ...addFormData, appliedDate: e.target.value })}
+                  style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }}
+                />
               </div>
               <div style={{ marginBottom: '24px' }}>
                 <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>意向梯队 / 难度</label>

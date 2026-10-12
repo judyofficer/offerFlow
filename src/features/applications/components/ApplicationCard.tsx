@@ -222,7 +222,7 @@ export const ApplicationCard: React.FC<Props> = ({ application, onClick, isDragg
         {application.jobTitle || '未命名岗位'}
       </div>
       
-      {/* 底部元信息行：地点/薪资 + 更新时间 (严格等高对齐) */}
+      {/* 底部元信息行：地点/薪资 + 投递时间 (严格等高对齐) */}
       <div 
         style={{ 
           display: 'flex', 
@@ -248,10 +248,25 @@ export const ApplicationCard: React.FC<Props> = ({ application, onClick, isDragg
           )}
         </div>
         
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', flexShrink: 0, marginLeft: 'auto' }} title={`最后更新: ${new Date(application.updatedAt).toLocaleString()}`}>
-          <Clock size={11} />
-          {new Date(application.updatedAt).toLocaleDateString(undefined, { month: '2-digit', day: '2-digit' })}
-        </span>
+        {(() => {
+          const appliedTimestamp = application.appliedAt || application.updatedAt;
+          const appliedDateStr = appliedTimestamp
+            ? new Date(appliedTimestamp).toLocaleDateString(undefined, { month: '2-digit', day: '2-digit' })
+            : '-';
+          const fullAppliedTime = appliedTimestamp ? new Date(appliedTimestamp).toLocaleString() : '未知';
+          const fullUpdatedTime = application.updatedAt ? new Date(application.updatedAt).toLocaleString() : null;
+          const tooltip = `投递时间: ${fullAppliedTime}${fullUpdatedTime && fullUpdatedTime !== fullAppliedTime ? `\n最后更新: ${fullUpdatedTime}` : ''}`;
+
+          return (
+            <span 
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', flexShrink: 0, marginLeft: 'auto' }} 
+              title={tooltip}
+            >
+              <Clock size={11} />
+              <span>{appliedDateStr}</span>
+            </span>
+          );
+        })()}
       </div>
     </div>
   );

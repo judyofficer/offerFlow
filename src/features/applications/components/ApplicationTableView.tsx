@@ -41,7 +41,7 @@ export const ApplicationTableView: React.FC<Props> = ({
 }) => {
   const { resumes } = useResumeStore();
   const { updateApplication } = useApplicationStore();
-  const [sortField, setSortField] = useState<SortField>('updatedAt');
+  const [sortField, setSortField] = useState<SortField>('appliedAt');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
 
   // 简历字典映射缓存

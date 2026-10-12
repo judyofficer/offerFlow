@@ -57,6 +57,24 @@ export const ApplicationDetailPanel: React.FC<Props> = ({ appId, onClose }) => {
     }
   };
 
+  const formatLocalDate = (timestamp?: number) => {
+    if (!timestamp) return '';
+    const d = new Date(timestamp);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const handleAppliedDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    if (val) {
+      // 保持本地日期时刻，设置为当天中午12:00防时区偏移
+      const ts = new Date(`${val}T12:00:00`).getTime();
+      updateApplication(appId, { appliedAt: ts });
+    }
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     updateApplication(appId, { [name]: value });
@@ -341,6 +359,19 @@ export const ApplicationDetailPanel: React.FC<Props> = ({ appId, onClose }) => {
                 value={application.source || ''}
                 onChange={handleChange}
                 placeholder="Boss, 牛客, 官网等"
+                style={{ width: '100%', boxSizing: 'border-box', padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '16px' }}>
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>投递日期</label>
+              <input
+                type="date"
+                name="appliedAt"
+                value={formatLocalDate(application.appliedAt)}
+                onChange={handleAppliedDateChange}
                 style={{ width: '100%', boxSizing: 'border-box', padding: '8px 12px', borderRadius: '4px', border: '1px solid var(--border-color)', outline: 'none', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
               />
             </div>
