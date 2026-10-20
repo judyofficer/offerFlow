@@ -58,6 +58,7 @@ const getRelativeDaysText = (targetDateStr: string) => {
 };
 
 const getLinkActionText = (type: EventType) => {
+  if (type === 'assessment') return '直达测评';
   if (type === 'oa') return '直达笔试';
   if (type === 'interview') return '进入面试';
   if (type === 'deadline') return '前往官网';

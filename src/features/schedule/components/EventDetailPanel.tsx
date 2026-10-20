@@ -558,11 +558,11 @@ export const EventDetailPanel: React.FC<Props> = ({ eventId, initialDate, initia
             )}
           </div>
 
-          {/* 5. 地点 / 笔试/面试链接 */}
+          {/* 5. 地点 / 测评/笔试/面试链接 */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', minHeight: '24px' }}>
               <label style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <MapPin size={14} color="var(--primary)" /> 笔试/面试链接
+                <MapPin size={14} color="var(--primary)" /> 测评/笔试/面试链接
               </label>
 
               {isLink && (

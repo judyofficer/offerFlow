@@ -110,7 +110,7 @@ const JobBoard: React.FC = () => {
       companyName: freshBookmark.companyName,
       jobTitle: freshBookmark.jobTitle,
       priority: freshBookmark.priority || 'target',
-      jobDescription: '',
+      jobDescription: freshBookmark.jobDescription || '',
       url: freshBookmark.url || '',
       salary: freshBookmark.salary || '',
       location: freshBookmark.location || '',

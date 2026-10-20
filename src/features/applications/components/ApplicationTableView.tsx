@@ -21,6 +21,8 @@ import styles from './ApplicationTableView.module.css';
 
 interface Props {
   applications: Application[];
+  activityById: Map<string, 'active' | 'pool' | 'closed'>;
+  onTogglePool: (app: Application) => void;
   onSelectApp: (appId: string) => void;
   onStatusChange: (appId: string, newStatus: ApplicationStatus) => void;
   onPriorityChange: (appId: string, newPriority: ApplicationPriority) => void;
@@ -33,6 +35,8 @@ type SortOrder = 'asc' | 'desc';
 
 export const ApplicationTableView: React.FC<Props> = ({
   applications,
+  activityById,
+  onTogglePool,
   onSelectApp,
   onStatusChange,
   onPriorityChange,
@@ -335,6 +339,9 @@ export const ApplicationTableView: React.FC<Props> = ({
                   {/* 7. 操作 */}
                   <td className={styles.td} style={{ textAlign: 'right' }} onClick={e => e.stopPropagation()}>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                      {activityById.get(app.id) !== 'closed' && <button type="button" className="btn btn-ghost btn-sm" style={{ fontSize: 11 }} onClick={() => onTogglePool(app)}>
+                        {activityById.get(app.id) === 'pool' ? '恢复活跃' : '移入池中'}
+                      </button>}
                       {resolvedUrl.url && (
                         <button
                           type="button"
@@ -360,7 +367,7 @@ export const ApplicationTableView: React.FC<Props> = ({
                         type="button"
                         onClick={() => onAddSchedule(app)}
                         className="btn btn-ghost btn-icon btn-sm"
-                        title="添加面试/笔试日程"
+                        title="添加测评/笔试/面试日程"
                         style={{ color: 'var(--primary)' }}
                       >
                         <CalendarPlus size={15} />

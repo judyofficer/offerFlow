@@ -10,6 +10,7 @@ export interface JobBookmark {
   location?: string;
   source?: string;
   notes?: string;
+  jobDescription?: string;
   deadline?: string; // 招聘截止日期，格式 YYYY-MM-DD
   createdAt: number;
 }

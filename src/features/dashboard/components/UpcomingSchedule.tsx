@@ -17,8 +17,8 @@ export const UpcomingSchedule: React.FC = () => {
     .slice(0, 5); // Show next 5 events
 
   return (
-    <div style={{ backgroundColor: 'var(--bg-primary)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)', height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ padding: '20px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <div style={{ backgroundColor: 'var(--bg-primary)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border-color)', height: '100%', minHeight: 0, minWidth: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ flexShrink: 0, padding: '20px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h3 className="text-h3" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <Calendar size={18} /> 近期日程
         </h3>
@@ -30,7 +30,7 @@ export const UpcomingSchedule: React.FC = () => {
         </button>
       </div>
 
-      <div style={{ padding: '20px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div style={{ padding: '20px', flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {upcomingEvents.length > 0 ? (
           upcomingEvents.map(event => {
             const isToday = event.date === todayStr;
@@ -41,6 +41,8 @@ export const UpcomingSchedule: React.FC = () => {
                 key={event.id}
                 onClick={() => navigate('/schedule')}
                 style={{
+                  flexShrink: 0,
+                  overflowWrap: 'anywhere',
                   padding: '12px',
                   borderRadius: 'var(--radius-md)',
                   backgroundColor: 'var(--bg-secondary)',

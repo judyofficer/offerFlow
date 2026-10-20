@@ -1,5 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useState } from 'react';
 import { useApplicationStore } from '../../applications/store/useApplicationStore';
+import { useScheduleStore } from '../../schedule/store/useScheduleStore';
+import { STALLED_DAYS, getApplicationActivity, getStalledDays } from '../../applications/utils/applicationActivity';
 import { STATUS_CONFIG } from '../../applications/types/application';
 import { AlertTriangle, Clock, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -7,22 +9,20 @@ import { useNavigate } from 'react-router-dom';
 export const StalledApplications: React.FC = () => {
   const { applications, updateApplication } = useApplicationStore();
   const navigate = useNavigate();
+  const { events } = useScheduleStore();
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 60000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const stalledList = useMemo(() => {
-    const now = Date.now();
-    const activeApps = applications.filter(a => !['wishlist', 'offer', 'rejected'].includes(a.status));
-    
-    const withDays = activeApps.map(app => {
-      const daysStalled = Math.floor((now - app.updatedAt) / (1000 * 60 * 60 * 24));
-      return { ...app, daysStalled };
-    });
-
-    // Only show applications stalled for 7 days or more
-    return withDays
-      .filter(app => app.daysStalled >= 7)
-      .sort((a, b) => b.daysStalled - a.daysStalled) // Most stalled first
-      .slice(0, 10); // Show top 10 max
-  }, [applications]);
+    return applications
+      .filter(app => getApplicationActivity(app, events, now) === 'pool')
+      .map(app => ({ ...app, daysStalled: getStalledDays(app, now) }))
+      .sort((a, b) => b.daysStalled - a.daysStalled)
+      .slice(0, 10);
+  }, [applications, events, now]);
 
   const handleMarkRejected = (id: string) => {
     if (confirm('确认将该投递标记为已淘汰？')) {
@@ -34,14 +34,14 @@ export const StalledApplications: React.FC = () => {
     return (
       <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-tertiary)' }}>
         <Clock size={32} style={{ marginBottom: '12px', opacity: 0.5 }} />
-        <p style={{ fontSize: '14px' }}>当前没有停滞超过 7 天的记录</p>
-        <p style={{ fontSize: '12px', marginTop: '4px' }}>太棒了，流程都在顺利推进中！</p>
+        <p style={{ fontSize: '14px' }}>当前没有待跟进池记录</p>
+        <p style={{ fontSize: '12px', marginTop: '4px' }}>{STALLED_DAYS} 天无进展且没有待办日程的岗位会自动收进池中。</p>
       </div>
     );
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', height: '100%', overflowY: 'auto', paddingRight: '4px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', minHeight: '100%', paddingRight: '4px' }}>
       {stalledList.map((app) => {
         const isSevere = app.daysStalled >= 14;
         const alertColor = isSevere ? 'var(--danger)' : 'var(--warning)';
@@ -50,6 +50,9 @@ export const StalledApplications: React.FC = () => {
           <div 
             key={app.id}
             style={{ 
+              flexShrink: 0,
+              minWidth: 0,
+              overflowWrap: 'anywhere',
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'space-between',
@@ -68,25 +71,25 @@ export const StalledApplications: React.FC = () => {
                 <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)', marginBottom: '4px' }}>
                   {app.companyName}
                 </div>
-                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
                   <span>{app.jobTitle}</span>
                   <span>•</span>
                   <span style={{ 
                     color: alertColor,
                     fontWeight: 500
                   }}>
-                    卡在 "{STATUS_CONFIG[app.status].label}" 已 {app.daysStalled} 天
+                    {app.pooledAt ? '手动收池 · ' : ''}{STATUS_CONFIG[app.status].label} · {app.daysStalled} 天无进展
                   </span>
                 </div>
               </div>
             </div>
             
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
               <button 
-                onClick={() => navigate('/applications')}
-                style={{ fontSize: '12px', padding: '4px 8px', borderRadius: '4px', border: '1px solid var(--border-color)', backgroundColor: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)' }}
+                onClick={() => navigate('/applications?scope=pool')}
+                style={{ fontSize: '12px', whiteSpace: 'nowrap', padding: '4px 8px', borderRadius: '4px', border: '1px solid var(--border-color)', backgroundColor: 'transparent', cursor: 'pointer', color: 'var(--text-secondary)' }}
               >
-                查看
+                待跟进池
               </button>
               <button 
                 onClick={() => handleMarkRejected(app.id)}

@@ -1,9 +1,15 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import jobPageHandler from './api/job-page.ts'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), {
+    name: 'job-page-api',
+    configureServer(server) {
+      server.middlewares.use('/api/job-page', (req, res) => { void jobPageHandler(req, res); });
+    },
+  }],
   server: {
     host: true, // 监听所有地址，包括局域网和公网地址 (0.0.0.0)
     port: 5173,

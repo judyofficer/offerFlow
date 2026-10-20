@@ -85,7 +85,7 @@ const Schedule: React.FC = () => {
     <div className={styles.container}>
       <header className={styles.header}>
         <h1 className="text-h1">日程管理</h1>
-        <p style={{ color: 'var(--text-secondary)', marginTop: '4px' }}>统筹所有的笔试、面试安排与 Offer 截止时间。</p>
+        <p style={{ color: 'var(--text-secondary)', marginTop: '4px' }}>统筹所有的测评、笔试、面试安排与 Offer 截止时间。</p>
       </header>
 
       <div className={styles.content}>

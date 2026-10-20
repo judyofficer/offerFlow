@@ -1,3 +1,4 @@
+import { useSearchParams } from 'react-router-dom';
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Plus, X, Calendar, Search, LayoutGrid, TableProperties, Link as LinkIcon, Clock, Hourglass, ChevronLeft, ChevronRight } from 'lucide-react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
@@ -10,13 +11,33 @@ import type { ApplicationStatus, ApplicationPriority } from '../../types/applica
 import { ApplicationCard } from '../../components/ApplicationCard';
 import { ApplicationDetailPanel } from '../../components/ApplicationDetailPanel';
 import { ApplicationTableView } from '../../components/ApplicationTableView';
+import { ApplicationAddModal } from '../../components/ApplicationAddModal';
 import styles from './Applications.module.css';
+import { STALLED_DAYS, getApplicationActivity, getProgressTime, getStalledDays } from '../../utils/applicationActivity';
+import type { ActivityScope } from '../../utils/applicationActivity';
 
-const COLUMNS: ApplicationStatus[] = ['applied', 'oa', 'interview', 'hr', 'offer', 'rejected'];
+const COLUMNS: ApplicationStatus[] = ['wishlist', 'applied', 'assessment', 'oa', 'interview', 'hr', 'offer', 'rejected'];
 
 export const Applications: React.FC = () => {
   const { applications, addApplication, updateApplicationStatus, updateApplication, deleteApplication } = useApplicationStore();
-  const { addEvent } = useScheduleStore();
+  const { addEvent, events } = useScheduleStore();
+  const [searchParams] = useSearchParams();
+  const [activityScope, setActivityScope] = useState<ActivityScope>(() => {
+    const scope = searchParams.get('scope');
+    return scope === 'pool' || scope === 'closed' || scope === 'all' ? scope : 'active';
+  });
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 60000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const activityById = useMemo(() => new Map(applications.map(app => [app.id, getApplicationActivity(app, events, now)])), [applications, events, now]);
+  const scopeCounts = useMemo(() => ({
+    active: applications.filter(app => activityById.get(app.id) === 'active').length,
+    pool: applications.filter(app => activityById.get(app.id) === 'pool').length,
+    closed: applications.filter(app => activityById.get(app.id) === 'closed').length,
+    all: applications.length,
+  }), [applications, activityById]);
   const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
 
   // 视图模式：'kanban' (看板) 或 'table' (表格)
@@ -36,19 +57,6 @@ export const Applications: React.FC = () => {
 
   // Add Application Modal State
   const [addModalOpen, setAddModalOpen] = useState(false);
-  const [addFormData, setAddFormData] = useState<{
-    companyName: string;
-    jobTitle: string;
-    url: string;
-    priority: ApplicationPriority;
-    appliedDate: string;
-  }>({
-    companyName: '',
-    jobTitle: '',
-    url: '',
-    priority: 'target',
-    appliedDate: new Date().toISOString().split('T')[0]
-  });
 
   // Schedule Prompt Modal State
   const [scheduleModalState, setScheduleModalState] = useState<{
@@ -80,36 +88,47 @@ export const Applications: React.FC = () => {
   });
 
   const handleAddNew = () => {
-    const today = new Date().toISOString().split('T')[0];
-    setAddFormData({ companyName: '', jobTitle: '', url: '', priority: 'target', appliedDate: today });
     setAddModalOpen(true);
   };
 
-  const submitAddNew = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!addFormData.companyName.trim() || !addFormData.jobTitle.trim()) return;
-
+  const handleAddApplicationSubmit = (data: {
+    companyName: string;
+    jobTitle: string;
+    url: string;
+    priority: ApplicationPriority;
+    appliedDate: string;
+    salary?: string;
+    location?: string;
+    source?: string;
+    jobDescription?: string;
+    deadline?: string;
+  }) => {
     let appliedAt = Date.now();
-    if (addFormData.appliedDate) {
-      appliedAt = new Date(`${addFormData.appliedDate}T12:00:00`).getTime();
+    if (data.appliedDate) {
+      appliedAt = new Date(`${data.appliedDate}T12:00:00`).getTime();
     }
 
     addApplication({
-      companyName: addFormData.companyName.trim(),
-      jobTitle: addFormData.jobTitle.trim(),
-      url: addFormData.url.trim(),
-      priority: addFormData.priority,
+      companyName: data.companyName,
+      jobTitle: data.jobTitle,
+      url: data.url,
+      priority: data.priority,
       appliedAt,
-      jobDescription: '',
-      status: 'applied'
+      salary: data.salary,
+      location: data.location,
+      source: data.source,
+      deadline: data.deadline,
+      jobDescription: data.jobDescription || '',
+      status: 'applied',
     });
-    setAddModalOpen(false);
   };
 
   const getScheduleEventDefaultTitle = (companyName: string, status: ApplicationStatus) => {
     const comp = companyName.trim();
     const prefix = comp ? `${comp} - ` : '';
     switch (status) {
+      case 'assessment':
+        return `${prefix}测评`;
       case 'oa':
         return `${prefix}笔试`;
       case 'interview':
@@ -124,12 +143,12 @@ export const Applications: React.FC = () => {
   };
 
   const triggerSchedulePrompt = (appId: string, status: ApplicationStatus) => {
-    if (['oa', 'interview', 'hr', 'offer'].includes(status)) {
+    if (['assessment', 'oa', 'interview', 'hr', 'offer'].includes(status)) {
       setTimeout(() => {
         const app = applications.find(a => a.id === appId);
-        const isOaOrOffer = status === 'oa' || status === 'offer';
+        const isOaOrOffer = status === 'assessment' || status === 'oa' || status === 'offer';
 
-        // 如果是笔试或Offer反馈，默认提供 3 天时限截止
+        // 如果是测评、笔试或Offer反馈，默认提供 3 天时限截止
         const defaultDate = new Date();
         if (isOaOrOffer) {
           defaultDate.setDate(defaultDate.getDate() + 3);
@@ -137,7 +156,7 @@ export const Applications: React.FC = () => {
 
         setScheduleFormData({
           title: getScheduleEventDefaultTitle(app?.companyName || '', status),
-          type: status === 'oa' ? 'oa' : (status === 'offer' ? 'deadline' : 'interview'),
+          type: status === 'assessment' ? 'assessment' : status === 'oa' ? 'oa' : (status === 'offer' ? 'deadline' : 'interview'),
           date: defaultDate.toISOString().split('T')[0],
           startDate: isOaOrOffer ? new Date().toISOString().split('T')[0] : undefined,
           time: isOaOrOffer ? '23:59' : '14:00',
@@ -176,10 +195,11 @@ export const Applications: React.FC = () => {
     setScheduleModalState(null);
   };
 
-  // 过滤后的岗位数据 (按投递时间倒序排列，最新投递的排在最前)
+  // 当前分组按最近流程推进倒序排列
   const filteredApplications = useMemo(() => {
     return applications
       .filter(app => {
+        if (activityScope !== 'all' && activityById.get(app.id) !== activityScope) return false;
         // 1. 搜索过滤
         if (searchQuery.trim()) {
           const q = searchQuery.trim().toLowerCase();
@@ -200,15 +220,15 @@ export const Applications: React.FC = () => {
         return true;
       })
       .sort((a, b) => {
-        // 最新投递的排在上面
-        const timeA = a.appliedAt || a.updatedAt || 0;
-        const timeB = b.appliedAt || b.updatedAt || 0;
+        // 最近推进的排在上面
+        const timeA = getProgressTime(a);
+        const timeB = getProgressTime(b);
         if (timeB !== timeA) {
           return timeB - timeA;
         }
         return (b.updatedAt || 0) - (a.updatedAt || 0);
       });
-  }, [applications, searchQuery, priorityFilter, statusFilter]);
+  }, [applications, searchQuery, priorityFilter, statusFilter, activityScope, activityById]);
 
   const kanbanRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -256,33 +276,11 @@ export const Applications: React.FC = () => {
     el.addEventListener('scroll', updateScrollBounds, { passive: true });
     window.addEventListener('resize', updateScrollBounds);
 
-    // 2. 0 延迟、0 掉帧的高性能滚轮分流处理器
+    // 保留触控板与鼠标的原生滚动方向，仅显式按下 Shift 时横移。
     const handleWheel = (e: WheelEvent) => {
-      // 触控板原生左右滑动 (|deltaX| > |deltaY|)：完全放行浏览器原生平滑横滑，0 拦截
-      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
-        return;
-      }
-
-      // Shift + 滚轮：全域加速横移
-      if (e.shiftKey && e.deltaY !== 0) {
-        e.preventDefault();
-        el.scrollLeft += e.deltaY * 1.2;
-        return;
-      }
-
-      const target = e.target as HTMLElement | null;
-      const cardList = target?.closest(`.${styles.cardList}`) as HTMLElement | null;
-
-      // 处于具有垂直滚动条的卡片列表区域：原生纵向滚动，绝不转化为横滑（保证上下看岗位不横跳）
-      if (cardList && cardList.scrollHeight > cardList.clientHeight + 2) {
-        return;
-      }
-
-      // 处于表头、无滚动条的短列、或看板空白背景区域：滚轮直接平滑平移看板（零延迟、无需找间隙）
-      if (e.deltaY !== 0) {
-        e.preventDefault();
-        el.scrollLeft += e.deltaY;
-      }
+      if (e.ctrlKey || !e.shiftKey || e.deltaY === 0 || e.deltaX !== 0) return;
+      e.preventDefault();
+      el.scrollLeft += e.deltaY * 1.2;
     };
 
     // 3. 键盘左右方向键平滑横移看板 (在未聚焦输入框时生效)
@@ -305,7 +303,7 @@ export const Applications: React.FC = () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('resize', updateScrollBounds);
     };
-  }, [viewMode]);
+  }, [viewMode, activityScope, statusFilter, filteredApplications.length]);
 
   return (
     <div className={styles.container}>
@@ -318,6 +316,19 @@ export const Applications: React.FC = () => {
           <Plus size={16} /> 添加岗位
         </button>
       </header>
+
+      <div className={styles.activityBar}>
+        <div className={styles.scopeTabs} role="group" aria-label="投递记录分组">
+          {([{ key: 'active', label: '活跃岗位' }, { key: 'pool', label: '待跟进池' }, { key: 'closed', label: '已结束' }, { key: 'all', label: '全部记录' }] as const).map(scope => (
+            <button key={scope.key} type="button" aria-pressed={activityScope === scope.key}
+              className={`${styles.scopeTab} ${activityScope === scope.key ? styles.scopeTabActive : ''}`}
+              onClick={() => { setActivityScope(scope.key); setStatusFilter('all'); }}>
+              {scope.label}<span>{scopeCounts[scope.key]}</span>
+            </button>
+          ))}
+        </div>
+        <p className={styles.scopeHint}>{STALLED_DAYS} 天无流程进展自动进入待跟进池；有待办日程的岗位保持活跃。所有记录保留原阶段。</p>
+      </div>
 
       {/* 现代化多功能工具栏 */}
       <div className={styles.toolbar}>
@@ -394,6 +405,8 @@ export const Applications: React.FC = () => {
         </div>
       </div>
 
+      {filteredApplications.length === 0 && <div className={styles.emptyNotice}>当前分组没有符合条件的岗位，可切换分组或调整筛选。</div>}
+
       {/* 核心视图区域：根据 viewMode 切换看板或高密度表格 */}
       {viewMode === 'kanban' ? (
         <div className={styles.kanbanWrapper}>
@@ -403,7 +416,7 @@ export const Applications: React.FC = () => {
               type="button"
               className={`${styles.navScrollBtn} ${styles.navScrollLeft}`}
               onClick={() => scrollKanban('left')}
-              title="向左平移看板 (亦可按 ← 键、Shift+滚轮 或在表头滚动)"
+              title="向左平移看板 (亦可按 ← 键或 Shift+滚轮)"
             >
               <ChevronLeft size={20} />
             </button>
@@ -415,7 +428,7 @@ export const Applications: React.FC = () => {
               type="button"
               className={`${styles.navScrollBtn} ${styles.navScrollRight}`}
               onClick={() => scrollKanban('right')}
-              title="向右平移看板 (亦可按 → 键、Shift+滚轮 或在表头滚动)"
+              title="向右平移看板 (亦可按 → 键或 Shift+滚轮)"
             >
               <ChevronRight size={20} />
             </button>
@@ -423,22 +436,20 @@ export const Applications: React.FC = () => {
 
           <DragDropContext onDragEnd={handleDragEnd}>
             <div className={styles.kanbanBoard} ref={kanbanRef} onScroll={checkScrollBounds}>
-              {COLUMNS.map(status => {
+              {COLUMNS.filter(status => {
+                if (statusFilter !== 'all') return status === statusFilter;
+                if (activityScope === 'closed') return ['offer', 'rejected'].includes(status);
+                if (activityScope !== 'all' && ['offer', 'rejected'].includes(status)) return false;
+                return status !== 'wishlist' || filteredApplications.some(app => app.status === 'wishlist');
+              }).map(status => {
                 const columnApps = filteredApplications
                   .filter(app => app.status === status)
-                  .sort((a, b) => {
-                    const timeA = a.appliedAt || a.updatedAt || 0;
-                    const timeB = b.appliedAt || b.updatedAt || 0;
-                    if (timeB !== timeA) {
-                      return timeB - timeA;
-                    }
-                    return (b.updatedAt || 0) - (a.updatedAt || 0);
-                  });
+;
                 const config = STATUS_CONFIG[status];
 
                 return (
                   <div key={status} className={styles.column}>
-                    <div className={styles.columnHeader} title="💡 在表头滚动滚轮可直接横向平移看板">
+                    <div className={styles.columnHeader} title="触控板左右滑动可平移看板，列内上下滑动可查看岗位">
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: config.color }} />
                         <span>{config.label}</span>
@@ -469,11 +480,17 @@ export const Applications: React.FC = () => {
                                     application={app}
                                     onClick={() => setSelectedAppId(app.id)}
                                     isDragging={snapshot.isDragging}
+                                    activity={activityById.get(app.id)}
+                                    stalledDays={getStalledDays(app, now)}
+                                    onTogglePool={() => updateApplication(app.id, activityById.get(app.id) === 'pool'
+                                      ? { pooledAt: undefined, followUpAt: Date.now() }
+                                      : { pooledAt: Date.now() })}
                                   />
                                 </div>
                               )}
                             </Draggable>
                           ))}
+                          {columnApps.length === 0 && <div className={styles.emptyColumn}>暂无{config.label}岗位</div>}
                           {provided.placeholder}
                         </div>
                       )}
@@ -487,6 +504,9 @@ export const Applications: React.FC = () => {
       ) : (
         <ApplicationTableView
           applications={filteredApplications}
+          activityById={activityById}
+          onTogglePool={(app) => updateApplication(app.id, activityById.get(app.id) === 'pool'
+            ? { pooledAt: undefined, followUpAt: Date.now() } : { pooledAt: Date.now() })}
           onSelectApp={(appId) => setSelectedAppId(appId)}
           onStatusChange={(appId, newStatus) => {
             updateApplicationStatus(appId, newStatus);
@@ -496,14 +516,14 @@ export const Applications: React.FC = () => {
             updateApplication(appId, { priority: newPriority });
           }}
           onAddSchedule={(app) => {
-            const isOaOrOffer = app.status === 'oa' || app.status === 'offer';
+            const isOaOrOffer = app.status === 'assessment' || app.status === 'oa' || app.status === 'offer';
             const defaultDate = new Date();
             if (isOaOrOffer) {
               defaultDate.setDate(defaultDate.getDate() + 3);
             }
             setScheduleFormData({
               title: `${app.companyName} - ${STATUS_CONFIG[app.status]?.label || '面试'}`,
-              type: app.status === 'oa' ? 'oa' : (app.status === 'offer' ? 'deadline' : 'interview'),
+              type: app.status === 'assessment' ? 'assessment' : app.status === 'oa' ? 'oa' : (app.status === 'offer' ? 'deadline' : 'interview'),
               date: defaultDate.toISOString().split('T')[0],
               startDate: isOaOrOffer ? new Date().toISOString().split('T')[0] : undefined,
               time: isOaOrOffer ? '23:59' : '14:00',
@@ -527,61 +547,20 @@ export const Applications: React.FC = () => {
       {selectedAppId && (
         <ApplicationDetailPanel
           appId={selectedAppId}
+          activity={activityById.get(selectedAppId)}
+          onTogglePool={() => updateApplication(selectedAppId, activityById.get(selectedAppId) === 'pool'
+            ? { pooledAt: undefined, followUpAt: Date.now() } : { pooledAt: Date.now() })}
           onClose={() => setSelectedAppId(null)}
+          onStatusChange={(id, status) => { updateApplicationStatus(id, status); triggerSchedulePrompt(id, status); }}
         />
       )}
 
       {/* Add Application Modal */}
-      {addModalOpen && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
-          <div style={{ backgroundColor: 'var(--bg-primary)', borderRadius: 'var(--radius-lg)', width: '440px', padding: '24px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.2)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <h3 className="text-h3">添加投递岗位</h3>
-              <button onClick={() => setAddModalOpen(false)} className="btn btn-ghost btn-icon"><X size={20} /></button>
-            </div>
-            <form onSubmit={submitAddNew}>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>公司名称</label>
-                <input required autoFocus className={styles.input} placeholder="例如：字节跳动 / 招银网络" value={addFormData.companyName} onChange={e => setAddFormData({ ...addFormData, companyName: e.target.value })} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }} />
-              </div>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>投递岗位</label>
-                <input required className={styles.input} placeholder="例如：前端开发工程师" value={addFormData.jobTitle} onChange={e => setAddFormData({ ...addFormData, jobTitle: e.target.value })} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }} />
-              </div>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>进度查询链接 (可选)</label>
-                <input className={styles.input} placeholder="https://... (投递完成后生成的进度查询链接)" value={addFormData.url} onChange={e => setAddFormData({ ...addFormData, url: e.target.value })} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }} />
-              </div>
-              <div style={{ marginBottom: '16px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>投递日期</label>
-                <input
-                  type="date"
-                  className={styles.input}
-                  value={addFormData.appliedDate}
-                  onChange={e => setAddFormData({ ...addFormData, appliedDate: e.target.value })}
-                  style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }}
-                />
-              </div>
-              <div style={{ marginBottom: '24px' }}>
-                <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', color: 'var(--text-secondary)' }}>意向梯队 / 难度</label>
-                <select
-                  value={addFormData.priority}
-                  onChange={e => setAddFormData({ ...addFormData, priority: e.target.value as ApplicationPriority })}
-                  style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)', outline: 'none' }}
-                >
-                  <option value="dream">冲刺 (重点意向 / 高难度)</option>
-                  <option value="target">主攻 (核心匹配 / 主力投递)</option>
-                  <option value="safety">保底 (稳健备选 / 练习托底)</option>
-                </select>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
-                <button type="button" onClick={() => setAddModalOpen(false)} className="btn btn-outline">取消</button>
-                <button type="submit" className="btn btn-primary">确认添加</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <ApplicationAddModal
+        isOpen={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        onSubmit={handleAddApplicationSubmit}
+      />
 
       {/* Schedule Prompt Modal */}
       {scheduleModalState && (
@@ -712,7 +691,9 @@ export const Applications: React.FC = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontWeight: 600, color: 'var(--text-secondary)' }}>
                     <LinkIcon size={14} color="var(--primary)" />
-                    {scheduleModalState.status === 'oa'
+                    {scheduleModalState.status === 'assessment'
+                      ? '测评链接 / 平台地址 (可选)'
+                      : scheduleModalState.status === 'oa'
                       ? '笔试链接 / 平台地址 (可选)'
                       : ['interview', 'hr'].includes(scheduleModalState.status)
                         ? '面试会议链接 / 线下考场 (可选)'
@@ -739,7 +720,9 @@ export const Applications: React.FC = () => {
                 <input
                   className={styles.input}
                   placeholder={
-                    scheduleModalState.status === 'oa'
+                    scheduleModalState.status === 'assessment'
+                      ? 'https://... (测评平台链接)'
+                      : scheduleModalState.status === 'oa'
                       ? "https://... (例如牛客/赛码/牛客网等笔试链接)"
                       : ['interview', 'hr'].includes(scheduleModalState.status)
                         ? "https://meeting.tencent.com/... 或 面试地点"

@@ -12,11 +12,11 @@ const Dashboard: React.FC = () => {
 
   const stats = useMemo(() => {
     const totalApplied = applications.filter(a => a.status !== 'wishlist').length;
-    const interviewing = applications.filter(a => ['oa', 'interview', 'hr'].includes(a.status)).length;
+    const interviewing = applications.filter(a => ['assessment', 'oa', 'interview', 'hr'].includes(a.status)).length;
     const offers = applications.filter(a => a.status === 'offer').length;
 
     // Response rate: anything that is not just 'applied' or 'wishlist'
-    const responses = applications.filter(a => ['oa', 'interview', 'hr', 'offer', 'rejected'].includes(a.status)).length;
+    const responses = applications.filter(a => ['assessment', 'oa', 'interview', 'hr', 'offer', 'rejected'].includes(a.status)).length;
     const responseRate = totalApplied > 0 ? Math.round((responses / totalApplied) * 100) : 0;
 
     return { totalApplied, interviewing, offers, responseRate };
@@ -54,7 +54,7 @@ const Dashboard: React.FC = () => {
         {/* Left: Drop-off Analysis */}
         <div className={styles.chartCard}>
           <h3 className="text-h3" style={{ marginBottom: '24px' }}>环节存活率诊断</h3>
-          <div style={{ flex: 1, minHeight: 0 }}>
+          <div className={styles.cardContent}>
             <DropOffAnalysis />
           </div>
         </div>
@@ -62,7 +62,7 @@ const Dashboard: React.FC = () => {
         {/* Middle: Stalled Radar */}
         <div className={styles.chartCard}>
           <h3 className="text-h3" style={{ marginBottom: '24px' }}>停滞/养鱼预警</h3>
-          <div style={{ flex: 1, minHeight: 0 }}>
+          <div className={styles.cardContent}>
             <StalledApplications />
           </div>
         </div>

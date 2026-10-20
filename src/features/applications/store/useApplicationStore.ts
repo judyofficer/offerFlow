@@ -27,6 +27,7 @@ export const useApplicationStore = create<ApplicationState>()(
             id: newId,
             appliedAt: appData.appliedAt || Date.now(),
             updatedAt: Date.now(),
+            statusUpdatedAt: Date.now(),
           };
           return { applications: [newApp, ...state.applications] };
         });
@@ -35,13 +36,13 @@ export const useApplicationStore = create<ApplicationState>()(
 
       updateApplicationStatus: (id, status) => set((state) => ({
         applications: state.applications.map(app => 
-          app.id === id ? { ...app, status, updatedAt: Date.now() } : app
+          app.id === id && app.status !== status ? { ...app, status, statusUpdatedAt: Date.now(), pooledAt: undefined, followUpAt: undefined, updatedAt: Date.now() } : app
         )
       })),
 
       updateApplication: (id, data) => set((state) => ({
         applications: state.applications.map(app => 
-          app.id === id ? { ...app, ...data, updatedAt: Date.now() } : app
+          app.id === id ? { ...app, statusUpdatedAt: app.statusUpdatedAt ?? app.updatedAt, ...data, ...(data.status && data.status !== app.status ? { statusUpdatedAt: Date.now(), pooledAt: undefined, followUpAt: undefined } : {}), updatedAt: Date.now() } : app
         )
       })),
 

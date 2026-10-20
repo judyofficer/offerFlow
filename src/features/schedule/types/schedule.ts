@@ -1,4 +1,4 @@
-export type EventType = 'oa' | 'interview' | 'deadline' | 'other';
+export type EventType = 'assessment' | 'oa' | 'interview' | 'deadline' | 'other';
 export type TimeType = 'specific' | 'deadline' | 'all_day';
 
 export interface ScheduleEvent {
@@ -20,6 +20,7 @@ export interface ScheduleEvent {
 }
 
 export const EVENT_TYPE_CONFIG: Record<EventType, { label: string; color: string; bgColor: string; borderColor: string }> = {
+  assessment: { label: '测评', color: '#06b6d4', bgColor: 'rgba(6, 182, 212, 0.12)', borderColor: 'rgba(6, 182, 212, 0.28)' },
   oa: { label: '笔试', color: '#8b5cf6', bgColor: 'rgba(139, 92, 246, 0.12)', borderColor: 'rgba(139, 92, 246, 0.28)' },
   interview: { label: '面试', color: '#f59e0b', bgColor: 'rgba(245, 158, 11, 0.12)', borderColor: 'rgba(245, 158, 11, 0.28)' },
   deadline: { label: 'Deadline', color: '#ef4444', bgColor: 'rgba(239, 68, 68, 0.12)', borderColor: 'rgba(239, 68, 68, 0.28)' },

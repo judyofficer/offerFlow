@@ -11,7 +11,7 @@ export const DropOffAnalysis: React.FC = () => {
     
     // 我们用一个粗略的快照来反推漏斗 (由于没有完整的状态流转历史表)
     // 初筛通过：只要进入了 oa, interview, hr, offer 就算通过简历初筛
-    const passedResume = all.filter(a => ['oa', 'interview', 'hr', 'offer'].includes(a.status)).length;
+    const passedResume = all.filter(a => ['assessment', 'oa', 'interview', 'hr', 'offer'].includes(a.status)).length;
     
     // 进入面试：只要进入了 interview, hr, offer 就算拿到面试
     const passedOa = all.filter(a => ['interview', 'hr', 'offer'].includes(a.status)).length;
@@ -28,7 +28,7 @@ export const DropOffAnalysis: React.FC = () => {
         color: 'var(--primary)'
       },
       { 
-        label: '初筛/笔试 (简历通过)', 
+        label: '测评/笔试 (初筛通过)',
         count: passedResume, 
         base: total,
         rateLabel: total > 0 ? `${Math.round((passedResume / total) * 100)}% 简历通过率` : '0%',
@@ -62,9 +62,9 @@ export const DropOffAnalysis: React.FC = () => {
   const maxCount = metrics[0].count;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', height: '100%', justifyContent: 'center' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minHeight: '100%', justifyContent: 'center' }}>
       {metrics.map((m, idx) => (
-        <div key={idx} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div key={idx} style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
             <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)' }}>{m.label}</span>
             <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: 500 }}>

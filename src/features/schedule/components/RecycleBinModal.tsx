@@ -66,7 +66,7 @@ export const RecycleBinModal: React.FC<Props> = ({ isOpen, onClose }) => {
 
   // 类型统计
   const typeCounts = useMemo(() => {
-    const counts: Record<string, number> = { all: deletedEvents.length, oa: 0, interview: 0, deadline: 0, other: 0 };
+    const counts: Record<string, number> = { all: deletedEvents.length, assessment: 0, oa: 0, interview: 0, deadline: 0, other: 0 };
     deletedEvents.forEach(e => {
       counts[e.type] = (counts[e.type] || 0) + 1;
     });
@@ -297,6 +297,7 @@ export const RecycleBinModal: React.FC<Props> = ({ isOpen, onClose }) => {
             {[
               { key: 'all' as const, label: `全部 (${typeCounts.all})` },
               { key: 'interview' as const, label: `面试 (${typeCounts.interview})` },
+              { key: 'assessment' as const, label: `测评 (${typeCounts.assessment})` },
               { key: 'oa' as const, label: `笔试 (${typeCounts.oa})` },
               { key: 'deadline' as const, label: `Deadline (${typeCounts.deadline})` },
               { key: 'other' as const, label: `其他 (${typeCounts.other})` },

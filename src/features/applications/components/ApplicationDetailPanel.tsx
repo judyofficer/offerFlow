@@ -3,6 +3,7 @@ import { X, Trash2, ExternalLink, RotateCcw, Copy, Check, Sparkles, ClipboardPas
 import { useApplicationStore } from '../store/useApplicationStore';
 import { useResumeStore } from '../../resumes/store/useResumeStore';
 import { useJobStore } from '../../jobBoard/store/useJobStore';
+import type { ApplicationStatus } from '../types/application';
 import { STATUS_CONFIG } from '../types/application';
 import { resolveApplicationUrl, openCareerUrl } from '../utils/careerUrlHelper';
 import styles from './ApplicationDetailPanel.module.css';
@@ -10,9 +11,12 @@ import styles from './ApplicationDetailPanel.module.css';
 interface Props {
   appId: string;
   onClose: () => void;
+  activity?: 'active' | 'pool' | 'closed';
+  onTogglePool?: () => void;
+  onStatusChange?: (id: string, status: ApplicationStatus) => void;
 }
 
-export const ApplicationDetailPanel: React.FC<Props> = ({ appId, onClose }) => {
+export const ApplicationDetailPanel: React.FC<Props> = ({ appId, onClose, onStatusChange, activity, onTogglePool }) => {
   const { applications, updateApplication, deleteApplication } = useApplicationStore();
   const { resumes } = useResumeStore();
   const { addBookmark } = useJobStore();
@@ -77,7 +81,11 @@ export const ApplicationDetailPanel: React.FC<Props> = ({ appId, onClose }) => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    updateApplication(appId, { [name]: value });
+    if (name === 'status' && onStatusChange) {
+      onStatusChange(appId, value as ApplicationStatus);
+    } else {
+      updateApplication(appId, { [name]: value });
+    }
   };
 
   const handleDelete = () => {
@@ -96,6 +104,7 @@ export const ApplicationDetailPanel: React.FC<Props> = ({ appId, onClose }) => {
         salary: application.salary || '',
         location: application.location || '',
         source: application.source || '',
+        jobDescription: application.jobDescription || '',
         deadline: application.deadline || '',
       });
       deleteApplication(appId);
@@ -137,6 +146,9 @@ export const ApplicationDetailPanel: React.FC<Props> = ({ appId, onClose }) => {
                 </button>
               )}
             </h2>
+            {onTogglePool && activity !== 'closed' && <button type="button" className="btn btn-ghost btn-sm" onClick={onTogglePool}>
+              {activity === 'pool' ? '恢复活跃' : '移入待跟进池'}
+            </button>}
             <p className="text-body" style={{ color: 'var(--text-secondary)', marginTop: '2px' }}>{application.jobTitle}</p>
           </div>
           <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>

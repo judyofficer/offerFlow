@@ -9,6 +9,9 @@ interface Props {
   application: Application;
   onClick: () => void;
   isDragging?: boolean;
+  activity?: 'active' | 'pool' | 'closed';
+  stalledDays?: number;
+  onTogglePool?: () => void;
 }
 
 const renderPriorityIcon = (priority: string) => {
@@ -24,7 +27,7 @@ const renderPriorityIcon = (priority: string) => {
   }
 };
 
-export const ApplicationCard: React.FC<Props> = ({ application, onClick, isDragging }) => {
+export const ApplicationCard: React.FC<Props> = ({ application, onClick, isDragging, activity, stalledDays, onTogglePool }) => {
   const { updateApplication } = useApplicationStore();
   const priority = application.priority || 'target';
   const pConfig = PRIORITY_CONFIG[priority] || PRIORITY_CONFIG.target;
@@ -268,6 +271,13 @@ export const ApplicationCard: React.FC<Props> = ({ application, onClick, isDragg
           );
         })()}
       </div>
+      {activity !== 'closed' && onTogglePool && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, borderTop: '1px solid var(--border-color)', paddingTop: 8, fontSize: 11 }}>
+          <span style={{ color: activity === 'pool' ? 'var(--warning)' : 'var(--text-tertiary)' }}>{stalledDays ? `${stalledDays} 天无流程进展` : '刚有进展'}</span>
+          <button type="button" className="btn btn-ghost btn-sm" style={{ fontSize: 11, padding: '2px 6px' }}
+            onClick={event => { event.stopPropagation(); onTogglePool(); }}>{activity === 'pool' ? '恢复活跃' : '移入待跟进池'}</button>
+        </div>
+      )}
     </div>
   );
 };
