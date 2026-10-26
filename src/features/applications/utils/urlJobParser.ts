@@ -85,7 +85,7 @@ const KNOWN_PLATFORM_DOMAINS: Array<{
   { domains: ['shixiseng.com'], sourceName: '实习僧' },
   { domains: ['iguopin.com'], sourceName: '国聘网' },
   { domains: ['mokahr.com'], sourceName: 'Moka招聘' },
-  { domains: ['beisen.com', 'hotjob.cn'], sourceName: '北森招聘' },
+  { domains: ['beisen.com', 'hotjob.cn', 'zhiye.com'], sourceName: '北森招聘' },
   { domains: ['jobs.feishu.cn'], sourceName: '飞书招聘' },
 ];
 
